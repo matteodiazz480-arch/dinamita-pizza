@@ -1,4 +1,4 @@
-# NEXO CREATIVE — Agencia de Marketing & Comunicación Digital
+﻿# NEXO CREATIVE — Agencia de Marketing & Comunicación Digital
 
 Sitio web corporativo e interactivo de **NEXO CREATIVE**, diseñado con estética editorial dark-luxury, animaciones fluidas y arquitectura separada en **Frontend** y **Backend**.
 
@@ -10,8 +10,6 @@ Sitio web corporativo e interactivo de **NEXO CREATIVE**, diseñado con estétic
 proyecto/
 ├── frontend/
 │   ├── index.html                  # Documento principal HTML5 y metadatos SEO
-│   ├── public/
-│   │   └── _headers                # Cabeceras HTTP de seguridad (CSP, HSTS, XFO)
 │   └── src/
 │       ├── assets/                 # Imágenes editoriales optimizadas
 │       ├── components/             # Secciones y componentes UI interactivos
@@ -20,13 +18,14 @@ proyecto/
 │       ├── App.jsx                 # Orquestador principal de la aplicación
 │       ├── index.css               # Sistema de diseño y utilidades Tailwind CSS v4
 │       └── main.jsx                # Punto de entrada React 19
+├── api/
+│   └── [...path].js                # Función serverless de Vercel (expone /api/*)
 ├── backend/
 │   ├── securityApi.js              # Middleware API (CSRF HMAC, Rate Limiting, Sanitización, ARCO)
 │   └── server.js                   # Servidor HTTP autónomo para los endpoints /api/*
 ├── package.json                    # Scripts y dependencias del proyecto
 ├── vite.config.js                  # Configuración de compilación y servidor Vite
-├── vercel.json                     # Reglas de cabeceras de seguridad para despliegue
-├── netlify.toml                    # Configuración de publicación estática y redirecciones
+├── vercel.json                     # Despliegue en Vercel: build, rewrites SPA y cabeceras de seguridad
 └── README.md                       # Documentación general del proyecto
 ```
 
@@ -69,3 +68,13 @@ npm run build
 ```bash
 npm run lint
 ```
+
+---
+
+## Despliegue en Vercel
+
+1. Importar el repositorio en Vercel (detecta `vercel.json`: `npm run build` → `dist`).
+2. Definir la variable de entorno **`CSRF_SECRET`** (cadena aleatoria de 64 caracteres hexadecimales). Es obligatoria: sin ella cada instancia serverless generaría un secreto distinto y los formularios fallarían por CSRF.
+3. Las rutas `/api/*` se sirven desde `api/[...path].js` reutilizando `backend/securityApi.js`.
+
+> El sistema de archivos de Vercel es efímero: los registros de `leads.jsonl` y `arco_requests.jsonl` no persisten entre invocaciones. Para conservar las consultas hay que conectar una base de datos o un webhook (`.env.example`).

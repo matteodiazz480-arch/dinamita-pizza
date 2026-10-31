@@ -1,23 +1,33 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, lazy, Suspense, memo } from "react";
 import Navbar from "./components/Navbar";
 import MobileBottomNav from "./components/MobileBottomNav";
-import Hero from "./components/Hero";
-import AboutSection from "./components/AboutSection";
-import ServicesSection from "./components/ServicesSection";
-import PlansSection from "./components/PlansSection";
+import HeroBase from "./components/Hero";
+import AboutSectionBase from "./components/AboutSection";
+import ServicesSectionBase from "./components/ServicesSection";
+import PlansSectionBase from "./components/PlansSection";
 import ProcessSection from "./components/ProcessSection";
-import ResultsSection from "./components/ResultsSection";
-import FreeConsultationSection from "./components/FreeConsultationSection";
-import FaqSection from "./components/FaqSection";
-import CtaContactSection from "./components/CtaContactSection";
+import ResultsSectionBase from "./components/ResultsSection";
+import FreeConsultationSectionBase from "./components/FreeConsultationSection";
+import FaqSectionBase from "./components/FaqSection";
+import CtaContactSectionBase from "./components/CtaContactSection";
 import Footer from "./components/Footer";
-import InteractiveContactModal from "./components/InteractiveContactModal";
-import PlanFinderModal from "./components/PlanFinderModal";
-import VirtualAssistantChat from "./components/VirtualAssistantChat";
 import CookieConsentBanner from "./components/CookieConsentBanner";
-import LegalPagesModal from "./components/LegalPagesModal";
 import { getConsentPreferences, saveConsentPreferences } from "./utils/cookieConsent";
 import { getCsrfToken } from "./utils/securityClient";
+
+const InteractiveContactModal = lazy(() => import("./components/InteractiveContactModal"));
+const PlanFinderModal = lazy(() => import("./components/PlanFinderModal"));
+const VirtualAssistantChat = lazy(() => import("./components/VirtualAssistantChat"));
+const LegalPagesModal = lazy(() => import("./components/LegalPagesModal"));
+
+const Hero = memo(HeroBase);
+const AboutSection = memo(AboutSectionBase);
+const ServicesSection = memo(ServicesSectionBase);
+const PlansSection = memo(PlansSectionBase);
+const ResultsSection = memo(ResultsSectionBase);
+const FreeConsultationSection = memo(FreeConsultationSectionBase);
+const FaqSection = memo(FaqSectionBase);
+const CtaContactSection = memo(CtaContactSectionBase);
 
 const TRACKED_SECTION_IDS = [
   "inicio",
@@ -39,7 +49,9 @@ export default function App() {
   const [consent, setConsent] = useState(() => getConsentPreferences());
   const [cookieSettingsOpen, setCookieSettingsOpen] = useState(false);
   const [activeLegalDoc, setActiveLegalDoc] = useState(null);
+  const [idleReady, setIdleReady] = useState(false);
   const scrollLockUntilRef = useRef(0);
+  const overlaysReady = idleReady || modalOpen || planFinderOpen || activeLegalDoc !== null;
 
   const handleNavigateSection = useCallback((sectionId) => {
     scrollLockUntilRef.current = Date.now() + 900;
@@ -80,6 +92,18 @@ export default function App() {
     if (window.location.hash.startsWith("#legal/")) {
       window.history.replaceState(null, "", window.location.pathname);
     }
+  }, []);
+
+  useEffect(() => {
+    const arm = () => setIdleReady(true);
+    const idleId =
+      typeof window.requestIdleCallback === "function"
+        ? window.requestIdleCallback(arm, { timeout: 2500 })
+        : window.setTimeout(arm, 1800);
+    return () => {
+      if (typeof window.cancelIdleCallback === "function") window.cancelIdleCallback(idleId);
+      else window.clearTimeout(idleId);
+    };
   }, []);
 
   useEffect(() => {
@@ -182,6 +206,8 @@ export default function App() {
         onNavigate={handleNavigateSection}
       />
 
+      {overlaysReady && (
+        <Suspense fallback={null}>
       <VirtualAssistantChat
         onOpenConsultationModal={handleOpenModal}
         onOpenLegalDoc={handleOpenLegalDoc}
@@ -201,6 +227,15 @@ export default function App() {
         onSelectPlanForConsultation={handleOpenModal}
       />
 
+      <LegalPagesModal
+        activeDocId={activeLegalDoc}
+        onSelectDoc={handleOpenLegalDoc}
+        onClose={handleCloseLegalDoc}
+        onOpenCookieSettings={() => setCookieSettingsOpen(true)}
+      />
+        </Suspense>
+      )}
+
       <CookieConsentBanner
         consent={consent}
         isSettingsOpen={cookieSettingsOpen}
@@ -208,13 +243,6 @@ export default function App() {
         onCloseSettings={() => setCookieSettingsOpen(false)}
         onSavePreferences={handleSaveCookiePreferences}
         onOpenLegalDoc={handleOpenLegalDoc}
-      />
-
-      <LegalPagesModal
-        activeDocId={activeLegalDoc}
-        onSelectDoc={handleOpenLegalDoc}
-        onClose={handleCloseLegalDoc}
-        onOpenCookieSettings={() => setCookieSettingsOpen(true)}
       />
     </div>
   );

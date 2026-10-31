@@ -1,153 +1,159 @@
-import React, { useRef, useState, useEffect, useCallback } from "react";
+import React, { useRef, useState, useEffect, memo } from "react";
 import { NEXO_CONFIG } from "../data/nexoData";
-import {
-  motion,
-  useMotionValue,
-  useSpring,
-  useTransform,
-  useReducedMotion,
-} from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Check } from "lucide-react";
 
-export default function ProcessSection() {
+const STEP_COUNT = NEXO_CONFIG.process.steps.length;
+const TRAVELER_SIZE = 14;
+
+function ProcessSection() {
   const sectionRef = useRef(null);
   const trackRef = useRef(null);
+  const lineRef = useRef(null);
+  const lineFillRef = useRef(null);
+  const travelerRef = useRef(null);
+  const headerFillRef = useRef(null);
   const stepRefs = useRef([]);
+  const dirtyRef = useRef(true);
   const prefersReducedMotion = useReducedMotion();
 
-  const progressMotionValue = useMotionValue(prefersReducedMotion ? 1 : 0);
-
-  const smoothProgress = useSpring(progressMotionValue, {
-    stiffness: 140,
-    damping: 28,
-    restDelta: 0.001,
-  });
-
-  const [activeStep, setActiveStep] = useState(prefersReducedMotion ? 4 : 1);
-  const [completedSteps, setCompletedSteps] = useState(
-    prefersReducedMotion ? [1, 2, 3, 4] : []
-  );
-  const [lineBounds, setLineBounds] = useState({ top: 68, bottom: 68 });
-
-  const travelerTop = useTransform(smoothProgress, [0, 1], ["0%", "100%"]);
-
-  const updateProgress = useCallback(() => {
-    if (!stepRefs.current || stepRefs.current.length < 4) return;
-    const steps = stepRefs.current;
-    if (!steps[0] || !steps[3]) return;
-
-    const r0 = steps[0].getBoundingClientRect();
-    const r1 = steps[1]?.getBoundingClientRect();
-    const r2 = steps[2]?.getBoundingClientRect();
-    const r3 = steps[3].getBoundingClientRect();
-
-    const y0 = r0.top + r0.height * 0.5;
-    const y1 = r1 ? r1.top + r1.height * 0.5 : y0 + 100;
-    const y2 = r2 ? r2.top + r2.height * 0.5 : y1 + 100;
-    const y3 = r3.top + r3.height * 0.5;
-
-    if (trackRef.current) {
-      const trackRect = trackRef.current.getBoundingClientRect();
-      const topOffset = Math.max(20, Math.round(y0 - trackRect.top));
-      const bottomOffset = Math.max(20, Math.round(trackRect.bottom - y3));
-      setLineBounds((prev) => {
-        if (
-          Math.abs(prev.top - topOffset) > 2 ||
-          Math.abs(prev.bottom - bottomOffset) > 2
-        ) {
-          return { top: topOffset, bottom: bottomOffset };
-        }
-        return prev;
-      });
-    }
-
-    const windowH = window.innerHeight;
-    const triggerY = windowH * 0.56;
-
-    const totalDist = y3 - y0;
-    if (totalDist <= 0) return;
-
-    let progress = 0;
-    if (triggerY <= y0) {
-      progress = 0;
-    } else if (triggerY >= y3) {
-      progress = 1;
-    } else {
-      progress = (triggerY - y0) / totalDist;
-    }
-
-    progressMotionValue.set(progress);
-
-    let current = 1;
-    const completed = [];
-
-    if (triggerY >= y0) {
-      current = 1;
-    }
-    if (triggerY >= y1) {
-      current = 2;
-      completed.push(1);
-    }
-    if (triggerY >= y2) {
-      current = 3;
-      completed.push(1, 2);
-    }
-    if (triggerY >= y3) {
-      current = 4;
-      completed.push(1, 2, 3);
-    }
-    if (triggerY >= y3 + 40) {
-      completed.push(4);
-    }
-
-    setActiveStep((prev) => (prev !== current ? current : prev));
-    setCompletedSteps((prev) => {
-      if (
-        prev.length === completed.length &&
-        prev.every((v, i) => v === completed[i])
-      ) {
-        return prev;
-      }
-      return completed;
-    });
-  }, [progressMotionValue]);
+  const [activeStep, setActiveStep] = useState(1);
+  const [completedSteps, setCompletedSteps] = useState([]);
 
   useEffect(() => {
-    if (prefersReducedMotion) {
-      progressMotionValue.set(1);
-      return;
-    }
-
     let rafId = null;
+    let running = false;
+    let lastScrollY = -1;
+    let lastViewportH = -1;
+    let lastStep = 1;
+    let lastCompletedKey = "";
 
-    const handleScroll = () => {
-      if (rafId !== null) return;
-      rafId = requestAnimationFrame(() => {
-        rafId = null;
-        updateProgress();
+    const update = () => {
+      const steps = stepRefs.current;
+      const first = steps[0];
+      const last = steps[STEP_COUNT - 1];
+      const track = trackRef.current;
+      if (!first || !last || !track) return;
+
+      const trackRect = track.getBoundingClientRect();
+      const centers = steps.map((el) => {
+        const r = el.getBoundingClientRect();
+        return r.top + r.height / 2;
       });
+
+      const y0 = centers[0];
+      const yLast = centers[STEP_COUNT - 1];
+      const span = yLast - y0;
+      if (span <= 0) return;
+
+      const trigger = window.innerHeight * 0.56;
+      const progress = Math.min(1, Math.max(0, (trigger - y0) / span));
+
+      if (lineRef.current) {
+        lineRef.current.style.top = `${Math.round(y0 - trackRect.top)}px`;
+        lineRef.current.style.height = `${Math.round(span)}px`;
+      }
+      if (lineFillRef.current) {
+        lineFillRef.current.style.transform = `scaleY(${progress})`;
+      }
+      if (travelerRef.current) {
+        travelerRef.current.style.transform = `translate3d(-50%, ${
+          progress * span - TRAVELER_SIZE / 2
+        }px, 0)`;
+      }
+      if (headerFillRef.current) {
+        headerFillRef.current.style.transform = `scaleX(${progress})`;
+      }
+
+      let current = 1;
+      const completed = [];
+      for (let i = 0; i < STEP_COUNT; i++) {
+        if (trigger >= centers[i]) {
+          current = i + 1;
+          if (i < STEP_COUNT - 1) completed.push(i + 1);
+        }
+      }
+      if (trigger >= yLast + 40) completed.push(STEP_COUNT);
+
+      if (current !== lastStep) {
+        lastStep = current;
+        setActiveStep(current);
+      }
+      const key = completed.join(",");
+      if (key !== lastCompletedKey) {
+        lastCompletedKey = key;
+        setCompletedSteps(completed);
+      }
     };
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("resize", handleScroll, { passive: true });
+    const frame = () => {
+      if (!running) return;
+      const y = window.scrollY;
+      const vh = window.innerHeight;
+      if (dirtyRef.current || y !== lastScrollY || vh !== lastViewportH) {
+        dirtyRef.current = false;
+        lastScrollY = y;
+        lastViewportH = vh;
+        update();
+      }
+      rafId = requestAnimationFrame(frame);
+    };
 
-    updateProgress();
+    const start = () => {
+      if (running) return;
+      running = true;
+      dirtyRef.current = true;
+      rafId = requestAnimationFrame(frame);
+    };
 
-    const timer1 = setTimeout(updateProgress, 150);
-    const timer2 = setTimeout(updateProgress, 600);
+    const stop = () => {
+      running = false;
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      rafId = null;
+    };
+
+    let io;
+    if (typeof IntersectionObserver !== "undefined" && sectionRef.current) {
+      io = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((e) => e.isIntersecting)) start();
+          else stop();
+        },
+        { rootMargin: "200px 0px" }
+      );
+      io.observe(sectionRef.current);
+    } else {
+      start();
+    }
+
+    const markDirty = () => {
+      dirtyRef.current = true;
+    };
+    window.addEventListener("resize", markDirty, { passive: true });
+    window.addEventListener("orientationchange", markDirty, { passive: true });
+
+    let ro;
+    if (typeof ResizeObserver !== "undefined" && trackRef.current) {
+      ro = new ResizeObserver(markDirty);
+      ro.observe(trackRef.current);
+    }
 
     if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(updateProgress);
+      document.fonts.ready.then(markDirty);
     }
 
     return () => {
-      window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", handleScroll);
-      if (rafId !== null) cancelAnimationFrame(rafId);
-      clearTimeout(timer1);
-      clearTimeout(timer2);
+      stop();
+      if (io) io.disconnect();
+      if (ro) ro.disconnect();
+      window.removeEventListener("resize", markDirty);
+      window.removeEventListener("orientationchange", markDirty);
     };
-  }, [prefersReducedMotion, updateProgress, progressMotionValue]);
+  }, []);
+
+  const fillTransition = prefersReducedMotion
+    ? "none"
+    : "transform 140ms linear";
 
   return (
     <section
@@ -166,36 +172,47 @@ export default function ProcessSection() {
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 sm:gap-6 mb-8 sm:mb-14">
-          <div className="max-w-xl">
+          <motion.div
+            initial={prefersReducedMotion ? false : { opacity: 0, y: 14 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-40px" }}
+            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+            className="max-w-xl"
+          >
             <h2 className="text-2xl sm:text-4xl font-black text-[#111111] tracking-tight leading-tight">
               {NEXO_CONFIG.process.title}
             </h2>
             <p className="text-xs sm:text-base text-gray-600 font-medium mt-1.5">
               {NEXO_CONFIG.process.subtitle}
             </p>
-          </div>
+          </motion.div>
 
-          <div className="bg-white border border-black/[0.06] rounded-xl p-3 sm:px-5 sm:py-3.5 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col gap-2 min-w-[220px] sm:min-w-[300px]">
+          <motion.div
+            initial={prefersReducedMotion ? false : { opacity: 0, y: 14 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-40px" }}
+            transition={{ duration: 0.45, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
+            className="bg-white border border-black/[0.06] rounded-xl p-3 sm:px-5 sm:py-3.5 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col gap-2 min-w-[220px] sm:min-w-[300px]"
+          >
             <div className="flex items-center justify-between text-[10px] sm:text-[11px] font-bold tracking-wider uppercase">
               <span className="text-gray-400">Etapa activa</span>
               <span className="text-[#111111] tabular-nums font-black">
-                0{Math.max(1, activeStep)} <span className="text-gray-300">/ 04</span>
+                0{activeStep} <span className="text-gray-300">/ 04</span>
               </span>
             </div>
 
             <div className="relative flex items-center justify-between pt-0.5">
               <div className="absolute left-3 right-3 top-1/2 -translate-y-1/2 h-[2px] bg-gray-200 rounded-full" />
 
-              <motion.div
-                className="absolute left-3 right-3 top-1/2 -translate-y-1/2 h-[2px] bg-[#111111] rounded-full origin-left"
-                style={{
-                  scaleX: prefersReducedMotion ? 1 : smoothProgress,
-                }}
+              <div
+                ref={headerFillRef}
+                className="absolute left-3 right-3 top-1/2 -translate-y-1/2 h-[2px] bg-[#111111] rounded-full origin-left will-change-transform"
+                style={{ transform: "scaleX(0)", transition: fillTransition }}
               />
 
               {NEXO_CONFIG.process.steps.map((s) => {
                 const reached = activeStep >= s.step;
-                const isLast = s.step === 4;
+                const isLast = s.step === STEP_COUNT;
                 return (
                   <div
                     key={s.step}
@@ -216,34 +233,38 @@ export default function ProcessSection() {
                 );
               })}
             </div>
-          </div>
+          </motion.div>
         </div>
 
         <div ref={trackRef} className="relative">
           <div
+            ref={lineRef}
             className="absolute left-4 sm:left-7 lg:left-1/2 -translate-x-1/2 w-[2px] z-0 pointer-events-none"
-            style={{
-              top: `${lineBounds.top}px`,
-              bottom: `${lineBounds.bottom}px`,
-            }}
+            style={{ top: 68, height: 0 }}
           >
             <div className="w-full h-full bg-gray-300/75 rounded-full" />
 
-            <motion.div
-              className="absolute top-0 left-0 w-full h-full rounded-full origin-top"
+            <div
+              ref={lineFillRef}
+              className="absolute top-0 left-0 w-full h-full rounded-full origin-top will-change-transform"
               style={{
-                scaleY: prefersReducedMotion ? 1 : smoothProgress,
+                transform: "scaleY(0)",
+                transition: fillTransition,
                 background:
                   "linear-gradient(180deg, #111111 0%, #111111 65%, #4d6b1a 88%, #9333EA 100%)",
               }}
             />
 
-            {!prefersReducedMotion && (
-              <motion.div
-                style={{ top: travelerTop }}
-                className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-[#BCE838] border-2 border-[#111111] pointer-events-none z-20 shadow-xs"
-              />
-            )}
+            <div
+              ref={travelerRef}
+              className="absolute top-0 left-1/2 rounded-full bg-[#BCE838] border-2 border-[#111111] pointer-events-none z-20 shadow-xs will-change-transform"
+              style={{
+                width: TRAVELER_SIZE,
+                height: TRAVELER_SIZE,
+                transform: `translate3d(-50%, ${-TRAVELER_SIZE / 2}px, 0)`,
+                transition: fillTransition,
+              }}
+            />
           </div>
 
           <div className="space-y-4 sm:space-y-8 lg:space-y-11 relative z-10">
@@ -253,12 +274,22 @@ export default function ProcessSection() {
               const isCurrent = activeStep === step.step;
 
               const isEven = index % 2 === 1;
-              const isFinalStep = step.step === 4;
+              const isFinalStep = step.step === STEP_COUNT;
 
               return (
-                <div
+                <motion.div
                   key={step.step}
-                  ref={(el) => (stepRefs.current[index] = el)}
+                  ref={(el) => {
+                    stepRefs.current[index] = el;
+                  }}
+                  initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-40px" }}
+                  transition={{
+                    duration: 0.4,
+                    delay: index * 0.05,
+                    ease: [0.16, 1, 0.3, 1],
+                  }}
                   className="relative grid grid-cols-1 lg:grid-cols-12 items-center gap-3 lg:gap-0"
                 >
                   <div className="hidden lg:flex lg:col-span-5 justify-end pr-12">
@@ -291,9 +322,7 @@ export default function ProcessSection() {
                         className={`absolute top-0 h-full transition-all duration-300 ease-out ${
                           isFinalStep ? "bg-[#9333EA]" : "bg-[#111111]"
                         } ${!isEven ? "right-0 origin-right" : "left-0 origin-left"}`}
-                        style={{
-                          width: isActivated ? "100%" : "0%",
-                        }}
+                        style={{ width: isActivated ? "100%" : "0%" }}
                       />
                     </div>
 
@@ -303,9 +332,7 @@ export default function ProcessSection() {
                         className={`absolute top-0 left-0 h-full transition-all duration-300 ease-out ${
                           isFinalStep ? "bg-[#9333EA]" : "bg-[#111111]"
                         }`}
-                        style={{
-                          width: isActivated ? "100%" : "0%",
-                        }}
+                        style={{ width: isActivated ? "100%" : "0%" }}
                       />
                     </div>
 
@@ -360,7 +387,7 @@ export default function ProcessSection() {
                       />
                     )}
                   </div>
-                </div>
+                </motion.div>
               );
             })}
           </div>
@@ -371,6 +398,8 @@ export default function ProcessSection() {
     </section>
   );
 }
+
+export default memo(ProcessSection);
 
 function EditorialStageMeta({ step, isActivated, isFinalStep, align }) {
   return (

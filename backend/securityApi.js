@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 
 const SERVER_SECRET =
@@ -152,7 +153,9 @@ function sendJson(res, statusCode, data, extraHeaders = {}) {
 
 function appendProtectedRecord(filename, record) {
   try {
-    const storageDir = path.resolve(process.cwd(), "backend", "storage");
+    const storageDir = process.env.VERCEL
+      ? path.join(os.tmpdir(), "nexo-storage")
+      : path.resolve(process.cwd(), "backend", "storage");
     if (!fs.existsSync(storageDir)) {
       fs.mkdirSync(storageDir, { recursive: true });
     }
