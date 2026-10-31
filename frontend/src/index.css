@@ -1,0 +1,134 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --brand-lime: #BCE838;
+    --brand-lime-hover: #add92b;
+    --brand-dark: #111111;
+    --brand-dark-card: #17181c;
+    --brand-purple: #9333EA;
+    --brand-gray: #9CA3AF;
+  }
+
+  html {
+    font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color-scheme: light dark;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: #111111;
+    color: #ffffff;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background-color: #BCE838;
+    color: #111111;
+  }
+
+  input, textarea, select {
+    caret-color: #BCE838;
+  }
+
+  :focus-visible {
+    outline: 2px solid #BCE838;
+    outline-offset: 2px;
+  }
+}
+
+.font-display-condensed {
+  font-family: 'Anton', 'Manrope', sans-serif;
+  letter-spacing: 0.01em;
+}
+
+.font-editorial-serif {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+}
+
+.card-surface {
+  background: #17181c;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.card-surface:hover {
+  border-color: rgba(188, 232, 56, 0.22);
+}
+
+.section-dark-to-light {
+  background: linear-gradient(
+    180deg,
+    #111111 0%,
+    #141518 12%,
+    #1b1d22 24%,
+    #282b32 36%,
+    #3b4049 48%,
+    #555b66 60%,
+    #767d89 71%,
+    #9ba1ac 81%,
+    #bfc4cd 89%,
+    #dde0e5 95%,
+    #edeff2 98%,
+    #F4F5F7 100%
+  );
+}
+
+.section-light-to-dark {
+  background: linear-gradient(
+    180deg,
+    #F4F5F7 0%,
+    #edeff2 3%,
+    #dde0e5 8%,
+    #bfc4cd 16%,
+    #9ba1ac 26%,
+    #767d89 37%,
+    #555b66 49%,
+    #3b4049 61%,
+    #282b32 73%,
+    #1b1d22 84%,
+    #141518 93%,
+    #111111 100%
+  );
+}
+
+.surface-about {
+  background: linear-gradient(180deg, #F4F5F7 0%, #F7F8FA 60%, #FFFFFF 100%);
+}
+
+.surface-services {
+  background: linear-gradient(180deg, #FFFFFF 0%, #FBFBFD 65%, #F5F6F8 100%);
+}
+
+.surface-plans {
+  background: linear-gradient(180deg, #F5F6F8 0%, #FFFFFF 50%, #F4F5F8 100%);
+}
+
+.surface-process {
+  background: linear-gradient(180deg, #F4F5F8 0%, #EFF1F5 50%, #F7F8FA 100%);
+}
+
+.surface-results {
+  background: linear-gradient(180deg, #F7F8FA 0%, #FFFFFF 55%, #F5F6F8 100%);
+}
+
+.surface-consultation {
+  background: linear-gradient(180deg, #F5F6F8 0%, #F3F4F7 100%);
+}
+
+.surface-faq {
+  background: linear-gradient(180deg, #F3F4F7 0%, #F4F5F7 100%);
+}
+
+.mask-fade-vertical {
+  mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

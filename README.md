@@ -1,16 +1,71 @@
-# React + Vite
+# NEXO CREATIVE — Agencia de Marketing & Comunicación Digital
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Sitio web corporativo e interactivo de **NEXO CREATIVE**, diseñado con estética editorial dark-luxury, animaciones fluidas y arquitectura separada en **Frontend** y **Backend**.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Estructura del Proyecto
 
-## React Compiler
+```text
+proyecto/
+├── frontend/
+│   ├── index.html                  # Documento principal HTML5 y metadatos SEO
+│   ├── public/
+│   │   └── _headers                # Cabeceras HTTP de seguridad (CSP, HSTS, XFO)
+│   └── src/
+│       ├── assets/                 # Imágenes editoriales optimizadas
+│       ├── components/             # Secciones y componentes UI interactivos
+│       ├── data/                   # Datos estructurados (servicios, planes, proceso, legales)
+│       ├── utils/                  # Clientes de seguridad CSRF, consentimiento y audio
+│       ├── App.jsx                 # Orquestador principal de la aplicación
+│       ├── index.css               # Sistema de diseño y utilidades Tailwind CSS v4
+│       └── main.jsx                # Punto de entrada React 19
+├── backend/
+│   ├── securityApi.js              # Middleware API (CSRF HMAC, Rate Limiting, Sanitización, ARCO)
+│   └── server.js                   # Servidor HTTP autónomo para los endpoints /api/*
+├── package.json                    # Scripts y dependencias del proyecto
+├── vite.config.js                  # Configuración de compilación y servidor Vite
+├── vercel.json                     # Reglas de cabeceras de seguridad para despliegue
+├── netlify.toml                    # Configuración de publicación estática y redirecciones
+└── README.md                       # Documentación general del proyecto
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the Oxlint configuration
+## Características Principales
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+- **Diseño Mobile-First & Responsive**: Navegación con indicador animado (`GooeyNav`) en escritorio y barra inferior adaptada a dispositivos móviles, selector interactivo de planes en pantallas pequeñas y composiciones visuales sin bordes con esquinas redondeadas.
+- **Animaciones de Aparición**: Transiciones sutiles y progresivas con `framer-motion` que respetan la preferencia `prefers-reduced-motion` del sistema operativo.
+- **Seguridad y Privacidad (Ley 25.326)**:
+  - Tokens CSRF firmados con `HMAC-SHA256` mediante cookies `HttpOnly` + `SameSite=Strict`.
+  - Limitación de tasa (*Sliding-Window Rate Limiting*) por hash de IP anonimizado.
+  - Sanitización estricta de entradas, filtro anti-bots (*honeypot* + validación de tiempo humano) y cabeceras `Content-Security-Policy`.
+  - Gestión granular de cookies y ejercicio de derechos ARCO.
+
+---
+
+## Requisitos e Instalación
+
+1. Instalar dependencias:
+
+```bash
+npm install
+```
+
+2. Iniciar el entorno de desarrollo (Frontend + Backend API integrados):
+
+```bash
+npm run dev
+```
+
+3. Compilar para producción:
+
+```bash
+npm run build
+```
+
+4. Ejecutar verificación de código (linter):
+
+```bash
+npm run lint
+```

@@ -1,17 +1,17 @@
 {
-  "name": "dinamita-pizza",
+  "name": "nexo-creative",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "oxlint",
-    "preview": "vite preview"
+    "lint": "oxlint frontend/src backend",
+    "preview": "vite preview",
+    "start:backend": "node backend/server.js"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
-    "canvas-confetti": "^1.9.4",
     "framer-motion": "^14.7.1",
     "lucide-react": "^1.62.0",
     "react": "^19.3.1",
