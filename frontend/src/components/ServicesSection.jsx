@@ -62,6 +62,7 @@ export default function ServicesSection({ onOpenConsultationModal }) {
               alt="Diseño de contenido y gestión de redes sociales para marcas"
               className="w-full aspect-[4/3] sm:aspect-[5/4] lg:aspect-[4/5] rounded-2xl object-cover object-center block"
               loading="lazy"
+              decoding="async"
             />
           </motion.div>
 

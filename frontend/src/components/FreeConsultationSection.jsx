@@ -18,7 +18,7 @@ export default function FreeConsultationSection({ onOpenModal }) {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-40px" }}
           transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-          className="rounded-2xl bg-white/85 backdrop-blur-sm border border-black/[0.07] p-4 sm:p-7 lg:px-9 lg:py-7 shadow-[0_4px_24px_rgba(17,17,17,0.03)]"
+          className="rounded-2xl bg-white border border-black/[0.07] p-4 sm:p-7 lg:px-9 lg:py-7 shadow-[0_4px_24px_rgba(17,17,17,0.03)]"
         >
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 lg:gap-10">
             <div className="space-y-2.5 max-w-2xl">

@@ -32,6 +32,7 @@ export default function Hero({ onOpenConsultationModal, onOpenPlanFinder }) {
             alt="NEXO Creative — Agencia de Marketing y Comunicación"
             className="w-full h-full object-cover object-[62%_center] sm:object-center scale-[1.01]"
             loading="eager"
+            decoding="async"
           />
           <div className="absolute inset-0 bg-[#111111]/45" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#111111]/92 via-[#111111]/72 md:via-[#111111]/58 to-[#111111]/25" />

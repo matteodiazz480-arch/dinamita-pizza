@@ -3,6 +3,8 @@
   display: inline-flex;
   align-items: center;
   max-width: 100%;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .gooey-nav-frame {

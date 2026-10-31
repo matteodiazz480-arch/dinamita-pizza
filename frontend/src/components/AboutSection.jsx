@@ -63,7 +63,7 @@ export default function AboutSection() {
                     delay: index * 0.06,
                     ease: [0.16, 1, 0.3, 1],
                   }}
-                  className="bg-white/90 backdrop-blur-xs rounded-2xl p-3.5 sm:p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-sm border border-black/[0.05] transition-shadow"
+                  className="bg-white rounded-2xl p-3.5 sm:p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-sm border border-black/[0.05] transition-shadow"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div
@@ -130,6 +130,7 @@ export default function AboutSection() {
               alt="Dirección creativa y producción visual NEXO Creative"
               className="w-full aspect-[4/3] sm:aspect-[16/10] lg:aspect-[3/4] rounded-2xl object-cover object-[center_64%] lg:object-[center_60%] block"
               loading="lazy"
+              decoding="async"
             />
           </motion.div>
         </div>

@@ -89,6 +89,7 @@ export default function ResultsSection() {
               alt="Posicionamiento y alcance de marca NEXO Creative"
               className="w-full aspect-[4/3] sm:aspect-[16/10] lg:aspect-[4/5] rounded-2xl object-cover object-[center_50%] block"
               loading="lazy"
+              decoding="async"
             />
           </motion.div>
         </div>

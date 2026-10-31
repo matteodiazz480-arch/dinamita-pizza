@@ -49,7 +49,7 @@ export default function FaqSection() {
                     ease: [0.16, 1, 0.3, 1],
                   }}
                   onClick={() => toggleFaq(item.id)}
-                  className="bg-white/90 backdrop-blur-xs rounded-2xl p-4 sm:p-5 border border-black/[0.06] shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all hover:shadow-xs cursor-pointer"
+                  className="bg-white rounded-2xl p-4 sm:p-5 border border-black/[0.06] shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all hover:shadow-xs cursor-pointer"
                 >
                   <div className="flex items-start gap-3">
                     <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#9333EA]/[0.08] flex items-center justify-center flex-shrink-0 mt-0.5 text-[#9333EA]">
@@ -97,6 +97,7 @@ export default function FaqSection() {
               alt="Identidad y comunicación visual de marca"
               className="w-full aspect-[4/4] sm:aspect-[4/5] lg:aspect-[3/4] max-h-[310px] sm:max-h-[360px] lg:max-h-[410px] rounded-2xl object-cover object-[center_36%] block"
               loading="lazy"
+              decoding="async"
             />
           </motion.div>
         </div>

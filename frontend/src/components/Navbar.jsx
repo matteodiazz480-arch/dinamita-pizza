@@ -11,11 +11,20 @@ export default function Navbar({
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
+    let rafId = null;
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        const scrolled = window.scrollY > 20;
+        setIsScrolled((prev) => (prev !== scrolled ? scrolled : prev));
+      });
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (rafId !== null) cancelAnimationFrame(rafId);
+    };
   }, []);
 
   const navItems = NEXO_CONFIG.navLinks;

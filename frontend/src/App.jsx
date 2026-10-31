@@ -43,7 +43,43 @@ export default function App() {
 
   const handleNavigateSection = useCallback((sectionId) => {
     scrollLockUntilRef.current = Date.now() + 900;
-    setActiveSectionId(sectionId);
+    setActiveSectionId((prev) => (prev !== sectionId ? sectionId : prev));
+  }, []);
+
+  const handleOpenModal = useCallback((service = "") => {
+    setSelectedService(service || "Publicidad Digital (Meta Ads)");
+    setModalOpen(true);
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
+    setModalOpen(false);
+  }, []);
+
+  const handleOpenPlanFinder = useCallback(() => {
+    setPlanFinderOpen(true);
+  }, []);
+
+  const handleClosePlanFinder = useCallback(() => {
+    setPlanFinderOpen(false);
+    if (window.location.hash === "#encontra-tu-plan") {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  }, []);
+
+  const handleSaveCookiePreferences = useCallback((prefs) => {
+    const updated = saveConsentPreferences(prefs);
+    setConsent(updated);
+  }, []);
+
+  const handleOpenLegalDoc = useCallback((docId) => {
+    setActiveLegalDoc(docId);
+  }, []);
+
+  const handleCloseLegalDoc = useCallback(() => {
+    setActiveLegalDoc(null);
+    if (window.location.hash.startsWith("#legal/")) {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
   }, []);
 
   useEffect(() => {
@@ -64,31 +100,40 @@ export default function App() {
     syncFromHash();
     window.addEventListener("hashchange", syncFromHash);
 
+    let scrollRafId = null;
+
     const handleScrollSpy = () => {
-      if (Date.now() < scrollLockUntilRef.current) return;
+      if (scrollRafId !== null) return;
 
-      const reachedBottom =
-        window.innerHeight + window.scrollY >=
-        document.documentElement.scrollHeight - 120;
-      if (reachedBottom) {
-        setActiveSectionId("contacto");
-        return;
-      }
+      scrollRafId = requestAnimationFrame(() => {
+        scrollRafId = null;
 
-      const scrollTriggerY = window.scrollY + window.innerHeight * 0.35;
-      let currentId = "inicio";
+        if (Date.now() < scrollLockUntilRef.current) return;
 
-      for (const id of TRACKED_SECTION_IDS) {
-        const el = document.getElementById(id);
-        if (el) {
-          const rect = el.getBoundingClientRect();
-          const top = rect.top + window.scrollY;
-          if (scrollTriggerY >= top) {
-            currentId = id;
+        const scrollY = window.scrollY;
+        const windowH = window.innerHeight;
+        const scrollHeight = document.documentElement.scrollHeight;
+
+        if (windowH + scrollY >= scrollHeight - 140) {
+          setActiveSectionId((prev) => (prev === "contacto" ? prev : "contacto"));
+          return;
+        }
+
+        const scrollTriggerY = scrollY + windowH * 0.36;
+        let currentId = "inicio";
+
+        for (const id of TRACKED_SECTION_IDS) {
+          const el = document.getElementById(id);
+          if (el) {
+            const top = el.offsetTop;
+            if (scrollTriggerY >= top) {
+              currentId = id;
+            }
           }
         }
-      }
-      setActiveSectionId(currentId);
+
+        setActiveSectionId((prev) => (prev === currentId ? prev : currentId));
+      });
     };
 
     window.addEventListener("scroll", handleScrollSpy, { passive: true });
@@ -97,44 +142,9 @@ export default function App() {
     return () => {
       window.removeEventListener("hashchange", syncFromHash);
       window.removeEventListener("scroll", handleScrollSpy);
+      if (scrollRafId !== null) cancelAnimationFrame(scrollRafId);
     };
   }, []);
-
-  const handleOpenModal = (service = "") => {
-    setSelectedService(service || "Publicidad Digital (Meta Ads)");
-    setModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setModalOpen(false);
-  };
-
-  const handleOpenPlanFinder = () => {
-    setPlanFinderOpen(true);
-  };
-
-  const handleClosePlanFinder = () => {
-    setPlanFinderOpen(false);
-    if (window.location.hash === "#encontra-tu-plan") {
-      window.history.replaceState(null, "", window.location.pathname);
-    }
-  };
-
-  const handleSaveCookiePreferences = (prefs) => {
-    const updated = saveConsentPreferences(prefs);
-    setConsent(updated);
-  };
-
-  const handleOpenLegalDoc = (docId) => {
-    setActiveLegalDoc(docId);
-  };
-
-  const handleCloseLegalDoc = () => {
-    setActiveLegalDoc(null);
-    if (window.location.hash.startsWith("#legal/")) {
-      window.history.replaceState(null, "", window.location.pathname);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-[#111111] text-white flex flex-col selection:bg-[#BCE838] selection:text-black">
