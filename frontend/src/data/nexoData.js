@@ -16,10 +16,9 @@ export const NEXO_CONFIG = {
   navLinks: [
     { label: "Inicio", href: "#inicio" },
     { label: "Nosotros", href: "#nosotros" },
-    { label: "Soluciones", href: "#servicios" },
+    { label: "Rubros", href: "#rubros" },
     { label: "Planes", href: "#planes" },
     { label: "Proceso", href: "#proceso" },
-    { label: "Rubros", href: "#rubros" },
     { label: "Contacto", href: "#contacto" },
   ],
 
@@ -309,81 +308,72 @@ export const NEXO_CONFIG = {
   },
 
   rubros: {
-    title: "Soluciones para tu rubro",
+    badge: "Soluciones por rubro",
+    title: "Soluciones para tu negocio",
     subtitle:
-      "Propuestas diseñadas para potenciar el trabajo independiente y los servicios profesionales con estrategias digitales efectivas.",
-    oficios: {
-      badge: "NEXO Oficios",
-      tagline: "Más clientes para tu trabajo independiente.",
-      headline: "Hacemos que tu trabajo llegue a más personas.",
-      tags: [
-        "Electricistas",
-        "Plomeros",
-        "Pintores",
-        "Técnicos (aire, calderas, etc.)",
-        "Carpinteros",
-        "Cerrajeros y más",
-      ],
-      pillars: [
-        {
-          icon: "Image",
-          title: "Mostrá tus trabajos",
-          desc: "Fotos y videos de trabajos terminados que generan confianza inmediata.",
-        },
-        {
-          icon: "MapPin",
-          title: "Llegá a tu zona de trabajo",
-          desc: "Anuncios dirigidos a tu barrio o ciudad para conseguir clientes cercanos.",
-        },
-        {
-          icon: "MessageCircle",
-          title: "Recibí más consultas",
-          desc: "Contactos directos a tu WhatsApp listos para pedir cotizaciones.",
-        },
-        {
-          icon: "TrendingUp",
-          title: "Hacé crecer tu reputación",
-          desc: "Una presentación profesional para destacar frente a la competencia.",
-        },
-      ],
-      ctaText: "Ver planes para oficios",
-    },
-    profesionales: {
-      badge: "NEXO Profesionales",
-      tagline: "Una presencia digital profesional y confiable.",
-      headline: "Tu experiencia merece una presencia digital profesional.",
-      tags: [
-        "Abogados",
-        "Contadores",
-        "Arquitectos",
-        "Nutricionistas",
-        "Psicólogos",
-        "Consultores y más",
-      ],
-      pillars: [
-        {
-          icon: "UserCheck",
-          title: "Posicioná tu marca personal",
-          desc: "Transmití autoridad, seriedad y el valor real de tu trayectoria.",
-        },
-        {
-          icon: "Calendar",
-          title: "Generá consultas",
-          desc: "Atracción constante de pacientes y clientes calificados.",
-        },
-        {
-          icon: "BookOpen",
-          title: "Compartí tu conocimiento",
-          desc: "Contenido que responde dudas frecuentes y te posiciona como referente.",
-        },
-        {
-          icon: "PieChart",
-          title: "Desarrollá tu cartera",
-          desc: "Un canal propio y activo sin depender únicamente de recomendaciones.",
-        },
-      ],
-      ctaText: "Ver planes para profesionales",
-    },
+      "Estrategias de captación, presencia digital y publicidad pensadas según cómo compran tus clientes reales.",
+    cards: [
+      {
+        id: "comercios",
+        badge: "Comercios y Negocios",
+        tagline: "Ventas y punto de venta",
+        headline: "Locales y Comercios",
+        desc: "Campañas geolocalizadas y contenido visual constante para atraer clientes a tu punto de venta o pedidos directos.",
+        tags: [
+          "Gastronomía",
+          "Indumentaria",
+          "Barberías",
+          "Gimnasios",
+          "Tiendas locales",
+        ],
+        bullets: [
+          "Anuncios dirigidos a tu radio y barrio",
+          "Promociones, reels y catálogo visual",
+        ],
+        ctaText: "Ver soluciones para comercios",
+        serviceName: "Planes Comercios y Negocios",
+      },
+      {
+        id: "oficios",
+        badge: "NEXO Oficios",
+        tagline: "Servicios e instalaciones",
+        headline: "Oficios y Técnicos",
+        desc: "Hacé que quienes necesitan una reparación o trabajo en tu zona te encuentren primero y te pidan presupuesto por WhatsApp.",
+        tags: [
+          "Electricistas",
+          "Plomeros",
+          "Técnicos de aire",
+          "Carpinteros",
+          "Reformas",
+        ],
+        bullets: [
+          "Fotos de trabajos terminados que generan confianza",
+          "Botón directo a tu WhatsApp para presupuestos",
+        ],
+        ctaText: "Ver soluciones para oficios",
+        serviceName: "Planes NEXO Oficios",
+      },
+      {
+        id: "profesionales",
+        badge: "NEXO Profesionales",
+        tagline: "Servicios de confianza",
+        headline: "Servicios Profesionales",
+        desc: "Construí una presencia seria y de autoridad que valide tu trayectoria, transmita confianza y genere consultas calificadas.",
+        tags: [
+          "Abogados",
+          "Médicos",
+          "Arquitectos",
+          "Contadores",
+          "Psicólogos",
+        ],
+        bullets: [
+          "Posicionamiento de marca personal y autoridad",
+          "Canal activo para captar y agendar consultas",
+        ],
+        ctaText: "Ver soluciones para profesionales",
+        serviceName: "Planes NEXO Profesionales",
+      },
+    ],
   },
 
   faq: {

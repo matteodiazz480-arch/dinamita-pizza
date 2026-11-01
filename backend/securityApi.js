@@ -19,6 +19,7 @@ const ALLOWED_SERVICES = new Set([
   "Gestión de Redes Sociales",
   "Diseño de Contenido",
   "Estrategia Digital",
+  "Planes Comercios y Negocios",
   "Planes NEXO Oficios",
   "Planes NEXO Profesionales",
   "Plan Presencia & Contenido",
@@ -214,6 +215,23 @@ function processAssistantQuery(rawQuery) {
   }
 
   if (
+    q.includes("comercio") ||
+    q.includes("comercios") ||
+    q.includes("local") ||
+    q.includes("locales") ||
+    q.includes("tienda") ||
+    q.includes("gastronomia") ||
+    q.includes("gastronomía") ||
+    q.includes("restaurante")
+  ) {
+    return {
+      reply:
+        "Para comercios y locales (gastronomía, indumentaria, tiendas) armamos campañas geolocalizadas en tu radio de venta y contenido constante para atraer clientes y aumentar tus pedidos.",
+      action: { label: "Ver soluciones para comercios", type: "consultation" },
+    };
+  }
+
+  if (
     q.includes("oficio") ||
     q.includes("oficios") ||
     q.includes("electricista") ||
@@ -402,13 +420,12 @@ export function createSecurityMiddleware() {
 
     let url = (req.url || "").split("?")[0];
     if (
-      !url.startsWith("/api") &&
-      !url.startsWith("/backend") &&
-      !url.startsWith("/server") &&
-      !url.startsWith("/.env") &&
-      !url.startsWith("/.git")
+      url.startsWith("/assistant") ||
+      url.startsWith("/contact") ||
+      url.startsWith("/security/") ||
+      url.startsWith("/privacy/")
     ) {
-      url = "/api" + (url.startsWith("/") ? url : "/" + url);
+      url = "/api" + url;
     }
 
     if (

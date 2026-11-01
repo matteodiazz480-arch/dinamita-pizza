@@ -3,7 +3,6 @@ import Navbar from "./components/Navbar";
 import MobileBottomNav from "./components/MobileBottomNav";
 import HeroBase from "./components/Hero";
 import AboutSectionBase from "./components/AboutSection";
-import ServicesSectionBase from "./components/ServicesSection";
 import PlansSectionBase from "./components/PlansSection";
 import ProcessSection from "./components/ProcessSection";
 import RubrosSectionBase from "./components/RubrosSection";
@@ -22,7 +21,6 @@ const LegalPagesModal = lazy(() => import("./components/LegalPagesModal"));
 
 const Hero = memo(HeroBase);
 const AboutSection = memo(AboutSectionBase);
-const ServicesSection = memo(ServicesSectionBase);
 const PlansSection = memo(PlansSectionBase);
 const RubrosSection = memo(RubrosSectionBase);
 const FreeConsultationSection = memo(FreeConsultationSectionBase);
@@ -32,10 +30,9 @@ const CtaContactSection = memo(CtaContactSectionBase);
 const TRACKED_SECTION_IDS = [
   "inicio",
   "nosotros",
-  "servicios",
+  "rubros",
   "planes",
   "proceso",
-  "rubros",
   "asesoramiento",
   "faq",
   "contacto",
@@ -184,13 +181,12 @@ export default function App() {
           onOpenPlanFinder={handleOpenPlanFinder}
         />
         <AboutSection />
-        <ServicesSection onOpenConsultationModal={handleOpenModal} />
+        <RubrosSection onOpenConsultationModal={handleOpenModal} />
         <PlansSection
           onOpenConsultationModal={handleOpenModal}
           onOpenPlanFinder={handleOpenPlanFinder}
         />
         <ProcessSection />
-        <RubrosSection onOpenConsultationModal={handleOpenModal} />
         <FreeConsultationSection onOpenModal={handleOpenModal} />
         <FaqSection />
         <CtaContactSection onOpenConsultationModal={handleOpenModal} />

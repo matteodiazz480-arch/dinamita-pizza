@@ -15,6 +15,23 @@ function getLocalAssistantReply(rawQuery) {
   const q = rawQuery.toLowerCase();
 
   if (
+    q.includes("comercio") ||
+    q.includes("comercios") ||
+    q.includes("local") ||
+    q.includes("locales") ||
+    q.includes("tienda") ||
+    q.includes("gastronomia") ||
+    q.includes("gastronomía") ||
+    q.includes("restaurante")
+  ) {
+    return {
+      reply:
+        "Para comercios y locales (gastronomía, indumentaria, tiendas) armamos campañas geolocalizadas en tu radio de venta y contenido constante para atraer clientes y aumentar tus pedidos.",
+      action: { label: "Ver soluciones para comercios", type: "consultation", service: "Planes Comercios y Negocios" },
+    };
+  }
+
+  if (
     q.includes("oficio") ||
     q.includes("oficios") ||
     q.includes("electricista") ||

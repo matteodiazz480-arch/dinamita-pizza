@@ -31,7 +31,7 @@ export default function Navbar({
 
   const resolveDesktopActiveIndex = (secId) => {
     const normalized =
-      secId === "asesoramiento" || secId === "faq" ? "rubros" : secId;
+      secId === "asesoramiento" || secId === "faq" ? "proceso" : secId;
     const found = navItems.findIndex((item) => item.href === `#${normalized}`);
     return found >= 0 ? found : 0;
   };
@@ -40,14 +40,14 @@ export default function Navbar({
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-40 transition-colors duration-300 ${
+      className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
         isScrolled
-          ? "bg-[#111111]/90 backdrop-blur-md border-b border-white/[0.07] py-2.5 shadow-md shadow-black/25"
-          : "bg-gradient-to-b from-[#111111]/85 to-transparent py-3"
+          ? "bg-[#0d0f12]/95 backdrop-blur-xl border-b border-white/12 py-3.5 sm:py-4 shadow-[0_12px_32px_rgba(0,0,0,0.55)]"
+          : "bg-[#0d0f12]/80 md:bg-gradient-to-b md:from-[#0d0f12]/95 md:to-transparent backdrop-blur-md md:backdrop-blur-none border-b border-white/8 md:border-b-0 py-4 sm:py-5"
       }`}
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-4">
           <a
             href="#inicio"
             onClick={(e) => {
@@ -55,10 +55,10 @@ export default function Navbar({
               onNavigateSection?.("inicio");
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
-            className="transition-opacity duration-200 hover:opacity-90 flex-shrink-0"
+            className="transition-transform duration-200 hover:scale-103 flex-shrink-0"
             aria-label="NEXO Creative Inicio"
           >
-            <BrandLogo />
+            <BrandLogo size="large" />
           </a>
 
           <div className="hidden md:flex items-center justify-center">
@@ -68,7 +68,7 @@ export default function Navbar({
               size="md"
               frame={true}
               particleCount={12}
-              spread={40}
+              spread={44}
               animationTime={500}
               timeVariance={200}
               gooeyness={0.4}
@@ -90,9 +90,9 @@ export default function Navbar({
               onClick={() =>
                 onOpenConsultationModal?.("Asesoramiento Gratuito General")
               }
-              className="text-[11px] sm:text-xs font-extrabold tracking-wide text-[#111111] bg-[#BCE838] hover:bg-[#add92b] md:text-white md:bg-transparent md:hover:text-[#111111] md:hover:bg-[#BCE838] border border-[#BCE838] md:border-white/20 md:hover:border-[#BCE838] px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full transition-all cursor-pointer"
+              className="text-xs sm:text-sm font-black tracking-wide text-[#111111] bg-[#BCE838] hover:bg-[#cbf446] px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl transition-all cursor-pointer shadow-[0_0_18px_rgba(188,232,56,0.3)] hover:shadow-[0_0_26px_rgba(188,232,56,0.45)] hover:scale-102 active:scale-98"
             >
-              Asesoramiento
+              Diagnóstico gratis
             </button>
           </div>
         </div>

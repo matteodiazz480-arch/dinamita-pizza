@@ -3,19 +3,19 @@ import GooeyNav from "./GooeyNav";
 
 const MOBILE_GOOEY_ITEMS = [
   { id: "inicio", label: "Inicio", href: "#inicio" },
-  { id: "servicios", label: "Soluciones", href: "#servicios" },
-  { id: "planes", label: "Planes", href: "#planes" },
   { id: "rubros", label: "Rubros", href: "#rubros" },
+  { id: "planes", label: "Planes", href: "#planes" },
+  { id: "proceso", label: "Proceso", href: "#proceso" },
   { id: "contacto", label: "Contacto", href: "#contacto" },
 ];
 
 export default function MobileBottomNav({ activeSectionId, onNavigate }) {
   const resolveMobileActiveIndex = (secId) => {
     if (secId === "inicio" || secId === "nosotros") return 0;
-    if (secId === "servicios") return 1;
-    if (secId === "planes" || secId === "proceso") return 2;
+    if (secId === "rubros") return 1;
+    if (secId === "planes") return 2;
     if (
-      secId === "rubros" ||
+      secId === "proceso" ||
       secId === "asesoramiento" ||
       secId === "faq"
     ) {

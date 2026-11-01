@@ -416,6 +416,7 @@ ${sData.message}
                       className="w-full bg-[#0d0f12] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-[#BCE838] transition-colors"
                     >
                       <option value="Publicidad Digital (Meta Ads)">Publicidad Digital (Meta Ads)</option>
+                      <option value="Planes Comercios y Negocios">Planes Comercios y Negocios</option>
                       <option value="Planes NEXO Oficios">Planes NEXO Oficios</option>
                       <option value="Planes NEXO Profesionales">Planes NEXO Profesionales</option>
                       <option value="Gestión de Redes Sociales">Gestión de Redes Sociales</option>

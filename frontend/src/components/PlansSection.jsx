@@ -12,25 +12,25 @@ function PlanCard({ plan, onOpenConsultationModal, prefersReducedMotion }) {
       animate={{ opacity: 1, y: 0 }}
       exit={prefersReducedMotion ? undefined : { opacity: 0, y: -8 }}
       transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
-      className={`rounded-2xl p-4 sm:p-6 flex flex-col justify-between relative overflow-hidden transition-shadow h-full ${
+      className={`rounded-3xl p-5 sm:p-6 flex flex-col justify-between relative overflow-hidden transition-all duration-300 h-full ${
         isFeatured
-          ? "bg-[#111111] text-white shadow-lg border border-white/10"
-          : "bg-white text-[#111111] border border-black/[0.07] shadow-[0_4px_20px_rgba(0,0,0,0.03)]"
+          ? "bg-[#111111] text-white shadow-xl border border-white/12"
+          : "bg-white text-[#111111] border border-black/[0.07] shadow-[0_8px_24px_rgba(0,0,0,0.04)]"
       }`}
     >
-      <div className="space-y-3 sm:space-y-3.5">
+      <div className="space-y-3.5">
         <div className="flex items-start justify-between gap-2">
           <div>
             <div className="flex items-center gap-2">
               <span
                 className={`font-display-condensed text-xl sm:text-2xl leading-none tracking-wider ${
-                  isFeatured ? "text-[#BCE838]" : "text-black/25"
+                  isFeatured ? "text-[#BCE838]" : "text-black/30"
                 }`}
               >
                 {plan.code}
               </span>
               <h3
-                className={`text-base sm:text-xl font-black tracking-tight ${
+                className={`text-lg sm:text-xl font-black tracking-tight ${
                   isFeatured ? "text-white" : "text-[#111111]"
                 }`}
               >
@@ -38,7 +38,7 @@ function PlanCard({ plan, onOpenConsultationModal, prefersReducedMotion }) {
               </h3>
             </div>
             <p
-              className={`text-[11px] sm:text-xs font-bold mt-0.5 ${
+              className={`text-xs font-bold mt-1 ${
                 isFeatured ? "text-[#BCE838]" : "text-[#9333EA]"
               }`}
             >
@@ -47,7 +47,7 @@ function PlanCard({ plan, onOpenConsultationModal, prefersReducedMotion }) {
           </div>
 
           {isFeatured && (
-            <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-[#BCE838] text-[#111111] flex-shrink-0">
+            <span className="px-2.5 py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-[#BCE838] text-[#111111] flex-shrink-0 shadow-xs">
               Más elegido
             </span>
           )}
@@ -62,15 +62,15 @@ function PlanCard({ plan, onOpenConsultationModal, prefersReducedMotion }) {
         </p>
 
         <div
-          className={`py-2.5 px-3.5 rounded-xl border flex flex-wrap items-baseline justify-between gap-1 ${
+          className={`py-2 px-3 rounded-xl border inline-flex items-center gap-2 ${
             isFeatured
               ? "bg-[#17181c] border-white/[0.08]"
               : "bg-[#F4F5F7] border-black/[0.05]"
           }`}
         >
           <span
-            className={`text-xs sm:text-sm font-extrabold ${
-              isFeatured ? "text-white" : "text-[#111111]"
+            className={`text-xs font-extrabold ${
+              isFeatured ? "text-[#BCE838]" : "text-[#111111]"
             }`}
           >
             {plan.priceInfo}
@@ -80,28 +80,21 @@ function PlanCard({ plan, onOpenConsultationModal, prefersReducedMotion }) {
               isFeatured ? "text-gray-400" : "text-gray-500"
             }`}
           >
-            {plan.priceDetail}
+            · Ajustado a tus objetivos
           </span>
         </div>
 
-        <div className="space-y-1.5 pt-0.5">
-          <span
-            className={`block text-[10px] sm:text-[11px] font-bold uppercase tracking-wider ${
-              isFeatured ? "text-gray-400" : "text-gray-500"
-            }`}
-          >
-            Servicios incluidos:
-          </span>
+        <div className="space-y-2 pt-1 border-t border-current/10">
           <ul className="space-y-1.5">
-            {plan.includedServices.map((srv, idx) => (
+            {plan.includedServices.slice(0, 3).map((srv, idx) => (
               <li
                 key={idx}
-                className={`flex items-start gap-2 text-xs ${
+                className={`flex items-start gap-2 text-xs font-medium ${
                   isFeatured ? "text-gray-200" : "text-gray-700"
                 }`}
               >
                 <span
-                  className={`w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                  className={`w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
                     isFeatured
                       ? "bg-[#BCE838]/20 text-[#BCE838]"
                       : "bg-[#111111] text-[#BCE838]"
@@ -120,15 +113,15 @@ function PlanCard({ plan, onOpenConsultationModal, prefersReducedMotion }) {
         <button
           type="button"
           onClick={() => onOpenConsultationModal?.(plan.name)}
-          className={`w-full py-2.5 sm:py-3 px-4 rounded-xl text-xs sm:text-sm font-extrabold inline-flex items-center justify-center gap-2 transition-colors cursor-pointer group ${
+          className={`w-full py-3 px-4 rounded-xl text-xs sm:text-sm font-extrabold inline-flex items-center justify-center gap-2 transition-colors cursor-pointer group shadow-xs active:scale-[0.99] ${
             isFeatured
-              ? "bg-[#BCE838] hover:bg-[#add92b] text-[#111111]"
+              ? "bg-[#BCE838] hover:bg-[#cbf446] text-[#111111]"
               : "bg-[#111111] hover:bg-[#1e2026] text-white"
           }`}
         >
           <span>Consultar por este plan</span>
           <ArrowRight
-            className={`w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:translate-x-0.5 transition-transform ${
+            className={`w-4 h-4 group-hover:translate-x-0.5 transition-transform ${
               isFeatured ? "text-[#111111]" : "text-[#BCE838]"
             }`}
           />
