@@ -28,7 +28,9 @@ export default function RubrosSection({ onOpenConsultationModal }) {
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [hoveredIndex, setHoveredIndex] = useState(null);
-  const [containerWidth, setContainerWidth] = useState(1200);
+  const [containerWidth, setContainerWidth] = useState(
+    typeof window !== "undefined" ? window.innerWidth : 1200
+  );
 
   const cardsData = [
     {
@@ -48,7 +50,7 @@ export default function RubrosSection({ onOpenConsultationModal }) {
     if (!containerRef.current) return;
     const updateWidth = () => {
       if (containerRef.current) {
-        setContainerWidth(containerRef.current.offsetWidth || 1200);
+        setContainerWidth(containerRef.current.offsetWidth || window.innerWidth || 1200);
       }
     };
     updateWidth();
@@ -58,15 +60,17 @@ export default function RubrosSection({ onOpenConsultationModal }) {
       ro.observe(el);
       return () => ro.disconnect();
     }
+    window.addEventListener("resize", updateWidth);
+    return () => window.removeEventListener("resize", updateWidth);
   }, []);
 
-  const isMobile = containerWidth < 640;
-  const isTablet = containerWidth >= 640 && containerWidth < 1024;
+  const isMobile = containerWidth < 768;
+  const isTablet = containerWidth >= 768 && containerWidth < 1024;
 
-  // Parámetros de abanico (FanCardCarousel)
-  const responsiveFanSpread = isMobile ? 32 : isTablet ? 90 : 160;
-  const responsiveRotation = isMobile ? 3.5 : isTablet ? 5 : 7;
-  const responsiveYCurve = isMobile ? 18 : isTablet ? 26 : 34;
+  // Parámetros de abanico (FanCardCarousel en Desktop / Tablet)
+  const responsiveFanSpread = isMobile ? 0 : isTablet ? 85 : 160;
+  const responsiveRotation = isMobile ? 0 : isTablet ? 4.5 : 7;
+  const responsiveYCurve = isMobile ? 0 : isTablet ? 22 : 34;
 
   const handleNext = useCallback(() => {
     setActiveIndex((prev) => (prev < cardsData.length - 1 ? prev + 1 : 0));
@@ -193,7 +197,7 @@ export default function RubrosSection({ onOpenConsultationModal }) {
         {/* Escenario del FanCardCarousel con tarjetas estilo Blur Blanco */}
         <div
           ref={containerRef}
-          className="relative w-full h-[620px] sm:h-[560px] lg:h-[520px] flex items-center justify-center select-none"
+          className="relative w-full h-auto md:h-[550px] lg:h-[510px] flex items-center justify-center select-none"
         >
           {cardsData.map((card, index) => {
             const distance = index - activeIndex;
@@ -210,24 +214,41 @@ export default function RubrosSection({ onOpenConsultationModal }) {
             return (
               <motion.div
                 key={card.id}
-                style={{
-                  position: "absolute",
-                  left: "50%",
-                  top: "50%",
-                  width: "100%",
-                  maxWidth: isMobile ? "92%" : isTablet ? "780px" : "860px",
-                  cursor: "pointer",
-                  zIndex,
-                  touchAction: "pan-y",
-                }}
+                style={
+                  isMobile
+                    ? {
+                        position: isActive ? "relative" : "absolute",
+                        width: "100%",
+                        maxWidth: "100%",
+                        pointerEvents: isActive ? "auto" : "none",
+                        zIndex: isActive ? 10 : 0,
+                        touchAction: "pan-y",
+                      }
+                    : {
+                        position: "absolute",
+                        left: "50%",
+                        top: "50%",
+                        width: "100%",
+                        maxWidth: isTablet ? "780px" : "860px",
+                        cursor: "pointer",
+                        zIndex,
+                        touchAction: "pan-y",
+                      }
+                }
                 animate={
-                  prefersReducedMotion
+                  isMobile
+                    ? {
+                        opacity: isActive ? 1 : 0,
+                        scale: isActive ? 1 : 0.96,
+                      }
+                    : prefersReducedMotion
                     ? { opacity: isActive ? 1 : 0, pointerEvents: isActive ? "auto" : "none" }
                     : {
                         x: `calc(-50% + ${xOffset}px)`,
                         y: `calc(-50% + ${yOffset}px)`,
                         rotate: rotation,
                         scale: isHovered && !isActive ? scale * 1.02 : scale,
+                        opacity: 1,
                       }
                 }
                 transition={{
@@ -249,16 +270,16 @@ export default function RubrosSection({ onOpenConsultationModal }) {
               >
                 {/* Tarjeta con estilo efecto blur blanco */}
                 <div
-                  className={`w-full rounded-3xl p-5 sm:p-7 lg:p-8 transition-shadow duration-300 relative overflow-hidden ${
+                  className={`w-full rounded-3xl p-4 sm:p-7 lg:p-8 transition-shadow duration-300 relative overflow-hidden ${
                     isActive
-                      ? "bg-white/85 backdrop-blur-2xl border border-white/80 shadow-[0_24px_60px_-15px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/[0.05]"
+                      ? "bg-white/90 backdrop-blur-2xl border border-white/80 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.08),0_2px_8px_rgba(0,0,0,0.03)] ring-1 ring-black/[0.04]"
                       : "bg-white/70 backdrop-blur-xl border border-white/60 shadow-[0_15px_35px_-10px_rgba(0,0,0,0.06)] hover:bg-white/80"
                   }`}
                 >
-                  <div className="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-6 lg:gap-8 items-center">
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6 lg:gap-8 items-center">
                     {/* Fotografía del rubro */}
                     <div className="md:col-span-5 w-full">
-                      <div className="relative rounded-2xl overflow-hidden aspect-[4/3] sm:aspect-[16/11] md:aspect-[4/5] bg-gray-100 border border-black/[0.06] shadow-xs group">
+                      <div className="relative rounded-2xl overflow-hidden aspect-[16/10] sm:aspect-[16/11] md:aspect-[4/5] bg-gray-100 border border-black/[0.06] shadow-xs group">
                         <img
                           src={card.image}
                           alt={card.headline}
@@ -267,7 +288,7 @@ export default function RubrosSection({ onOpenConsultationModal }) {
                           decoding="async"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
-                        <div className="absolute bottom-3 left-3 right-3 bg-white/90 backdrop-blur-md rounded-xl px-3 py-1.5 border border-white/60 flex items-center justify-between shadow-xs">
+                        <div className="absolute bottom-2.5 left-2.5 right-2.5 bg-white/90 backdrop-blur-md rounded-xl px-2.5 py-1.5 border border-white/60 flex items-center justify-between shadow-xs">
                           <span
                             className={`text-[11px] font-extrabold ${
                               isOficios ? "text-[#111111]" : "text-[#9333EA]"
@@ -283,11 +304,11 @@ export default function RubrosSection({ onOpenConsultationModal }) {
                     </div>
 
                     {/* Contenido descriptivo y características */}
-                    <div className="md:col-span-7 flex flex-col justify-between space-y-3.5">
+                    <div className="md:col-span-7 flex flex-col justify-between space-y-3 sm:space-y-3.5">
                       <div>
-                        <div className="flex items-center gap-2 mb-1.5">
+                        <div className="flex items-center gap-2 mb-1">
                           <div
-                            className={`w-7 h-7 rounded-lg flex items-center justify-center ${
+                            className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center ${
                               isOficios
                                 ? "bg-[#BCE838]/20 text-[#111111]"
                                 : "bg-[#9333EA]/10 text-[#9333EA]"
@@ -308,7 +329,7 @@ export default function RubrosSection({ onOpenConsultationModal }) {
                           </span>
                         </div>
 
-                        <h3 className="text-xl sm:text-2xl font-black text-[#111111] tracking-tight leading-tight">
+                        <h3 className="text-lg sm:text-2xl font-black text-[#111111] tracking-tight leading-snug">
                           {card.headline}
                         </h3>
 
@@ -317,7 +338,7 @@ export default function RubrosSection({ onOpenConsultationModal }) {
                         </p>
 
                         {/* Etiquetas de especialidades */}
-                        <div className="flex flex-wrap gap-1.5 pt-2.5">
+                        <div className="flex flex-wrap gap-1.5 pt-2">
                           {card.tags.map((tag, idx) => (
                             <span
                               key={idx}
@@ -364,7 +385,7 @@ export default function RubrosSection({ onOpenConsultationModal }) {
                                 : "Planes NEXO Profesionales"
                             );
                           }}
-                          className="inline-flex items-center gap-2 bg-[#111111] hover:bg-[#202227] text-white font-extrabold px-6 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm tracking-wide transition-colors cursor-pointer group shadow-sm"
+                          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#111111] hover:bg-[#202227] text-white font-extrabold px-6 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm tracking-wide transition-colors cursor-pointer group shadow-sm"
                         >
                           <span>{card.ctaText}</span>
                           <ArrowRight className="w-4 h-4 text-[#BCE838] group-hover:translate-x-0.5 transition-transform" />
@@ -377,11 +398,11 @@ export default function RubrosSection({ onOpenConsultationModal }) {
             );
           })}
 
-          {/* Botones laterales de navegación */}
+          {/* Botones laterales de navegación para Desktop */}
           <button
             type="button"
             onClick={handlePrev}
-            className="absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 z-30 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/80 hover:bg-white text-gray-800 border border-black/10 backdrop-blur-md flex items-center justify-center shadow-md transition-all cursor-pointer hover:scale-105"
+            className="hidden md:flex absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-white/80 hover:bg-white text-gray-800 border border-black/10 backdrop-blur-md items-center justify-center shadow-md transition-all cursor-pointer hover:scale-105"
             aria-label="Rubro anterior"
           >
             <ChevronLeft className="w-5 h-5" />
@@ -389,10 +410,47 @@ export default function RubrosSection({ onOpenConsultationModal }) {
           <button
             type="button"
             onClick={handleNext}
-            className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 z-30 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/80 hover:bg-white text-gray-800 border border-black/10 backdrop-blur-md flex items-center justify-center shadow-md transition-all cursor-pointer hover:scale-105"
+            className="hidden md:flex absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-white/80 hover:bg-white text-gray-800 border border-black/10 backdrop-blur-md items-center justify-center shadow-md transition-all cursor-pointer hover:scale-105"
             aria-label="Siguiente rubro"
           >
             <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Controles de navegación para móvil (debajo de la tarjeta, sin tapar el contenido) */}
+        <div className="flex md:hidden items-center justify-between gap-3 mt-4 px-1">
+          <button
+            type="button"
+            onClick={handlePrev}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/80 hover:bg-white text-gray-800 border border-black/10 backdrop-blur-md text-xs font-bold shadow-xs cursor-pointer active:scale-95 transition-transform"
+            aria-label="Rubro anterior"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            <span>Anterior</span>
+          </button>
+
+          <div className="flex items-center gap-1.5">
+            {cardsData.map((_, dotIdx) => (
+              <button
+                key={dotIdx}
+                type="button"
+                onClick={() => setActiveIndex(dotIdx)}
+                className={`h-2 rounded-full transition-all cursor-pointer ${
+                  activeIndex === dotIdx ? "w-6 bg-[#111111]" : "w-2 bg-black/20"
+                }`}
+                aria-label={`Ir a tarjeta ${dotIdx + 1}`}
+              />
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={handleNext}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/80 hover:bg-white text-gray-800 border border-black/10 backdrop-blur-md text-xs font-bold shadow-xs cursor-pointer active:scale-95 transition-transform"
+            aria-label="Siguiente rubro"
+          >
+            <span>Siguiente</span>
+            <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       </div>
