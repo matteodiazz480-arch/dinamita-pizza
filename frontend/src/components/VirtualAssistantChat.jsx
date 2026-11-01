@@ -11,6 +11,164 @@ import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { playSound } from "../utils/sound";
 import { securePost, sanitizeClientText } from "../utils/securityClient";
 
+function getLocalAssistantReply(rawQuery) {
+  const q = rawQuery.toLowerCase();
+
+  if (
+    q.includes("oficio") ||
+    q.includes("oficios") ||
+    q.includes("electricista") ||
+    q.includes("plomero") ||
+    q.includes("gasista") ||
+    q.includes("carpintero") ||
+    q.includes("tecnico") ||
+    q.includes("técnico") ||
+    q.includes("instalador") ||
+    q.includes("pintor")
+  ) {
+    return {
+      reply:
+        "Para oficios (electricistas, plomeros, técnicos, instaladores) en NEXO desarrollamos planes directos para captar clientes en tu zona de trabajo y mostrar tus trabajos reales con reputación verificada.",
+      action: { label: "Ver planes para oficios", type: "consultation", service: "Planes NEXO Oficios" },
+    };
+  }
+
+  if (
+    q.includes("profesional") ||
+    q.includes("profesionales") ||
+    q.includes("medico") ||
+    q.includes("médico") ||
+    q.includes("abogado") ||
+    q.includes("abogada") ||
+    q.includes("arquitecto") ||
+    q.includes("arquitecta") ||
+    q.includes("contador") ||
+    q.includes("contadora") ||
+    q.includes("nutricionista") ||
+    q.includes("psicologo") ||
+    q.includes("psicólogo") ||
+    q.includes("consultor")
+  ) {
+    return {
+      reply:
+        "Para profesionales independientes (médicos, abogados, arquitectos, contadores) construimos una presencia digital de autoridad, posicionando tu marca personal y facilitando la agenda de consultas.",
+      action: { label: "Ver planes para profesionales", type: "consultation", service: "Planes NEXO Profesionales" },
+    };
+  }
+
+  if (
+    q.includes("privacidad") ||
+    q.includes("datos") ||
+    q.includes("cookie") ||
+    q.includes("ley 25326") ||
+    q.includes("25.326")
+  ) {
+    return {
+      reply:
+        "Protegemos tus datos personales conforme a la Ley 25.326 (Argentina). No compartimos tu información con terceros para fines comerciales y podés ejercer tus derechos de acceso, rectificación o supresión desde las Políticas Legales en el pie de página.",
+    };
+  }
+
+  if (
+    q.includes("gratis") ||
+    q.includes("gratuito") ||
+    q.includes("asesoramiento") ||
+    q.includes("diagnóstico") ||
+    q.includes("diagnostico")
+  ) {
+    return {
+      reply:
+        "Ofrecemos una sesión de diagnóstico gratuita donde revisamos tu presencia digital o campañas actuales y definimos un plan de acción sin compromiso.",
+      action: { label: "Solicitar asesoramiento", type: "consultation", service: "Asesoramiento Gratuito General" },
+    };
+  }
+
+  if (
+    q.includes("plan") ||
+    q.includes("planes") ||
+    q.includes("propuesta")
+  ) {
+    return {
+      reply:
+        "Contamos con planes adaptados a cada tipo de negocio:\n• Planes NEXO Oficios y NEXO Profesionales.\n• Plan Presencia & Contenido (Redes + Diseño).\n• Plan Captación Meta Ads.\n• Plan Crecimiento Integral.\n\nTodos se ajustan al alcance que necesites.",
+      action: { label: "Solicitar cotización de plan", type: "consultation", service: "Plan Crecimiento Integral" },
+    };
+  }
+
+  if (
+    q.includes("precio") ||
+    q.includes("cuesta") ||
+    q.includes("costo") ||
+    q.includes("tarifa") ||
+    q.includes("presupuesto")
+  ) {
+    return {
+      reply:
+        "Armamos cada presupuesto según los objetivos y el volumen de tu negocio. Podés pedir una cotización personalizada completando nuestro formulario de asesoramiento.",
+      action: { label: "Solicitar cotización", type: "consultation", service: "Asesoramiento Gratuito General" },
+    };
+  }
+
+  if (
+    q.includes("servicio") ||
+    q.includes("hacen") ||
+    q.includes("ofrecen") ||
+    q.includes("publicidad") ||
+    q.includes("meta") ||
+    q.includes("redes") ||
+    q.includes("diseño") ||
+    q.includes("diseno")
+  ) {
+    return {
+      reply:
+        "Trabajamos en 4 áreas principales:\n1. Publicidad Digital (Meta Ads en Facebook e Instagram).\n2. Gestión de Redes Sociales.\n3. Diseño de Contenido.\n4. Estrategia Digital y Soluciones por Rubro.",
+    };
+  }
+
+  if (
+    q.includes("proceso") ||
+    q.includes("pasos") ||
+    q.includes("etapas") ||
+    q.includes("trabajan")
+  ) {
+    return {
+      reply:
+        "Trabajamos en 4 etapas claras:\n01. Análisis del negocio.\n02. Estrategia a medida.\n03. Implementación de anuncios y piezas.\n04. Optimización de resultados.",
+    };
+  }
+
+  if (
+    q.includes("contacto") ||
+    q.includes("whatsapp") ||
+    q.includes("telefono") ||
+    q.includes("teléfono") ||
+    q.includes("email")
+  ) {
+    return {
+      reply:
+        "Podés escribirnos directamente por WhatsApp o completar el formulario para que nos comuniquemos con vos a la brevedad.",
+      action: { label: "Abrir formulario", type: "consultation", service: "Asesoramiento Gratuito General" },
+    };
+  }
+
+  if (
+    q.includes("tiempo") ||
+    q.includes("tardan") ||
+    q.includes("resultado")
+  ) {
+    return {
+      reply:
+        "Las campañas de Meta Ads y estrategias digitales empiezan a generar consultas y visibilidad desde las primeras semanas de circulación activa.",
+    };
+  }
+
+  return {
+    reply:
+      "En NEXO Creative nos especializamos en publicidad en Meta Ads, gestión de redes, diseño y soluciones para comercios, oficios y profesionales. ¿Querés coordinar un asesoramiento gratuito?",
+    action: { label: "Solicitar asesoramiento", type: "consultation", service: "Asesoramiento Gratuito General" },
+  };
+}
+
 export default function VirtualAssistantChat({
   onOpenConsultationModal,
   onOpenLegalDoc,
@@ -48,10 +206,10 @@ export default function VirtualAssistantChat({
   };
 
   const suggestions = [
+    "Planes para oficios y profesionales",
     "¿Qué servicios ofrecen?",
     "¿Cómo es el proceso?",
     "Asesoramiento gratuito",
-    "Privacidad de datos",
   ];
 
   const msgCounter = useRef(1);
@@ -81,14 +239,24 @@ export default function VirtualAssistantChat({
     setIsTyping(false);
     const botId = msgCounter.current++;
 
+    let botReply = "";
+    let botAction = null;
+
+    if (res.ok && res.data?.reply) {
+      botReply = res.data.reply;
+      botAction = res.data.action || null;
+    } else {
+      // Local fallback in case backend is offline, static hosting, or cold start
+      const fallback = getLocalAssistantReply(text);
+      botReply = fallback.reply;
+      botAction = fallback.action || null;
+    }
+
     const botMsg = {
       id: `bot-${botId}`,
       sender: "bot",
-      text: res.ok
-        ? res.data.reply
-        : res.data?.error ||
-          "En este momento no pude procesar la consulta. Podés usar el formulario de contacto.",
-      action: res.ok ? res.data.action : null,
+      text: botReply,
+      action: botAction,
       time: "Ahora",
     };
 
@@ -98,7 +266,7 @@ export default function VirtualAssistantChat({
   const handleActionClick = (action) => {
     if (action?.type === "consultation") {
       setIsOpen(false);
-      onOpenConsultationModal?.("Asesoramiento Gratuito General");
+      onOpenConsultationModal?.(action.service || "Asesoramiento Gratuito General");
     }
   };
 

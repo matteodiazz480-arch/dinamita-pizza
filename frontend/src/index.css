@@ -110,6 +110,10 @@
   background: linear-gradient(180deg, #F7F8FA 0%, #FFFFFF 55%, #F5F6F8 100%);
 }
 
+.surface-rubros {
+  background: linear-gradient(180deg, #F5F6F8 0%, #FFFFFF 50%, #F5F6F8 100%);
+}
+
 .surface-consultation {
   background: linear-gradient(180deg, #F5F6F8 0%, #F3F4F7 100%);
 }

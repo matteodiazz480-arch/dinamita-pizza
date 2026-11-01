@@ -3,7 +3,7 @@ import { NEXO_CONFIG } from "../data/nexoData";
 import { Zap, Users, BarChart3, Star, ArrowRight, Compass } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import RotatingText from "./RotatingText";
-import heroCreativeImg from "../assets/hero-creative.jpg";
+import heroGrowthImg from "../assets/hero-growth.jpg";
 
 export default function Hero({ onOpenConsultationModal, onOpenPlanFinder }) {
   const prefersReducedMotion = useReducedMotion();
@@ -26,16 +26,17 @@ export default function Hero({ onOpenConsultationModal, onOpenPlanFinder }) {
   return (
     <section id="inicio" className="relative w-full bg-[#111111] text-white overflow-hidden">
       <div className="relative min-h-[78vh] sm:min-h-[84vh] lg:min-h-[90vh] w-full pt-24 sm:pt-32 pb-8 sm:pb-14 flex flex-col justify-between overflow-hidden">
+        {/* Foto de fondo en el título, encuadrada para no cortar el casco, rostros ni la flecha */}
         <div className="absolute inset-0 w-full h-full z-0 overflow-hidden pointer-events-none">
           <img
-            src={heroCreativeImg}
-            alt="NEXO Creative — Agencia de Marketing y Comunicación"
-            className="w-full h-full object-cover object-[62%_center] sm:object-center scale-[1.01]"
+            src={heroGrowthImg}
+            alt="NEXO Creative — Estrategias y Crecimiento"
+            className="w-full h-full object-cover object-[70%_16%] sm:object-[68%_18%] md:object-[66%_16%] lg:object-[68%_12%] scale-[1.01]"
             loading="eager"
             decoding="async"
           />
           <div className="absolute inset-0 bg-[#111111]/45" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#111111]/92 via-[#111111]/72 md:via-[#111111]/58 to-[#111111]/25" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#111111]/95 via-[#111111]/82 md:via-[#111111]/60 to-[#111111]/20" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#111111] via-transparent to-[#111111]/75" />
         </div>
 

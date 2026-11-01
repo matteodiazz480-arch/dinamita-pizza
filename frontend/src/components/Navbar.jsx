@@ -31,7 +31,7 @@ export default function Navbar({
 
   const resolveDesktopActiveIndex = (secId) => {
     const normalized =
-      secId === "asesoramiento" || secId === "faq" ? "resultados" : secId;
+      secId === "asesoramiento" || secId === "faq" ? "rubros" : secId;
     const found = navItems.findIndex((item) => item.href === `#${normalized}`);
     return found >= 0 ? found : 0;
   };

@@ -19,7 +19,7 @@ export const NEXO_CONFIG = {
     { label: "Soluciones", href: "#servicios" },
     { label: "Planes", href: "#planes" },
     { label: "Proceso", href: "#proceso" },
-    { label: "Proyectos", href: "#resultados" },
+    { label: "Rubros", href: "#rubros" },
     { label: "Contacto", href: "#contacto" },
   ],
 
@@ -251,18 +251,6 @@ export const NEXO_CONFIG = {
     ],
   },
 
-  freeConsultation: {
-    title: "Asesoramiento gratuito para tu negocio",
-    description:
-      "Evaluamos tus canales actuales y conversamos sobre tus objetivos sin costo, para recomendarte qué acciones te conviene implementar según tu rubro.",
-    points: [
-      "Diagnóstico de tu presencia digital actual",
-      "Propuesta de acción adaptada a tu negocio",
-      "Presupuesto claro y sin compromiso",
-    ],
-    ctaText: "Solicitar asesoramiento gratuito",
-  },
-
   process: {
     title: "Cómo trabajamos tu crecimiento",
     subtitle: "Metodología estructurada en cuatro pasos claros",
@@ -320,6 +308,84 @@ export const NEXO_CONFIG = {
     ],
   },
 
+  rubros: {
+    title: "Soluciones para tu rubro",
+    subtitle:
+      "Propuestas diseñadas para potenciar el trabajo independiente y los servicios profesionales con estrategias digitales efectivas.",
+    oficios: {
+      badge: "NEXO Oficios",
+      tagline: "Más clientes para tu trabajo independiente.",
+      headline: "Hacemos que tu trabajo llegue a más personas.",
+      tags: [
+        "Electricistas",
+        "Plomeros",
+        "Pintores",
+        "Técnicos (aire, calderas, etc.)",
+        "Carpinteros",
+        "Cerrajeros y más",
+      ],
+      pillars: [
+        {
+          icon: "Image",
+          title: "Mostrá tus trabajos",
+          desc: "Fotos y videos de trabajos terminados que generan confianza inmediata.",
+        },
+        {
+          icon: "MapPin",
+          title: "Llegá a tu zona de trabajo",
+          desc: "Anuncios dirigidos a tu barrio o ciudad para conseguir clientes cercanos.",
+        },
+        {
+          icon: "MessageCircle",
+          title: "Recibí más consultas",
+          desc: "Contactos directos a tu WhatsApp listos para pedir cotizaciones.",
+        },
+        {
+          icon: "TrendingUp",
+          title: "Hacé crecer tu reputación",
+          desc: "Una presentación profesional para destacar frente a la competencia.",
+        },
+      ],
+      ctaText: "Ver planes para oficios",
+    },
+    profesionales: {
+      badge: "NEXO Profesionales",
+      tagline: "Una presencia digital profesional y confiable.",
+      headline: "Tu experiencia merece una presencia digital profesional.",
+      tags: [
+        "Abogados",
+        "Contadores",
+        "Arquitectos",
+        "Nutricionistas",
+        "Psicólogos",
+        "Consultores y más",
+      ],
+      pillars: [
+        {
+          icon: "UserCheck",
+          title: "Posicioná tu marca personal",
+          desc: "Transmití autoridad, seriedad y el valor real de tu trayectoria.",
+        },
+        {
+          icon: "Calendar",
+          title: "Generá consultas",
+          desc: "Atracción constante de pacientes y clientes calificados.",
+        },
+        {
+          icon: "BookOpen",
+          title: "Compartí tu conocimiento",
+          desc: "Contenido que responde dudas frecuentes y te posiciona como referente.",
+        },
+        {
+          icon: "PieChart",
+          title: "Desarrollá tu cartera",
+          desc: "Un canal propio y activo sin depender únicamente de recomendaciones.",
+        },
+      ],
+      ctaText: "Ver planes para profesionales",
+    },
+  },
+
   faq: {
     title: "Resolvemos tus dudas antes de empezar",
     items: [
@@ -339,7 +405,7 @@ export const NEXO_CONFIG = {
         id: 3,
         question: "¿Trabajan con negocios de cualquier rubro?",
         answer:
-          "Sí, adaptamos la estrategia a comercios, empresas de servicios, marcas y emprendimientos.",
+          "Sí, adaptamos la estrategia a comercios, empresas de servicios, trabajadores de oficio, profesionales y marcas independientes.",
       },
       {
         id: 4,
@@ -348,6 +414,18 @@ export const NEXO_CONFIG = {
           "Sí, diseñamos todas las piezas gráficas y creativos necesarios para tus anuncios y redes.",
       },
     ],
+  },
+
+  freeConsultation: {
+    title: "Asesoramiento gratuito para tu negocio",
+    description:
+      "Evaluamos tus canales actuales y conversamos sobre tus objetivos sin costo, para recomendarte qué acciones te conviene implementar según tu rubro.",
+    points: [
+      "Diagnóstico de tu presencia digital actual",
+      "Propuesta de acción adaptada a tu negocio",
+      "Presupuesto claro y sin compromiso",
+    ],
+    ctaText: "Solicitar asesoramiento gratuito",
   },
 
   cta: {

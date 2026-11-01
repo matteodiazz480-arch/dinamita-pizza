@@ -4,7 +4,9 @@ import os from "node:os";
 import path from "node:path";
 
 const SERVER_SECRET =
-  process.env.CSRF_SECRET || crypto.randomBytes(32).toString("hex");
+  process.env.CSRF_SECRET ||
+  process.env.VERCEL_GIT_COMMIT_SHA ||
+  "nexo_csrf_secret_salt_2026_secure_key";
 
 const rateLimitStore = {
   contact: new Map(),
@@ -17,6 +19,8 @@ const ALLOWED_SERVICES = new Set([
   "Gestión de Redes Sociales",
   "Diseño de Contenido",
   "Estrategia Digital",
+  "Planes NEXO Oficios",
+  "Planes NEXO Profesionales",
   "Plan Presencia & Contenido",
   "Plan Captación Meta Ads",
   "Plan Crecimiento Integral",
@@ -116,6 +120,17 @@ function verifyCsrf(req) {
 }
 
 function readJsonBody(req, maxBytes = 16384) {
+  if (req.body && typeof req.body === "object") {
+    return Promise.resolve(req.body);
+  }
+  if (typeof req.body === "string" && req.body.trim()) {
+    try {
+      return Promise.resolve(JSON.parse(req.body));
+    } catch {
+      return Promise.reject(new Error("INVALID_JSON"));
+    }
+  }
+
   return new Promise((resolve, reject) => {
     let body = "";
     let bytes = 0;
@@ -195,6 +210,48 @@ function processAssistantQuery(rawQuery) {
       reply:
         "Por razones de seguridad y privacidad, solo puedo brindar información pública sobre los servicios comerciales, metodología y asesoramiento de NEXO Creative.",
       blocked: true,
+    };
+  }
+
+  if (
+    q.includes("oficio") ||
+    q.includes("oficios") ||
+    q.includes("electricista") ||
+    q.includes("plomero") ||
+    q.includes("gasista") ||
+    q.includes("carpintero") ||
+    q.includes("tecnico") ||
+    q.includes("técnico") ||
+    q.includes("instalador") ||
+    q.includes("pintor")
+  ) {
+    return {
+      reply:
+        "Para oficios (electricistas, técnicos, plomeros, carpinteros) en NEXO desarrollamos planes directos para captar clientes en tu zona de trabajo y mostrar tus trabajos reales con reputación verificada.",
+      action: { label: "Ver planes para oficios", type: "consultation" },
+    };
+  }
+
+  if (
+    q.includes("profesional") ||
+    q.includes("profesionales") ||
+    q.includes("medico") ||
+    q.includes("médico") ||
+    q.includes("abogado") ||
+    q.includes("abogada") ||
+    q.includes("arquitecto") ||
+    q.includes("arquitecta") ||
+    q.includes("contador") ||
+    q.includes("contadora") ||
+    q.includes("nutricionista") ||
+    q.includes("psicologo") ||
+    q.includes("psicólogo") ||
+    q.includes("consultor")
+  ) {
+    return {
+      reply:
+        "Para profesionales independientes (médicos, abogados, arquitectos, contadores) construimos una presencia digital de autoridad, posicionando tu marca personal y facilitando la agenda de consultas.",
+      action: { label: "Ver planes para profesionales", type: "consultation" },
     };
   }
 
@@ -343,7 +400,16 @@ export function createSecurityMiddleware() {
   return async function securityMiddleware(req, res, next) {
     applySecurityHeaders(req, res);
 
-    const url = (req.url || "").split("?")[0];
+    let url = (req.url || "").split("?")[0];
+    if (
+      !url.startsWith("/api") &&
+      !url.startsWith("/backend") &&
+      !url.startsWith("/server") &&
+      !url.startsWith("/.env") &&
+      !url.startsWith("/.git")
+    ) {
+      url = "/api" + (url.startsWith("/") ? url : "/" + url);
+    }
 
     if (
       url.startsWith("/backend") ||
@@ -372,7 +438,7 @@ export function createSecurityMiddleware() {
         200,
         { ok: true, csrfToken },
         {
-          "Set-Cookie": `nexo_csrf_secret=${secret}; HttpOnly; Path=/; SameSite=Strict`,
+          "Set-Cookie": `nexo_csrf_secret=${secret}; HttpOnly; Path=/; SameSite=Lax${process.env.NODE_ENV === "production" ? "; Secure" : ""}`,
         }
       );
     }

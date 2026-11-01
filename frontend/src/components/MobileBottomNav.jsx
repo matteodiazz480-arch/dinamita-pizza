@@ -5,7 +5,7 @@ const MOBILE_GOOEY_ITEMS = [
   { id: "inicio", label: "Inicio", href: "#inicio" },
   { id: "servicios", label: "Soluciones", href: "#servicios" },
   { id: "planes", label: "Planes", href: "#planes" },
-  { id: "resultados", label: "Proyectos", href: "#resultados" },
+  { id: "rubros", label: "Rubros", href: "#rubros" },
   { id: "contacto", label: "Contacto", href: "#contacto" },
 ];
 
@@ -14,7 +14,11 @@ export default function MobileBottomNav({ activeSectionId, onNavigate }) {
     if (secId === "inicio" || secId === "nosotros") return 0;
     if (secId === "servicios") return 1;
     if (secId === "planes" || secId === "proceso") return 2;
-    if (secId === "resultados" || secId === "asesoramiento" || secId === "faq") {
+    if (
+      secId === "rubros" ||
+      secId === "asesoramiento" ||
+      secId === "faq"
+    ) {
       return 3;
     }
     if (secId === "contacto") return 4;
