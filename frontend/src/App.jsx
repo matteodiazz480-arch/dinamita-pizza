@@ -8,6 +8,7 @@ import ProcessSection from "./components/ProcessSection";
 import RubrosSectionBase from "./components/RubrosSection";
 import FreeConsultationSectionBase from "./components/FreeConsultationSection";
 import FaqSectionBase from "./components/FaqSection";
+import BookingCalendarSectionBase from "./components/BookingCalendarSection";
 import CtaContactSectionBase from "./components/CtaContactSection";
 import Footer from "./components/Footer";
 import CookieConsentBanner from "./components/CookieConsentBanner";
@@ -25,6 +26,7 @@ const PlansSection = memo(PlansSectionBase);
 const RubrosSection = memo(RubrosSectionBase);
 const FreeConsultationSection = memo(FreeConsultationSectionBase);
 const FaqSection = memo(FaqSectionBase);
+const BookingCalendarSection = memo(BookingCalendarSectionBase);
 const CtaContactSection = memo(CtaContactSectionBase);
 
 const TRACKED_SECTION_IDS = [
@@ -35,28 +37,34 @@ const TRACKED_SECTION_IDS = [
   "proceso",
   "asesoramiento",
   "faq",
+  "agenda",
   "contacto",
 ];
 
 export default function App() {
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedService, setSelectedService] = useState("");
-  const [planFinderOpen, setPlanFinderOpen] = useState(false);
   const [activeSectionId, setActiveSectionId] = useState("inicio");
-  const [consent, setConsent] = useState(() => getConsentPreferences());
-  const [cookieSettingsOpen, setCookieSettingsOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [planFinderOpen, setPlanFinderOpen] = useState(false);
+  const [selectedService, setSelectedService] = useState("");
   const [activeLegalDoc, setActiveLegalDoc] = useState(null);
+  const [cookieSettingsOpen, setCookieSettingsOpen] = useState(false);
+  const [consent, setConsent] = useState(() => getConsentPreferences());
   const [idleReady, setIdleReady] = useState(false);
-  const scrollLockUntilRef = useRef(0);
   const overlaysReady = idleReady || modalOpen || planFinderOpen || activeLegalDoc !== null;
 
-  const handleNavigateSection = useCallback((sectionId) => {
-    scrollLockUntilRef.current = Date.now() + 900;
-    setActiveSectionId((prev) => (prev !== sectionId ? sectionId : prev));
+  const scrollLockUntilRef = useRef(0);
+
+  const handleNavigateSection = useCallback((secId) => {
+    setActiveSectionId(secId);
+    scrollLockUntilRef.current = Date.now() + 850;
+    const target = document.getElementById(secId);
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   }, []);
 
-  const handleOpenModal = useCallback((service = "") => {
-    setSelectedService(service || "Publicidad Digital (Meta Ads)");
+  const handleOpenModal = useCallback((serviceName) => {
+    setSelectedService(serviceName || "Asesoramiento Gratuito General");
     setModalOpen(true);
   }, []);
 
@@ -189,6 +197,7 @@ export default function App() {
         <ProcessSection />
         <FreeConsultationSection onOpenModal={handleOpenModal} />
         <FaqSection />
+        <BookingCalendarSection onOpenLegalDoc={handleOpenLegalDoc} />
         <CtaContactSection onOpenConsultationModal={handleOpenModal} />
       </main>
 
@@ -204,31 +213,31 @@ export default function App() {
 
       {overlaysReady && (
         <Suspense fallback={null}>
-      <VirtualAssistantChat
-        onOpenConsultationModal={handleOpenModal}
-        onOpenLegalDoc={handleOpenLegalDoc}
-      />
+          <VirtualAssistantChat
+            onOpenConsultationModal={handleOpenModal}
+            onOpenLegalDoc={handleOpenLegalDoc}
+          />
 
-      <InteractiveContactModal
-        key={selectedService}
-        isOpen={modalOpen}
-        onClose={handleCloseModal}
-        initialService={selectedService}
-        onOpenLegalDoc={handleOpenLegalDoc}
-      />
+          <InteractiveContactModal
+            key={selectedService}
+            isOpen={modalOpen}
+            onClose={handleCloseModal}
+            initialService={selectedService}
+            onOpenLegalDoc={handleOpenLegalDoc}
+          />
 
-      <PlanFinderModal
-        isOpen={planFinderOpen}
-        onClose={handleClosePlanFinder}
-        onSelectPlanForConsultation={handleOpenModal}
-      />
+          <PlanFinderModal
+            isOpen={planFinderOpen}
+            onClose={handleClosePlanFinder}
+            onSelectPlanForConsultation={handleOpenModal}
+          />
 
-      <LegalPagesModal
-        activeDocId={activeLegalDoc}
-        onSelectDoc={handleOpenLegalDoc}
-        onClose={handleCloseLegalDoc}
-        onOpenCookieSettings={() => setCookieSettingsOpen(true)}
-      />
+          <LegalPagesModal
+            activeDocId={activeLegalDoc}
+            onSelectDoc={handleOpenLegalDoc}
+            onClose={handleCloseLegalDoc}
+            onOpenCookieSettings={() => setCookieSettingsOpen(true)}
+          />
         </Suspense>
       )}
 

@@ -5,7 +5,7 @@ import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import editorialLuxuryImg from "../assets/nexo-editorial-luxury.jpg";
 
 export default function FaqSection() {
-  const [openIds, setOpenIds] = useState([1]);
+  const [openIds, setOpenIds] = useState([]);
   const prefersReducedMotion = useReducedMotion();
 
   const toggleFaq = (id) => {

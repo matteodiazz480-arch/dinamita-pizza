@@ -13,7 +13,7 @@
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.11);
   border-radius: 9999px;
-  padding: 0.28rem;
+  padding: 0.32rem 0.36rem;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.38);
 }
 
@@ -71,21 +71,21 @@
 }
 
 .gooey-nav-size-sm .gooey-nav-link {
-  padding: 0.44rem 0.64rem;
-  font-size: 0.72rem;
+  padding: 0.48rem 0.74rem;
+  font-size: 0.78rem;
   font-weight: 700;
 }
 
 @media (max-width: 380px) {
   .gooey-nav-size-sm .gooey-nav-link {
-    padding: 0.4rem 0.5rem;
-    font-size: 0.68rem;
+    padding: 0.44rem 0.58rem;
+    font-size: 0.72rem;
   }
 }
 
 .gooey-nav-size-md .gooey-nav-link {
-  padding: 0.45rem 0.9rem;
-  font-size: 0.8125rem;
+  padding: 0.5rem 1.05rem;
+  font-size: 0.86rem;
 }
 
 .gooey-nav-size-lg .gooey-nav-link {

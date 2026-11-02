@@ -26,6 +26,7 @@ const ALLOWED_SERVICES = new Set([
   "Plan Captación Meta Ads",
   "Plan Crecimiento Integral",
   "Asesoramiento Gratuito General",
+  "Reunión Gratuita 20 min",
   "Otro tipo de proyecto",
 ]);
 

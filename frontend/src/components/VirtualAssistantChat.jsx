@@ -289,20 +289,20 @@ export default function VirtualAssistantChat({
 
   return (
     <>
-      <div className="fixed bottom-18 md:bottom-5 right-4 sm:right-5 z-40 flex items-center justify-end">
+      <div className="fixed bottom-20 md:bottom-6 right-3 sm:right-6 z-40 flex items-center justify-end">
         <motion.button
           type="button"
           whileHover={prefersReducedMotion ? {} : { scale: 1.05 }}
           whileTap={prefersReducedMotion ? {} : { scale: 0.95 }}
           onClick={toggleChat}
-          className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-[#17181c] hover:bg-[#1f2127] text-white border border-white/15 flex items-center justify-center shadow-lg cursor-pointer transition-colors"
+          className="relative w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-[#17181c] hover:bg-[#1f2127] text-white border border-white/15 flex items-center justify-center shadow-lg cursor-pointer transition-colors"
           aria-label={isOpen ? "Cerrar asistente virtual" : "Abrir asistente virtual"}
         >
           <span className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full bg-[#BCE838] border-2 border-[#111111]" />
           {isOpen ? (
-            <X className="w-5 h-5 text-white" />
+            <X className="w-6 h-6 text-white" />
           ) : (
-            <MessageSquare className="w-5 h-5 text-[#BCE838]" />
+            <MessageSquare className="w-6 h-6 text-[#BCE838]" />
           )}
         </motion.button>
       </div>
@@ -314,7 +314,7 @@ export default function VirtualAssistantChat({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={prefersReducedMotion ? false : { opacity: 0, y: 12, scale: 0.96 }}
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed bottom-32 md:bottom-20 right-4 sm:right-5 w-[calc(100vw-2rem)] sm:w-[360px] h-[420px] sm:h-[480px] max-h-[calc(100vh-9.5rem)] bg-[#141519] border border-white/10 rounded-2xl shadow-2xl z-40 flex flex-col overflow-hidden text-white"
+            className="fixed bottom-20 md:bottom-22 right-3 sm:right-6 w-[calc(100vw-1.5rem)] sm:w-[380px] h-[460px] max-h-[72vh] md:max-h-[520px] bg-[#141519] border border-white/12 rounded-2xl shadow-[0_24px_60px_rgba(0,0,0,0.85)] z-40 flex flex-col overflow-hidden text-white"
           >
             <div className="px-4 py-3 bg-[#111111] border-b border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
@@ -372,7 +372,7 @@ export default function VirtualAssistantChat({
                           <button
                             type="button"
                             onClick={() => handleActionClick(msg.action)}
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#BCE838] hover:bg-[#add92b] text-[#111111] font-extrabold text-[11px] transition-colors cursor-pointer"
+                            className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-[#BCE838] hover:bg-[#add92b] text-[#111111] font-black text-xs sm:text-sm transition-colors cursor-pointer shadow-sm min-h-[40px]"
                           >
                             <span>{msg.action.label}</span>
                             <ArrowRight className="w-3 h-3" />
@@ -401,7 +401,7 @@ export default function VirtualAssistantChat({
                   type="button"
                   key={idx}
                   onClick={() => handleSendMessage(item)}
-                  className="px-2.5 py-1 rounded-full bg-white/5 hover:bg-[#BCE838]/12 hover:text-[#BCE838] border border-white/10 text-[11px] text-gray-300 font-medium whitespace-nowrap transition-colors cursor-pointer flex-shrink-0"
+                  className="px-3.5 py-2 rounded-full bg-white/8 hover:bg-[#BCE838]/15 hover:text-[#BCE838] border border-white/12 text-xs text-gray-200 font-semibold whitespace-nowrap transition-colors cursor-pointer flex-shrink-0 min-h-[36px] flex items-center"
                 >
                   {item}
                 </button>
@@ -422,15 +422,15 @@ export default function VirtualAssistantChat({
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
                   placeholder="Escribí tu consulta..."
-                  className="flex-1 bg-[#17181c] border border-white/10 rounded-xl px-3 py-2 text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#BCE838] transition-colors"
+                  className="flex-1 bg-[#17181c] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#BCE838] transition-colors"
                 />
                 <button
                   type="submit"
                   disabled={!inputMessage.trim() || isTyping}
-                  className="w-9 h-9 rounded-xl bg-[#BCE838] hover:bg-[#add92b] disabled:opacity-30 text-[#111111] flex items-center justify-center transition-all cursor-pointer flex-shrink-0"
+                  className="w-10 h-10 rounded-xl bg-[#BCE838] hover:bg-[#add92b] disabled:opacity-30 text-[#111111] flex items-center justify-center transition-all cursor-pointer flex-shrink-0"
                   aria-label="Enviar mensaje"
                 >
-                  <Send className="w-4 h-4" />
+                  <Send className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
               </div>
               <div className="flex items-center justify-between text-[10px] text-gray-500 px-1">
