@@ -94,24 +94,6 @@ export default function Hero({ onOpenConsultationModal, onOpenPlanFinder }) {
                 <span>Encontrá tu plan</span>
               </motion.button>
             </motion.div>
-
-            {/* Pastillas de beneficios clave */}
-            <motion.div
-              initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-              className="pt-4 flex flex-wrap gap-2 sm:gap-3"
-            >
-              {NEXO_CONFIG.hero.pills.map((pill, index) => (
-                <div
-                  key={index}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#181a20]/90 border border-white/12 text-xs font-semibold text-gray-200 backdrop-blur-sm"
-                >
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#BCE838]" />
-                  <span>{pill.text}</span>
-                </div>
-              ))}
-            </motion.div>
           </div>
         </div>
       </div>

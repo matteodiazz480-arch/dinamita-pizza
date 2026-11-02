@@ -49,7 +49,7 @@ export default function Navbar({
       }`}
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between gap-3 sm:gap-4">
+        <div className="flex items-center justify-between gap-2 sm:gap-4">
           <a
             href="#inicio"
             onClick={(e) => {
@@ -92,9 +92,10 @@ export default function Navbar({
               onClick={() =>
                 onOpenConsultationModal?.("Asesoramiento Gratuito General")
               }
-              className="text-[11px] sm:text-sm font-black tracking-wide text-[#111111] bg-[#BCE838] hover:bg-[#cbf446] px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full sm:rounded-xl transition-all cursor-pointer shadow-[0_0_14px_rgba(188,232,56,0.25)] hover:shadow-[0_0_26px_rgba(188,232,56,0.45)] hover:scale-102 active:scale-95"
+              className="text-[11px] sm:text-sm font-black tracking-wide text-[#111111] bg-[#BCE838] hover:bg-[#cbf446] px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full sm:rounded-xl transition-all cursor-pointer shadow-[0_0_14px_rgba(188,232,56,0.25)] hover:shadow-[0_0_26px_rgba(188,232,56,0.45)] hover:scale-102 active:scale-95 whitespace-nowrap"
             >
-              Diagnóstico gratis
+              <span className="sm:hidden">Diagnóstico</span>
+              <span className="hidden sm:inline">Diagnóstico gratis</span>
             </button>
           </div>
         </div>

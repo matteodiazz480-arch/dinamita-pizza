@@ -3,8 +3,8 @@ import {
   Calendar as CalendarIcon,
   Clock,
   CheckCircle2,
-  Video,
   ArrowRight,
+  ArrowLeft,
   ShieldCheck,
   AlertCircle,
   ChevronLeft,
@@ -74,13 +74,12 @@ function generateAvailableDays(count = 14) {
   const days = [];
   const start = new Date();
   let added = 0;
-  let offset = 1; // desde mañana
+  let offset = 1;
 
   while (added < count && offset < 30) {
     const d = new Date(start);
     d.setDate(start.getDate() + offset);
     if (d.getDay() !== 0) {
-      // Excluye domingos
       days.push({
         dateObj: d,
         isoString: d.toISOString().split("T")[0],
@@ -108,6 +107,7 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
     formLoadedAtRef.current = Date.now();
   }, []);
 
+  const [step, setStep] = useState(1); // 1: Turno | 2: Datos | 3: Confirmado
   const [selectedDay, setSelectedDay] = useState(daysList[0] || null);
   const [selectedTime, setSelectedTime] = useState("15:30");
   const [formData, setFormData] = useState({
@@ -117,7 +117,7 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
     businessName: "",
     notes: "",
     privacyConsent: true,
-    website_url: "", // honeypot
+    website_url: "",
   });
 
   const [errors, setErrors] = useState({});
@@ -129,7 +129,7 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
 
   const scrollDays = (direction) => {
     if (!daysScrollRef.current) return;
-    const scrollAmount = direction === "left" ? -180 : 180;
+    const scrollAmount = direction === "left" ? -160 : 160;
     daysScrollRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
   };
 
@@ -143,6 +143,17 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
     playSound("click");
   };
 
+  const handleGoToStep2 = () => {
+    if (!selectedDay || !selectedTime) return;
+    playSound("click");
+    setStep(2);
+  };
+
+  const handleBackToStep1 = () => {
+    playSound("click");
+    setStep(1);
+  };
+
   const validate = () => {
     const errs = {};
     const name = sanitizeClientText(formData.fullName, 80).trim();
@@ -150,11 +161,11 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
     const email = sanitizeClientText(formData.email, 120).trim();
 
     if (name.length < 2) {
-      errs.fullName = "Ingresá tu nombre (mínimo 2 letras).";
+      errs.fullName = "Ingresá tu nombre y apellido.";
     }
     const phoneDigits = phone.replace(/[^0-9]/g, "");
     if (!phone) {
-      errs.phone = "Ingresá tu WhatsApp.";
+      errs.phone = "Ingresá tu WhatsApp para coordinar.";
     } else if (phoneDigits.length < 6 || phoneDigits.length > 16) {
       errs.phone = "Número de teléfono inválido.";
     }
@@ -164,7 +175,7 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
       errs.email = "Correo electrónico inválido.";
     }
     if (!formData.privacyConsent) {
-      errs.privacyConsent = "Aceptá la política de privacidad.";
+      errs.privacyConsent = "Debés aceptar la política de privacidad.";
     }
 
     setErrors(errs);
@@ -206,7 +217,7 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
       if (!response.ok) {
         setStatus("error");
         setServerError(
-          response.error || "No pudimos agendar tu reunión. Reintentá en unos instantes."
+          response.error || "No pudimos agendar tu reunión. Por favor reintentá."
         );
         playSound("error");
         return;
@@ -214,6 +225,7 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
 
       playSound("success");
       setStatus("success");
+      setStep(3);
       setConfirmedBooking({
         refId: response.refId || "NEXO-MEET",
         dateString: meetingDateStr,
@@ -246,70 +258,382 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
     >
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#BCE838]/5 rounded-full blur-[140px] pointer-events-none" />
 
-      <div className="relative max-w-5xl mx-auto px-3.5 sm:px-6 lg:px-8">
-        {/* Cabecera compacta */}
+      <div className="relative max-w-2xl mx-auto px-3.5 sm:px-6">
+        {/* Cabecera limpia y concisa */}
         <motion.div
           initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-40px" }}
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="text-center max-w-2xl mx-auto mb-6 sm:mb-9"
+          className="text-center mb-6 sm:mb-8"
         >
-          <h2 className="text-xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
+          <h2 className="text-xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight leading-tight">
             {NEXO_CONFIG.cta.title}
           </h2>
 
-          <p className="text-xs sm:text-sm text-gray-300 font-normal max-w-lg mx-auto mt-2 leading-relaxed">
-            Agendá una reunión estratégica de <span className="text-[#BCE838] font-bold">20 minutos</span> gratuita. Coordinamos día y horario en vivo.
+          <p className="text-xs sm:text-sm text-gray-300 font-normal mt-2 leading-relaxed">
+            Agendá una reunión estratégica gratuita de{" "}
+            <span className="text-[#BCE838] font-bold">20 minutos</span>.
           </p>
-
-          {/* Badges compactos en 1 línea */}
-          <div className="mt-3.5 flex flex-wrap items-center justify-center gap-2 text-[11px] font-semibold text-gray-300">
-            <span className="inline-flex items-center gap-1 bg-[#17181c] border border-white/10 px-2.5 py-1 rounded-full">
-              <Clock className="w-3 h-3 text-[#BCE838]" />
-              <span>20 min puntuales</span>
-            </span>
-            <span className="inline-flex items-center gap-1 bg-[#17181c] border border-white/10 px-2.5 py-1 rounded-full">
-              <Video className="w-3 h-3 text-[#BCE838]" />
-              <span>Meet o llamada</span>
-            </span>
-            <span className="inline-flex items-center gap-1 bg-[#17181c] border border-white/10 px-2.5 py-1 rounded-full">
-              <CheckCircle2 className="w-3 h-3 text-[#BCE838]" />
-              <span>100% Gratuito</span>
-            </span>
-          </div>
         </motion.div>
 
-        {/* Tarjeta interactiva compacta del Calendario */}
-        <div className="bg-[#141519] border border-white/10 rounded-2xl p-3.5 sm:p-6 lg:p-7 shadow-[0_20px_50px_rgba(0,0,0,0.6)]">
+        {/* Tarjeta del Calendario por Etapas */}
+        <div className="bg-[#141519] border border-white/10 rounded-2xl p-4 sm:p-6 shadow-[0_20px_50px_rgba(0,0,0,0.65)] backdrop-blur-xl">
           <AnimatePresence mode="wait">
-            {status === "success" && confirmedBooking ? (
-              /* Confirmación de Reserva */
+            {/* ETAPA 1: Elegir Día y Horario */}
+            {step === 1 && (
               <motion.div
-                key="success"
+                key="step-1"
+                initial={prefersReducedMotion ? false : { opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                transition={{ duration: 0.25 }}
+                className="space-y-4"
+              >
+                <div className="flex items-center justify-between pb-2.5 border-b border-white/5 text-xs">
+                  <span className="font-extrabold text-white flex items-center gap-1.5">
+                    <span className="w-5 h-5 rounded-full bg-[#BCE838] text-[#111111] font-black flex items-center justify-center text-[10px]">
+                      1
+                    </span>
+                    <span>Elegí tu día y horario</span>
+                  </span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#BCE838]/15 text-[#BCE838] border border-[#BCE838]/30">
+                    Duración: 20 min
+                  </span>
+                </div>
+
+                {/* Selector de Días */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-[11px] font-bold text-gray-400 flex items-center gap-1">
+                      <CalendarIcon className="w-3.5 h-3.5 text-[#BCE838]" />
+                      <span>Días disponibles</span>
+                    </label>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => scrollDays("left")}
+                        className="p-1 rounded bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors cursor-pointer"
+                        aria-label="Anteriores"
+                      >
+                        <ChevronLeft className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => scrollDays("right")}
+                        className="p-1 rounded bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors cursor-pointer"
+                        aria-label="Siguientes"
+                      >
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div
+                    ref={daysScrollRef}
+                    className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar pb-1 scroll-smooth"
+                  >
+                    {daysList.map((day) => {
+                      const isSelected =
+                        selectedDay && selectedDay.isoString === day.isoString;
+                      return (
+                        <button
+                          key={day.isoString}
+                          type="button"
+                          onClick={() => handleSelectDay(day)}
+                          className={`flex flex-col items-center justify-center min-w-[50px] sm:min-w-[58px] py-1.5 sm:py-2 px-1 rounded-xl border transition-all cursor-pointer flex-shrink-0 select-none ${
+                            isSelected
+                              ? "bg-[#BCE838] border-[#BCE838] text-[#111111] shadow-[0_0_12px_rgba(188,232,56,0.35)] scale-102 font-black"
+                              : "bg-[#181a20] border-white/10 text-gray-300 hover:border-white/20"
+                          }`}
+                        >
+                          <span className="text-[9px] uppercase font-bold tracking-tight">
+                            {day.isTomorrow ? "Mañ" : day.dayOfWeek}
+                          </span>
+                          <span className="text-sm sm:text-base font-black my-0.2">
+                            {day.dayNumber}
+                          </span>
+                          <span className="text-[8px] uppercase font-medium">
+                            {day.monthName}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Selector de Horarios en Grilla Compacta */}
+                <div>
+                  <label className="text-[11px] font-bold text-gray-400 flex items-center gap-1 mb-2">
+                    <Clock className="w-3.5 h-3.5 text-[#BCE838]" />
+                    <span>Horario disponible</span>
+                  </label>
+
+                  <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5">
+                    {AVAILABLE_SLOTS.map((time) => {
+                      const isSelected = selectedTime === time;
+                      return (
+                        <button
+                          key={time}
+                          type="button"
+                          onClick={() => handleSelectTime(time)}
+                          className={`py-1.5 px-1 rounded-lg text-xs font-bold border transition-all cursor-pointer text-center ${
+                            isSelected
+                              ? "bg-[#BCE838] border-[#BCE838] text-[#111111] shadow-[0_0_10px_rgba(188,232,56,0.3)] font-black"
+                              : "bg-[#181a20] border-white/10 text-gray-300 hover:border-white/25"
+                          }`}
+                        >
+                          {time}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Resumen y Botón para Continuar a Etapa 2 */}
+                {selectedDay && (
+                  <div className="pt-2">
+                    <div className="p-2.5 rounded-xl bg-[#181a20] border border-[#BCE838]/25 flex items-center justify-between text-xs mb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-[#BCE838] animate-pulse" />
+                        <span className="font-bold text-white text-[11px] sm:text-xs">
+                          {selectedDay.dayOfWeek} {selectedDay.dayNumber} {selectedDay.monthName} · {selectedTime} hs
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-[#BCE838] font-bold">
+                        Paso 1 listo
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleGoToStep2}
+                      className="w-full inline-flex items-center justify-center gap-2 bg-[#BCE838] hover:bg-[#add92b] text-[#111111] font-black text-xs sm:text-sm py-2.5 sm:py-3 rounded-xl transition-all cursor-pointer shadow-[0_0_18px_rgba(188,232,56,0.35)] active:scale-98"
+                    >
+                      <span>Continuar con este horario</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {/* ETAPA 2: Datos de Contacto */}
+            {step === 2 && (
+              <motion.div
+                key="step-2"
+                initial={prefersReducedMotion ? false : { opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.25 }}
+                className="space-y-3.5"
+              >
+                <div className="flex items-center justify-between pb-2.5 border-b border-white/5 text-xs">
+                  <button
+                    type="button"
+                    onClick={handleBackToStep1}
+                    className="inline-flex items-center gap-1 text-gray-400 hover:text-white transition-colors cursor-pointer text-[11px]"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>Volver a horario</span>
+                  </button>
+                  <span className="font-extrabold text-[#BCE838] text-[11px]">
+                    {selectedDay?.dayOfWeek} {selectedDay?.dayNumber} {selectedDay?.monthName} · {selectedTime} hs
+                  </span>
+                </div>
+
+                {serverError && (
+                  <div className="p-2.5 rounded-lg bg-red-500/15 border border-red-500/30 text-red-300 text-xs flex items-center gap-1.5">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    <span>{serverError}</span>
+                  </div>
+                )}
+
+                <form onSubmit={handleSubmit} className="space-y-2.5 text-xs">
+                  {/* Honeypot */}
+                  <div className="hidden" aria-hidden="true">
+                    <input
+                      type="text"
+                      tabIndex={-1}
+                      autoComplete="off"
+                      value={formData.website_url}
+                      onChange={(e) =>
+                        setFormData({ ...formData, website_url: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div>
+                      <input
+                        type="text"
+                        maxLength={80}
+                        required
+                        value={formData.fullName}
+                        onChange={(e) =>
+                          setFormData({ ...formData, fullName: e.target.value })
+                        }
+                        placeholder="Nombre y Apellido *"
+                        className={`w-full bg-[#181a20] border rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none transition-colors ${
+                          errors.fullName
+                            ? "border-red-500"
+                            : "border-white/12 focus:border-[#BCE838]"
+                        }`}
+                      />
+                      {errors.fullName && (
+                        <p className="text-red-400 text-[9px] mt-0.5">
+                          {errors.fullName}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <input
+                        type="tel"
+                        maxLength={30}
+                        required
+                        value={formData.phone}
+                        onChange={(e) =>
+                          setFormData({ ...formData, phone: e.target.value })
+                        }
+                        placeholder="WhatsApp con código *"
+                        className={`w-full bg-[#181a20] border rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none transition-colors ${
+                          errors.phone
+                            ? "border-red-500"
+                            : "border-white/12 focus:border-[#BCE838]"
+                        }`}
+                      />
+                      {errors.phone && (
+                        <p className="text-red-400 text-[9px] mt-0.5">
+                          {errors.phone}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div>
+                      <input
+                        type="email"
+                        maxLength={120}
+                        required
+                        value={formData.email}
+                        onChange={(e) =>
+                          setFormData({ ...formData, email: e.target.value })
+                        }
+                        placeholder="Correo electrónico *"
+                        className={`w-full bg-[#181a20] border rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none transition-colors ${
+                          errors.email
+                            ? "border-red-500"
+                            : "border-white/12 focus:border-[#BCE838]"
+                        }`}
+                      />
+                      {errors.email && (
+                        <p className="text-red-400 text-[9px] mt-0.5">
+                          {errors.email}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <input
+                        type="text"
+                        maxLength={80}
+                        value={formData.businessName}
+                        onChange={(e) =>
+                          setFormData({ ...formData, businessName: e.target.value })
+                        }
+                        placeholder="Nombre de tu negocio (opcional)"
+                        className="w-full bg-[#181a20] border border-white/12 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#BCE838] transition-colors"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Consentimiento */}
+                  <label className="flex items-start gap-1.5 cursor-pointer select-none pt-0.5">
+                    <input
+                      type="checkbox"
+                      checked={formData.privacyConsent}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          privacyConsent: e.target.checked,
+                        })
+                      }
+                      className="mt-0.5 rounded border-gray-600 text-[#BCE838] focus:ring-[#BCE838]"
+                    />
+                    <span className="text-[10px] text-gray-400 leading-tight">
+                      Acepto el uso de mis datos para coordinar la reunión según la{" "}
+                      <button
+                        type="button"
+                        onClick={() => onOpenLegalDoc?.("privacidad")}
+                        className="text-gray-300 underline hover:text-[#BCE838] cursor-pointer"
+                      >
+                        Política de Privacidad
+                      </button>
+                      .
+                    </span>
+                  </label>
+                  {errors.privacyConsent && (
+                    <p className="text-red-400 text-[9px]">
+                      {errors.privacyConsent}
+                    </p>
+                  )}
+
+                  {/* Botón de envío */}
+                  <button
+                    type="submit"
+                    disabled={status === "submitting"}
+                    className="w-full mt-1.5 inline-flex items-center justify-center gap-1.5 bg-[#BCE838] hover:bg-[#add92b] text-[#111111] font-black text-xs sm:text-sm px-4 py-2.5 sm:py-3 rounded-xl transition-all cursor-pointer shadow-[0_0_18px_rgba(188,232,56,0.35)] active:scale-98 disabled:opacity-50"
+                  >
+                    {status === "submitting" ? (
+                      <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <span>Confirmar reunión de 20 min</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
+                </form>
+
+                <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[9px] text-gray-400">
+                  <span className="flex items-center gap-1">
+                    <ShieldCheck className="w-3 h-3 text-[#BCE838]" />
+                    <span>Datos protegidos · Ley 25.326</span>
+                  </span>
+                  <span>100% Sin Costo</span>
+                </div>
+              </motion.div>
+            )}
+
+            {/* ETAPA 3: Confirmación Exitosa */}
+            {step === 3 && confirmedBooking && (
+              <motion.div
+                key="step-3"
                 initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
-                className="text-center py-5 sm:py-8 max-w-md mx-auto space-y-4"
+                className="text-center py-4 space-y-3.5"
               >
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#BCE838]/15 border-2 border-[#BCE838] flex items-center justify-center mx-auto text-[#BCE838]">
-                  <CheckCircle2 className="w-8 h-8 sm:w-9 sm:h-9" />
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[#BCE838]/15 border-2 border-[#BCE838] flex items-center justify-center mx-auto text-[#BCE838]">
+                  <CheckCircle2 className="w-7 h-7 sm:w-8 sm:h-8" />
                 </div>
 
                 <div>
                   <span className="text-[10px] font-mono tracking-widest text-[#BCE838] uppercase">
-                    Código de reserva: {confirmedBooking.refId}
+                    Código: {confirmedBooking.refId}
                   </span>
-                  <h3 className="text-xl sm:text-2xl font-black text-white mt-1">
+                  <h3 className="text-lg sm:text-xl font-black text-white mt-0.5">
                     ¡Reunión de 20 min agendada!
                   </h3>
-                  <p className="text-xs text-gray-300 mt-1.5 leading-relaxed">
-                    Tu solicitud quedó registrada. Nos conectaremos puntualmente para el diagnóstico de tu marca.
+                  <p className="text-xs text-gray-300 mt-1 leading-relaxed">
+                    Tu turno quedó registrado con éxito en nuestro CRM. Nos conectaremos puntualmente.
                   </p>
                 </div>
 
-                <div className="bg-[#1a1c22] border border-white/10 rounded-xl p-3.5 text-left text-xs space-y-2">
+                <div className="bg-[#181a20] border border-white/10 rounded-xl p-3 text-left text-xs space-y-1.5">
                   <div className="flex items-center justify-between text-gray-400">
                     <span>Fecha y hora</span>
                     <span className="font-bold text-[#BCE838]">
@@ -332,12 +656,12 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
                   )}
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-1">
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-1">
                   <a
                     href={getWhatsAppBookingUrl()}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20ba59] text-white font-black text-xs px-5 py-3 rounded-xl transition-all shadow-md active:scale-98"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 bg-[#25D366] hover:bg-[#20ba59] text-white font-black text-xs px-5 py-2.5 rounded-xl transition-all shadow-md active:scale-98"
                   >
                     <WhatsAppIcon className="w-4 h-4 fill-current" />
                     <span>Confirmar por WhatsApp directo</span>
@@ -348,305 +672,20 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
                     onClick={() => {
                       setStatus("idle");
                       setConfirmedBooking(null);
+                      setStep(1);
                     }}
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 bg-white/10 hover:bg-white/15 text-white font-bold text-xs px-4 py-3 rounded-xl transition-colors border border-white/12"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 bg-white/10 hover:bg-white/15 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-colors border border-white/12"
                   >
                     <span>Agendar otra fecha</span>
                   </button>
                 </div>
               </motion.div>
-            ) : (
-              /* Flujo Compacto y Ultra Responsive */
-              <div
-                key="booking-flow"
-                className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6"
-              >
-                {/* Columna Izquierda: Días y Horarios */}
-                <div className="lg:col-span-6 space-y-3.5">
-                  {/* Selector de Día */}
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="text-xs font-black text-white flex items-center gap-1.5">
-                        <CalendarIcon className="w-3.5 h-3.5 text-[#BCE838]" />
-                        <span>1. Seleccioná el día</span>
-                      </label>
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => scrollDays("left")}
-                          className="p-1 rounded bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
-                          aria-label="Anteriores"
-                        >
-                          <ChevronLeft className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => scrollDays("right")}
-                          className="p-1 rounded bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
-                          aria-label="Siguientes"
-                        >
-                          <ChevronRight className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Fila de Días Compacta */}
-                    <div
-                      ref={daysScrollRef}
-                      className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar pb-1 scroll-smooth"
-                    >
-                      {daysList.map((day) => {
-                        const isSelected =
-                          selectedDay && selectedDay.isoString === day.isoString;
-                        return (
-                          <button
-                            key={day.isoString}
-                            type="button"
-                            onClick={() => handleSelectDay(day)}
-                            className={`flex flex-col items-center justify-center min-w-[50px] sm:min-w-[62px] py-1.5 sm:py-2 px-1 rounded-xl border transition-all cursor-pointer flex-shrink-0 select-none ${
-                              isSelected
-                                ? "bg-[#BCE838] border-[#BCE838] text-[#111111] shadow-[0_0_12px_rgba(188,232,56,0.35)] scale-102 font-black"
-                                : "bg-[#181a20] border-white/10 text-gray-300 hover:border-white/20"
-                            }`}
-                          >
-                            <span className="text-[9px] uppercase font-bold tracking-tight">
-                              {day.isTomorrow ? "Mañ" : day.dayOfWeek}
-                            </span>
-                            <span className="text-sm sm:text-lg font-black my-0.2">
-                              {day.dayNumber}
-                            </span>
-                            <span className="text-[8px] uppercase font-medium">
-                              {day.monthName}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Selector de Horarios Compacto en 4 Columnas */}
-                  <div>
-                    <label className="text-xs font-black text-white flex items-center gap-1.5 mb-2">
-                      <Clock className="w-3.5 h-3.5 text-[#BCE838]" />
-                      <span>2. Horario disponible (20 min)</span>
-                    </label>
-
-                    <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5">
-                      {AVAILABLE_SLOTS.map((time) => {
-                        const isSelected = selectedTime === time;
-                        return (
-                          <button
-                            key={time}
-                            type="button"
-                            onClick={() => handleSelectTime(time)}
-                            className={`py-1.5 px-1 rounded-lg text-xs font-bold border transition-all cursor-pointer text-center ${
-                              isSelected
-                                ? "bg-[#BCE838] border-[#BCE838] text-[#111111] shadow-[0_0_10px_rgba(188,232,56,0.3)] font-black"
-                                : "bg-[#181a20] border-white/10 text-gray-300 hover:border-white/25"
-                            }`}
-                          >
-                            {time}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Resumen del Turno Elegido */}
-                  {selectedDay && (
-                    <div className="p-2.5 rounded-xl bg-[#181a20] border border-[#BCE838]/25 flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-[#BCE838] animate-pulse" />
-                        <span className="font-bold text-white text-[11px] sm:text-xs">
-                          {selectedDay.dayOfWeek} {selectedDay.dayNumber} {selectedDay.monthName} · {selectedTime} hs (20 min)
-                        </span>
-                      </div>
-                      <span className="text-[10px] font-black text-[#BCE838] uppercase">
-                        Confirmación directa
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Columna Derecha: Formulario de Contacto Compacto */}
-                <div className="lg:col-span-6 bg-[#181a20] border border-white/10 rounded-xl p-3.5 sm:p-5 flex flex-col justify-between">
-                  <div>
-                    <h3 className="text-xs sm:text-sm font-black text-white mb-2.5">
-                      3. Tus datos de contacto
-                    </h3>
-
-                    {serverError && (
-                      <div className="mb-2.5 p-2 rounded-lg bg-red-500/15 border border-red-500/30 text-red-300 text-[11px] flex items-center gap-1.5">
-                        <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-                        <span>{serverError}</span>
-                      </div>
-                    )}
-
-                    <form onSubmit={handleSubmit} className="space-y-2.5 text-xs">
-                      {/* Honeypot */}
-                      <div className="hidden" aria-hidden="true">
-                        <input
-                          type="text"
-                          tabIndex={-1}
-                          autoComplete="off"
-                          value={formData.website_url}
-                          onChange={(e) =>
-                            setFormData({ ...formData, website_url: e.target.value })
-                          }
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {/* Nombre */}
-                        <div>
-                          <input
-                            type="text"
-                            maxLength={80}
-                            value={formData.fullName}
-                            onChange={(e) =>
-                              setFormData({ ...formData, fullName: e.target.value })
-                            }
-                            placeholder="Nombre y Apellido *"
-                            className={`w-full bg-[#131418] border rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none transition-colors ${
-                              errors.fullName
-                                ? "border-red-500"
-                                : "border-white/12 focus:border-[#BCE838]"
-                            }`}
-                          />
-                          {errors.fullName && (
-                            <p className="text-red-400 text-[9px] mt-0.5">
-                              {errors.fullName}
-                            </p>
-                          )}
-                        </div>
-
-                        {/* WhatsApp */}
-                        <div>
-                          <input
-                            type="tel"
-                            maxLength={30}
-                            value={formData.phone}
-                            onChange={(e) =>
-                              setFormData({ ...formData, phone: e.target.value })
-                            }
-                            placeholder="WhatsApp con código *"
-                            className={`w-full bg-[#131418] border rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none transition-colors ${
-                              errors.phone
-                                ? "border-red-500"
-                                : "border-white/12 focus:border-[#BCE838]"
-                            }`}
-                          />
-                          {errors.phone && (
-                            <p className="text-red-400 text-[9px] mt-0.5">
-                              {errors.phone}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {/* Email */}
-                        <div>
-                          <input
-                            type="email"
-                            maxLength={120}
-                            value={formData.email}
-                            onChange={(e) =>
-                              setFormData({ ...formData, email: e.target.value })
-                            }
-                            placeholder="Correo electrónico *"
-                            className={`w-full bg-[#131418] border rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none transition-colors ${
-                              errors.email
-                                ? "border-red-500"
-                                : "border-white/12 focus:border-[#BCE838]"
-                            }`}
-                          />
-                          {errors.email && (
-                            <p className="text-red-400 text-[9px] mt-0.5">
-                              {errors.email}
-                            </p>
-                          )}
-                        </div>
-
-                        {/* Negocio / Rubro */}
-                        <div>
-                          <input
-                            type="text"
-                            maxLength={80}
-                            value={formData.businessName}
-                            onChange={(e) =>
-                              setFormData({ ...formData, businessName: e.target.value })
-                            }
-                            placeholder="Tu negocio o rubro (opcional)"
-                            className="w-full bg-[#131418] border border-white/12 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#BCE838] transition-colors"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Checkbox Privacidad */}
-                      <label className="flex items-start gap-1.5 cursor-pointer select-none pt-0.5">
-                        <input
-                          type="checkbox"
-                          checked={formData.privacyConsent}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              privacyConsent: e.target.checked,
-                            })
-                          }
-                          className="mt-0.5 rounded border-gray-600 text-[#BCE838] focus:ring-[#BCE838]"
-                        />
-                        <span className="text-[10px] text-gray-400 leading-tight">
-                          Acepto el uso de mis datos para coordinar según la{" "}
-                          <button
-                            type="button"
-                            onClick={() => onOpenLegalDoc?.("privacidad")}
-                            className="text-gray-300 underline hover:text-[#BCE838] cursor-pointer"
-                          >
-                            Política de Privacidad
-                          </button>
-                          .
-                        </span>
-                      </label>
-                      {errors.privacyConsent && (
-                        <p className="text-red-400 text-[9px]">
-                          {errors.privacyConsent}
-                        </p>
-                      )}
-
-                      {/* Botón de envío */}
-                      <button
-                        type="submit"
-                        disabled={status === "submitting"}
-                        className="w-full mt-1.5 inline-flex items-center justify-center gap-1.5 bg-[#BCE838] hover:bg-[#add92b] text-[#111111] font-black text-xs px-4 py-2.5 rounded-xl transition-all cursor-pointer shadow-[0_0_16px_rgba(188,232,56,0.3)] hover:shadow-[0_0_22px_rgba(188,232,56,0.45)] active:scale-98 disabled:opacity-50"
-                      >
-                        {status === "submitting" ? (
-                          <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                          <>
-                            <span>Confirmar reunión de 20 min</span>
-                            <ArrowRight className="w-3.5 h-3.5" />
-                          </>
-                        )}
-                      </button>
-                    </form>
-                  </div>
-
-                  <div className="mt-3 pt-2 border-t border-white/5 flex items-center justify-between text-[9px] text-gray-400">
-                    <span className="flex items-center gap-1">
-                      <ShieldCheck className="w-3 h-3 text-[#BCE838]" />
-                      <span>Protegido bajo Ley 25.326</span>
-                    </span>
-                    <span>100% Sin Costo</span>
-                  </div>
-                </div>
-              </div>
             )}
           </AnimatePresence>
         </div>
 
-        {/* Enlace alternativo discreto a WhatsApp */}
-        <div className="mt-5 text-center">
+        {/* Enlace discreto a WhatsApp */}
+        <div className="mt-4 text-center">
           <a
             href={getWhatsAppUrl()}
             target="_blank"

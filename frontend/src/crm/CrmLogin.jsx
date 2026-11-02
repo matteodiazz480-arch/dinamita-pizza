@@ -11,12 +11,13 @@ export default function CrmLogin({ onLoginSuccess, onNavigateLanding }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!password || loading) return;
+    const clean = password.trim();
+    if (!clean || loading) return;
     setError("");
     setLoading(true);
 
     try {
-      const res = await crmLogin(password);
+      const res = await crmLogin(clean);
       if (res.ok) {
         onLoginSuccess?.(res.user);
       } else {
@@ -27,6 +28,11 @@ export default function CrmLogin({ onLoginSuccess, onNavigateLanding }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAutofill = () => {
+    setPassword("nexo2026admin");
+    setError("");
   };
 
   return (
@@ -72,6 +78,9 @@ export default function CrmLogin({ onLoginSuccess, onNavigateLanding }) {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Ingresá la clave de administrador"
                   required
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck="false"
                   autoFocus
                   className="w-full bg-[#181a20] border border-white/12 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#BCE838] transition-colors pr-10"
                 />
@@ -102,6 +111,17 @@ export default function CrmLogin({ onLoginSuccess, onNavigateLanding }) {
             </button>
           </form>
 
+          <div className="mt-5 p-3 rounded-xl bg-white/5 border border-white/10 text-center">
+            <p className="text-[11px] text-gray-300 mb-1.5">¿Primera vez ingresando?</p>
+            <button
+              type="button"
+              onClick={handleAutofill}
+              className="text-xs font-bold text-[#BCE838] hover:underline cursor-pointer bg-[#BCE838]/10 hover:bg-[#BCE838]/20 px-3 py-1.5 rounded-lg border border-[#BCE838]/30 transition-colors"
+            >
+              Autocompletar clave: <span className="font-mono">nexo2026admin</span>
+            </button>
+          </div>
+
           <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-between text-[11px] text-gray-400">
             <span className="flex items-center gap-1">
               <ShieldCheck className="w-3.5 h-3.5 text-[#BCE838]" />
@@ -115,11 +135,6 @@ export default function CrmLogin({ onLoginSuccess, onNavigateLanding }) {
               Volver al sitio
             </button>
           </div>
-        </div>
-
-        <div className="text-center mt-6 text-[11px] text-gray-400">
-          <span>Clave por defecto de desarrollo: </span>
-          <code className="text-[#BCE838] font-mono bg-white/5 px-2 py-0.5 rounded">nexo2026admin</code>
         </div>
       </div>
     </div>
