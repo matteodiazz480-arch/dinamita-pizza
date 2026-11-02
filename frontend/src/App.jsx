@@ -8,7 +8,6 @@ import ProcessSection from "./components/ProcessSection";
 import RubrosSectionBase from "./components/RubrosSection";
 import FreeConsultationSectionBase from "./components/FreeConsultationSection";
 import FaqSectionBase from "./components/FaqSection";
-import BookingCalendarSectionBase from "./components/BookingCalendarSection";
 import CtaContactSectionBase from "./components/CtaContactSection";
 import Footer from "./components/Footer";
 import CookieConsentBanner from "./components/CookieConsentBanner";
@@ -26,7 +25,6 @@ const PlansSection = memo(PlansSectionBase);
 const RubrosSection = memo(RubrosSectionBase);
 const FreeConsultationSection = memo(FreeConsultationSectionBase);
 const FaqSection = memo(FaqSectionBase);
-const BookingCalendarSection = memo(BookingCalendarSectionBase);
 const CtaContactSection = memo(CtaContactSectionBase);
 
 const TRACKED_SECTION_IDS = [
@@ -37,7 +35,6 @@ const TRACKED_SECTION_IDS = [
   "proceso",
   "asesoramiento",
   "faq",
-  "agenda",
   "contacto",
 ];
 
@@ -197,8 +194,7 @@ export default function App() {
         <ProcessSection />
         <FreeConsultationSection onOpenModal={handleOpenModal} />
         <FaqSection />
-        <BookingCalendarSection onOpenLegalDoc={handleOpenLegalDoc} />
-        <CtaContactSection onOpenConsultationModal={handleOpenModal} />
+        <CtaContactSection onOpenLegalDoc={handleOpenLegalDoc} />
       </main>
 
       <Footer

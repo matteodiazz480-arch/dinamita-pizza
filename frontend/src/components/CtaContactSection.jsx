@@ -1,70 +1,722 @@
-import React from "react";
-import { NEXO_CONFIG, getWhatsAppUrl } from "../data/nexoData";
-import { ArrowRight } from "lucide-react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
+import {
+  Calendar as CalendarIcon,
+  Clock,
+  CheckCircle2,
+  Video,
+  ArrowRight,
+  ShieldCheck,
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { securePost, sanitizeClientText } from "../utils/securityClient";
+import { playSound } from "../utils/sound";
 import { WhatsAppIcon } from "./Icons";
-import { motion, useReducedMotion } from "framer-motion";
+import { NEXO_CONFIG, getWhatsAppUrl } from "../data/nexoData";
 
-export default function CtaContactSection({ onOpenConsultationModal }) {
+const DAY_NAMES = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
+const FULL_DAY_NAMES = [
+  "Domingo",
+  "Lunes",
+  "Martes",
+  "Miércoles",
+  "Jueves",
+  "Viernes",
+  "Sábado",
+];
+const MONTH_NAMES = [
+  "Ene",
+  "Feb",
+  "Mar",
+  "Abr",
+  "May",
+  "Jun",
+  "Jul",
+  "Ago",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dic",
+];
+const FULL_MONTH_NAMES = [
+  "Enero",
+  "Febrero",
+  "Marzo",
+  "Abril",
+  "Mayo",
+  "Junio",
+  "Julio",
+  "Agosto",
+  "Septiembre",
+  "Octubre",
+  "Noviembre",
+  "Diciembre",
+];
+
+const MORNING_SLOTS = ["09:30", "10:15", "11:00", "11:45", "12:30"];
+const AFTERNOON_SLOTS = [
+  "14:00",
+  "14:45",
+  "15:30",
+  "16:15",
+  "17:00",
+  "17:45",
+  "18:30",
+];
+
+function generateAvailableDays(count = 14) {
+  const days = [];
+  const start = new Date();
+  let added = 0;
+  let offset = 1; // desde mañana
+
+  while (added < count && offset < 30) {
+    const d = new Date(start);
+    d.setDate(start.getDate() + offset);
+    if (d.getDay() !== 0) {
+      // Excluye domingos
+      days.push({
+        dateObj: d,
+        isoString: d.toISOString().split("T")[0],
+        dayOfWeek: DAY_NAMES[d.getDay()],
+        fullDayName: FULL_DAY_NAMES[d.getDay()],
+        dayNumber: d.getDate(),
+        monthName: MONTH_NAMES[d.getMonth()],
+        fullMonthName: FULL_MONTH_NAMES[d.getMonth()],
+        year: d.getFullYear(),
+        isTomorrow: offset === 1,
+      });
+      added++;
+    }
+    offset++;
+  }
+  return days;
+}
+
+export default function CtaContactSection({ onOpenLegalDoc }) {
   const prefersReducedMotion = useReducedMotion();
+  const daysList = useMemo(() => generateAvailableDays(12), []);
+  const formLoadedAtRef = useRef(0);
+
+  useEffect(() => {
+    formLoadedAtRef.current = Date.now();
+  }, []);
+
+  const [selectedDay, setSelectedDay] = useState(daysList[0] || null);
+  const [selectedTime, setSelectedTime] = useState("15:30");
+  const [formData, setFormData] = useState({
+    fullName: "",
+    phone: "",
+    email: "",
+    businessName: "",
+    notes: "",
+    privacyConsent: true,
+    website_url: "", // honeypot
+  });
+
+  const [errors, setErrors] = useState({});
+  const [status, setStatus] = useState("idle"); // idle | submitting | success | error
+  const [serverError, setServerError] = useState("");
+  const [confirmedBooking, setConfirmedBooking] = useState(null);
+
+  const daysScrollRef = useRef(null);
+
+  const scrollDays = (direction) => {
+    if (!daysScrollRef.current) return;
+    const scrollAmount = direction === "left" ? -220 : 220;
+    daysScrollRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+  };
+
+  const handleSelectDay = (day) => {
+    setSelectedDay(day);
+    playSound("click");
+  };
+
+  const handleSelectTime = (time) => {
+    setSelectedTime(time);
+    playSound("click");
+  };
+
+  const validate = () => {
+    const errs = {};
+    const name = sanitizeClientText(formData.fullName, 80).trim();
+    const phone = sanitizeClientText(formData.phone, 30).trim();
+    const email = sanitizeClientText(formData.email, 120).trim();
+
+    if (name.length < 2) {
+      errs.fullName = "Ingresá tu nombre y apellido (mínimo 2 letras).";
+    }
+    const phoneDigits = phone.replace(/[^0-9]/g, "");
+    if (!phone) {
+      errs.phone = "Ingresá tu WhatsApp para enviarte el enlace.";
+    } else if (phoneDigits.length < 6 || phoneDigits.length > 16) {
+      errs.phone = "Ingresá un número válido con código de área.";
+    }
+    if (!email) {
+      errs.email = "Ingresá tu correo electrónico.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+      errs.email = "Ingresá un correo electrónico válido.";
+    }
+    if (!formData.privacyConsent) {
+      errs.privacyConsent = "Debés aceptar la política de privacidad.";
+    }
+
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (status === "submitting") return;
+    setServerError("");
+
+    if (!validate()) {
+      playSound("error");
+      return;
+    }
+
+    setStatus("submitting");
+
+    const meetingDateStr = `${selectedDay.fullDayName} ${selectedDay.dayNumber} de ${selectedDay.fullMonthName} ${selectedDay.year}`;
+    const constructedMessage = `Reserva de reunión estratégica de 20 min para el ${meetingDateStr} a las ${selectedTime} hs.${
+      formData.notes ? ` Nota adicional: ${formData.notes}` : ""
+    }`;
+
+    try {
+      const response = await securePost("/api/contact", {
+        fullName: formData.fullName,
+        phone: formData.phone,
+        email: formData.email,
+        businessName: formData.businessName || "No especificado",
+        service: "Reunión Gratuita 20 min",
+        message: constructedMessage,
+        privacyConsent: true,
+        website_url: formData.website_url,
+        formLoadedAt: formLoadedAtRef.current,
+        meetingDate: selectedDay.isoString,
+        meetingTime: selectedTime,
+      });
+
+      if (!response.ok) {
+        setStatus("error");
+        setServerError(
+          response.error || "No pudimos agendar tu reunión. Por favor reintentá en unos instantes."
+        );
+        playSound("error");
+        return;
+      }
+
+      playSound("success");
+      setStatus("success");
+      setConfirmedBooking({
+        refId: response.refId || "NEXO-MEET",
+        dateString: meetingDateStr,
+        timeString: selectedTime,
+        fullName: formData.fullName,
+        phone: formData.phone,
+        email: formData.email,
+        businessName: formData.businessName,
+      });
+    } catch {
+      setStatus("error");
+      setServerError("Error de conexión. Verificá tu red y probá nuevamente.");
+      playSound("error");
+    }
+  };
+
+  const getWhatsAppBookingUrl = () => {
+    if (!confirmedBooking) return "#";
+    const text = encodeURIComponent(
+      `Hola NEXO Creative, acabo de agendar una reunión estratégica de 20 min para el ${confirmedBooking.dateString} a las ${confirmedBooking.timeString} hs (Ref: ${confirmedBooking.refId}). Mi negocio es: ${confirmedBooking.businessName || "Mi proyecto"}.`
+    );
+    const cleanNumber = (NEXO_CONFIG.whatsappNumber || "").replace(/[^0-9]/g, "");
+    return `https://wa.me/${cleanNumber}?text=${text}`;
+  };
 
   return (
     <section
       id="contacto"
-      className="bg-gradient-to-b from-[#111111] to-[#0b0c0e] text-white relative overflow-hidden"
+      className="bg-gradient-to-b from-[#111111] via-[#0d0f12] to-[#0b0c0e] text-white relative overflow-hidden pt-12 sm:pt-16 pb-16 sm:pb-24"
     >
-      <div className="w-full h-20 sm:h-32 lg:h-40 section-light-to-dark pointer-events-none" />
+      {/* Luz ambiental de fondo */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#BCE838]/5 rounded-full blur-[150px] pointer-events-none" />
 
-      <div className="py-10 sm:py-16 lg:py-20 relative">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <motion.h2
-            initial={prefersReducedMotion ? false : { opacity: 0, y: 14 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-40px" }}
-            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-            className="text-2xl sm:text-5xl font-black text-white tracking-tight leading-tight max-w-3xl mx-auto"
-          >
+      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Cabecera de la sección "¿Listo para potenciar tu negocio?" */}
+        <motion.div
+          initial={prefersReducedMotion ? false : { opacity: 0, y: 14 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-40px" }}
+          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+          className="text-center max-w-3xl mx-auto mb-9 sm:mb-12"
+        >
+          <h2 className="text-2xl sm:text-5xl font-black text-white tracking-tight leading-tight">
             {NEXO_CONFIG.cta.title}
-          </motion.h2>
+          </h2>
 
-          <motion.p
-            initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-40px" }}
-            transition={{ duration: 0.45, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
-            className="text-xs sm:text-base lg:text-lg text-[#9CA3AF] font-normal max-w-xl mx-auto mt-3 sm:mt-4 leading-relaxed"
+          <p className="text-xs sm:text-base lg:text-lg text-gray-300 font-normal max-w-xl mx-auto mt-3 sm:mt-4 leading-relaxed">
+            Agendá una reunión estratégica gratuita de 20 minutos. Elegí el día y horario que mejor te quede y coordinamos directamente.
+          </p>
+
+          {/* Insignias de la reunión */}
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 text-xs font-semibold text-gray-300">
+            <div className="flex items-center gap-1.5 bg-[#17181c] border border-white/10 px-3 py-1.5 rounded-full">
+              <Clock className="w-3.5 h-3.5 text-[#BCE838]" />
+              <span>20 min puntuales</span>
+            </div>
+            <div className="flex items-center gap-1.5 bg-[#17181c] border border-white/10 px-3 py-1.5 rounded-full">
+              <Video className="w-3.5 h-3.5 text-[#BCE838]" />
+              <span>Google Meet o llamada</span>
+            </div>
+            <div className="flex items-center gap-1.5 bg-[#17181c] border border-white/10 px-3 py-1.5 rounded-full">
+              <CheckCircle2 className="w-3.5 h-3.5 text-[#BCE838]" />
+              <span>100% Gratuito y sin compromiso</span>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Tarjeta interactiva del Calendario */}
+        <div className="bg-[#141519] border border-white/10 rounded-2xl sm:rounded-3xl p-4 sm:p-7 lg:p-9 shadow-[0_24px_64px_rgba(0,0,0,0.65)]">
+          <AnimatePresence mode="wait">
+            {status === "success" && confirmedBooking ? (
+              /* Pantalla de Confirmación de Reserva */
+              <motion.div
+                key="success"
+                initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.35 }}
+                className="text-center py-6 sm:py-10 max-w-xl mx-auto space-y-6"
+              >
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#BCE838]/15 border-2 border-[#BCE838] flex items-center justify-center mx-auto text-[#BCE838]">
+                  <CheckCircle2 className="w-9 h-9 sm:w-11 sm:h-11" />
+                </div>
+
+                <div>
+                  <span className="text-[11px] font-mono tracking-widest text-[#BCE838] uppercase">
+                    Código de reserva: {confirmedBooking.refId}
+                  </span>
+                  <h3 className="text-2xl sm:text-3xl font-black text-white mt-1.5">
+                    ¡Reunión de 20 min agendada!
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-300 mt-2 leading-relaxed">
+                    Tu solicitud ya fue registrada con éxito en nuestro sistema. Nos comunicaremos puntualmente en el horario acordado para brindarte el diagnóstico estratégico.
+                  </p>
+                </div>
+
+                {/* Resumen de la cita */}
+                <div className="bg-[#1a1c22] border border-white/10 rounded-2xl p-4 sm:p-5 text-left space-y-2.5">
+                  <div className="flex items-center justify-between text-xs text-gray-400 pb-2 border-b border-white/5">
+                    <span>Fecha y hora</span>
+                    <span className="font-bold text-[#BCE838]">
+                      {confirmedBooking.dateString} · {confirmedBooking.timeString} hs
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-gray-400 pb-2 border-b border-white/5">
+                    <span>Contacto</span>
+                    <span className="font-semibold text-white">
+                      {confirmedBooking.fullName} ({confirmedBooking.phone})
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-gray-400 pb-2 border-b border-white/5">
+                    <span>Negocio / Rubro</span>
+                    <span className="font-semibold text-white">
+                      {confirmedBooking.businessName || "No especificado"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-gray-400">
+                    <span>Modalidad</span>
+                    <span className="font-semibold text-white">
+                      Google Meet / Videollamada (20 min)
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                  <a
+                    href={getWhatsAppBookingUrl()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20ba59] text-white font-black text-xs sm:text-sm px-6 py-3.5 rounded-xl transition-all cursor-pointer shadow-md hover:scale-102"
+                  >
+                    <WhatsAppIcon className="w-4 h-4 fill-current" />
+                    <span>Confirmar por WhatsApp directo</span>
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStatus("idle");
+                      setConfirmedBooking(null);
+                    }}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 text-white font-bold text-xs sm:text-sm px-5 py-3.5 rounded-xl transition-colors cursor-pointer border border-white/12"
+                  >
+                    <span>Agendar otra fecha</span>
+                  </button>
+                </div>
+              </motion.div>
+            ) : (
+              /* Flujo del selector de turnos + formulario */
+              <div
+                key="booking-flow"
+                className="grid grid-cols-1 lg:grid-cols-12 gap-7 sm:gap-9"
+              >
+                {/* Columna Izquierda: Selección de Día y Horario */}
+                <div className="lg:col-span-7 space-y-6">
+                  {/* Selector de Día */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <label className="text-xs sm:text-sm font-extrabold text-white flex items-center gap-2">
+                        <CalendarIcon className="w-4 h-4 text-[#BCE838]" />
+                        <span>1. Seleccioná el día</span>
+                      </label>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => scrollDays("left")}
+                          className="p-1 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors cursor-pointer"
+                          aria-label="Días anteriores"
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => scrollDays("right")}
+                          className="p-1 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors cursor-pointer"
+                          aria-label="Siguientes días"
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div
+                      ref={daysScrollRef}
+                      className="flex items-center gap-2.5 overflow-x-auto no-scrollbar pb-1.5 scroll-smooth"
+                    >
+                      {daysList.map((day) => {
+                        const isSelected =
+                          selectedDay && selectedDay.isoString === day.isoString;
+                        return (
+                          <button
+                            key={day.isoString}
+                            type="button"
+                            onClick={() => handleSelectDay(day)}
+                            className={`flex flex-col items-center justify-center min-w-[68px] sm:min-w-[76px] py-3 px-2 rounded-2xl border transition-all cursor-pointer flex-shrink-0 select-none ${
+                              isSelected
+                                ? "bg-[#BCE838] border-[#BCE838] text-[#111111] shadow-[0_0_18px_rgba(188,232,56,0.35)] scale-102 font-black"
+                                : "bg-[#181a20] border-white/10 text-gray-300 hover:border-white/25 hover:bg-[#1e2027]"
+                            }`}
+                          >
+                            <span
+                              className={`text-[10px] font-bold uppercase tracking-wider ${
+                                isSelected ? "text-[#111111]/80" : "text-gray-400"
+                              }`}
+                            >
+                              {day.isTomorrow ? "Mañana" : day.dayOfWeek}
+                            </span>
+                            <span className="text-xl sm:text-2xl font-black my-0.5">
+                              {day.dayNumber}
+                            </span>
+                            <span
+                              className={`text-[10px] font-medium uppercase ${
+                                isSelected ? "text-[#111111]/80" : "text-gray-400"
+                              }`}
+                            >
+                              {day.monthName}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Selector de Horario */}
+                  <div>
+                    <label className="text-xs sm:text-sm font-extrabold text-white flex items-center gap-2 mb-3">
+                      <Clock className="w-4 h-4 text-[#BCE838]" />
+                      <span>2. Seleccioná el horario disponible (20 min)</span>
+                    </label>
+
+                    {/* Turnos Mañana */}
+                    <div className="space-y-2 mb-4">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+                        Turnos de Mañana
+                      </span>
+                      <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                        {MORNING_SLOTS.map((time) => {
+                          const isSelected = selectedTime === time;
+                          return (
+                            <button
+                              key={time}
+                              type="button"
+                              onClick={() => handleSelectTime(time)}
+                              className={`py-2 px-2.5 rounded-xl text-xs sm:text-sm font-bold border transition-all cursor-pointer text-center ${
+                                isSelected
+                                  ? "bg-[#BCE838] border-[#BCE838] text-[#111111] shadow-[0_0_14px_rgba(188,232,56,0.35)] scale-103 font-black"
+                                  : "bg-[#181a20] border-white/10 text-gray-300 hover:border-white/25 hover:bg-[#1e2027]"
+                              }`}
+                            >
+                              {time} hs
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Turnos Tarde */}
+                    <div className="space-y-2">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+                        Turnos de Tarde
+                      </span>
+                      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-4 gap-2">
+                        {AFTERNOON_SLOTS.map((time) => {
+                          const isSelected = selectedTime === time;
+                          return (
+                            <button
+                              key={time}
+                              type="button"
+                              onClick={() => handleSelectTime(time)}
+                              className={`py-2 px-2.5 rounded-xl text-xs sm:text-sm font-bold border transition-all cursor-pointer text-center ${
+                                isSelected
+                                  ? "bg-[#BCE838] border-[#BCE838] text-[#111111] shadow-[0_0_14px_rgba(188,232,56,0.35)] scale-103 font-black"
+                                  : "bg-[#181a20] border-white/10 text-gray-300 hover:border-white/25 hover:bg-[#1e2027]"
+                              }`}
+                            >
+                              {time} hs
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Resumen del turno seleccionado */}
+                  {selectedDay && (
+                    <div className="p-3.5 rounded-xl bg-[#1a1c22] border border-[#BCE838]/25 flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2.5">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#BCE838] animate-pulse" />
+                        <div>
+                          <p className="font-extrabold text-white">
+                            {selectedDay.fullDayName} {selectedDay.dayNumber} de{" "}
+                            {selectedDay.fullMonthName}
+                          </p>
+                          <p className="text-gray-400 text-[11px]">
+                            Horario: {selectedTime} hs (Duración: 20 min)
+                          </p>
+                        </div>
+                      </div>
+                      <span className="px-2.5 py-1 rounded-md bg-[#BCE838]/15 text-[#BCE838] font-black text-[10px] uppercase">
+                        Confirmación directa
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Columna Derecha: Formulario de Contacto */}
+                <div className="lg:col-span-5 bg-[#181a20] border border-white/10 rounded-2xl p-4 sm:p-6 flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-base sm:text-lg font-black text-white">
+                      3. Tus datos para coordinar
+                    </h3>
+                    <p className="text-[11px] text-gray-400 mt-1 mb-4">
+                      Para enviarte el enlace de Google Meet y confirmar tu turno.
+                    </p>
+
+                    {serverError && (
+                      <div className="mb-4 p-3 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs flex items-start gap-2">
+                        <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                        <span>{serverError}</span>
+                      </div>
+                    )}
+
+                    <form onSubmit={handleSubmit} className="space-y-3.5">
+                      {/* Honeypot anti-spam oculto */}
+                      <div className="hidden" aria-hidden="true">
+                        <input
+                          type="text"
+                          tabIndex={-1}
+                          autoComplete="off"
+                          value={formData.website_url}
+                          onChange={(e) =>
+                            setFormData({ ...formData, website_url: e.target.value })
+                          }
+                        />
+                      </div>
+
+                      {/* Nombre completo */}
+                      <div>
+                        <label className="block text-xs font-bold text-gray-300 mb-1">
+                          Nombre y Apellido *
+                        </label>
+                        <input
+                          type="text"
+                          maxLength={80}
+                          value={formData.fullName}
+                          onChange={(e) =>
+                            setFormData({ ...formData, fullName: e.target.value })
+                          }
+                          placeholder="Ej. Lucas Gómez"
+                          className={`w-full bg-[#131418] border rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none transition-colors ${
+                            errors.fullName
+                              ? "border-red-500"
+                              : "border-white/12 focus:border-[#BCE838]"
+                          }`}
+                        />
+                        {errors.fullName && (
+                          <p className="text-red-400 text-[10px] mt-1">
+                            {errors.fullName}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* WhatsApp */}
+                      <div>
+                        <label className="block text-xs font-bold text-gray-300 mb-1">
+                          WhatsApp (con código de área) *
+                        </label>
+                        <input
+                          type="tel"
+                          maxLength={30}
+                          value={formData.phone}
+                          onChange={(e) =>
+                            setFormData({ ...formData, phone: e.target.value })
+                          }
+                          placeholder="Ej. +54 9 11 1234 5678"
+                          className={`w-full bg-[#131418] border rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none transition-colors ${
+                            errors.phone
+                              ? "border-red-500"
+                              : "border-white/12 focus:border-[#BCE838]"
+                          }`}
+                        />
+                        {errors.phone && (
+                          <p className="text-red-400 text-[10px] mt-1">
+                            {errors.phone}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Email */}
+                      <div>
+                        <label className="block text-xs font-bold text-gray-300 mb-1">
+                          Correo electrónico *
+                        </label>
+                        <input
+                          type="email"
+                          maxLength={120}
+                          value={formData.email}
+                          onChange={(e) =>
+                            setFormData({ ...formData, email: e.target.value })
+                          }
+                          placeholder="tuemail@ejemplo.com"
+                          className={`w-full bg-[#131418] border rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none transition-colors ${
+                            errors.email
+                              ? "border-red-500"
+                              : "border-white/12 focus:border-[#BCE838]"
+                          }`}
+                        />
+                        {errors.email && (
+                          <p className="text-red-400 text-[10px] mt-1">
+                            {errors.email}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Negocio / Rubro (opcional) */}
+                      <div>
+                        <label className="block text-xs font-bold text-gray-300 mb-1">
+                          Nombre de tu negocio o rubro (opcional)
+                        </label>
+                        <input
+                          type="text"
+                          maxLength={80}
+                          value={formData.businessName}
+                          onChange={(e) =>
+                            setFormData({ ...formData, businessName: e.target.value })
+                          }
+                          placeholder="Ej. Barbería / Estudio Contable / Local"
+                          className="w-full bg-[#131418] border border-white/12 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#BCE838] transition-colors"
+                        />
+                      </div>
+
+                      {/* Checkbox Privacidad */}
+                      <div className="pt-1">
+                        <label className="flex items-start gap-2 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={formData.privacyConsent}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                privacyConsent: e.target.checked,
+                              })
+                            }
+                            className="mt-0.5 rounded border-gray-600 text-[#BCE838] focus:ring-[#BCE838]"
+                          />
+                          <span className="text-[11px] text-gray-400 leading-tight">
+                            Acepto el tratamiento de mis datos para la reunión según las{" "}
+                            <button
+                              type="button"
+                              onClick={() => onOpenLegalDoc?.("privacidad")}
+                              className="text-gray-300 underline underline-offset-2 hover:text-[#BCE838] cursor-pointer"
+                            >
+                              Políticas de Privacidad
+                            </button>
+                            .
+                          </span>
+                        </label>
+                        {errors.privacyConsent && (
+                          <p className="text-red-400 text-[10px] mt-1">
+                            {errors.privacyConsent}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Botón de envío */}
+                      <button
+                        type="submit"
+                        disabled={status === "submitting"}
+                        className="w-full mt-2 inline-flex items-center justify-center gap-2 bg-[#BCE838] hover:bg-[#add92b] text-[#111111] font-black text-xs sm:text-sm px-5 py-3.5 rounded-xl transition-all cursor-pointer shadow-[0_0_20px_rgba(188,232,56,0.35)] hover:shadow-[0_0_28px_rgba(188,232,56,0.5)] active:scale-98 disabled:opacity-50"
+                      >
+                        {status === "submitting" ? (
+                          <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <>
+                            <span>Confirmar reunión gratuita (20 min)</span>
+                            <ArrowRight className="w-4 h-4" />
+                          </>
+                        )}
+                      </button>
+                    </form>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-[10px] text-gray-400">
+                    <span className="flex items-center gap-1">
+                      <ShieldCheck className="w-3.5 h-3.5 text-[#BCE838]" />
+                      <span>Protegido bajo Ley 25.326</span>
+                    </span>
+                    <span>100% Sin Costo</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Enlace alternativo directo a WhatsApp */}
+        <div className="mt-8 text-center">
+          <p className="text-xs text-gray-400 mb-2">¿Preferís escribirnos directamente?</p>
+          <a
+            href={getWhatsAppUrl()}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-xs font-bold text-[#BCE838] hover:underline underline-offset-4"
           >
-            {NEXO_CONFIG.cta.description}
-          </motion.p>
-
-          <motion.div
-            initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-40px" }}
-            transition={{ duration: 0.45, delay: 0.14, ease: [0.16, 1, 0.3, 1] }}
-            className="mt-6 sm:mt-8 flex flex-wrap items-center justify-center gap-3"
-          >
-            <motion.button
-              whileHover={prefersReducedMotion ? {} : { scale: 1.015 }}
-              whileTap={prefersReducedMotion ? {} : { scale: 0.985 }}
-              onClick={() => onOpenConsultationModal?.("Asesoramiento Gratuito General")}
-              className="inline-flex items-center justify-center gap-2 bg-[#BCE838] hover:bg-[#add92b] text-[#111111] font-extrabold px-5 sm:px-7 py-3 sm:py-4 rounded-xl text-xs sm:text-sm tracking-wide transition-colors cursor-pointer shadow-sm group"
-            >
-              <span>{NEXO_CONFIG.cta.buttonText}</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-            </motion.button>
-
-            <motion.a
-              whileHover={prefersReducedMotion ? {} : { scale: 1.015 }}
-              whileTap={prefersReducedMotion ? {} : { scale: 0.985 }}
-              href={getWhatsAppUrl()}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 bg-white/[0.04] hover:bg-white/[0.08] text-white border border-white/10 px-5 sm:px-6 py-3 sm:py-4 rounded-xl text-xs sm:text-sm font-bold transition-colors cursor-pointer"
-            >
-              <WhatsAppIcon className="w-4 h-4 fill-[#BCE838]" />
-              <span>WhatsApp directo</span>
-            </motion.a>
-          </motion.div>
+            <WhatsAppIcon className="w-4 h-4 fill-[#BCE838]" />
+            <span>Hablar por WhatsApp con un asesor</span>
+          </a>
         </div>
       </div>
     </section>
