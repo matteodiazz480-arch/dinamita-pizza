@@ -45,7 +45,7 @@ export default function Navbar({
       className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
         isScrolled
           ? "bg-[#0d0f12]/95 backdrop-blur-xl border-b border-white/12 py-2 sm:py-3.5 shadow-[0_12px_32px_rgba(0,0,0,0.55)]"
-          : "bg-[#0d0f12]/60 md:bg-gradient-to-b md:from-[#0d0f12]/95 md:to-transparent backdrop-blur-md md:backdrop-blur-none border-b border-white/8 md:border-b-0 py-2 sm:py-4"
+          : "bg-gradient-to-b from-[#0d0f12]/90 via-[#0d0f12]/35 to-transparent py-2 sm:py-4 border-b-0"
       }`}
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -92,7 +92,7 @@ export default function Navbar({
               onClick={() =>
                 onOpenConsultationModal?.("Asesoramiento Gratuito General")
               }
-              className="text-[11px] sm:text-sm font-black tracking-wide text-[#111111] bg-[#BCE838] hover:bg-[#cbf446] px-3.5 py-1.5 sm:px-5 sm:py-2.5 rounded-xl transition-all cursor-pointer shadow-[0_0_14px_rgba(188,232,56,0.25)] hover:shadow-[0_0_26px_rgba(188,232,56,0.45)] hover:scale-102 active:scale-98"
+              className="text-[11px] sm:text-sm font-black tracking-wide text-[#111111] bg-[#BCE838] hover:bg-[#cbf446] px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full sm:rounded-xl transition-all cursor-pointer shadow-[0_0_14px_rgba(188,232,56,0.25)] hover:shadow-[0_0_26px_rgba(188,232,56,0.45)] hover:scale-102 active:scale-95"
             >
               Diagnóstico gratis
             </button>

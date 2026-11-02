@@ -10,19 +10,19 @@ export default function Hero({ onOpenConsultationModal, onOpenPlanFinder }) {
 
   return (
     <section id="inicio" className="relative w-full bg-[#111111] text-white overflow-hidden">
-      <div className="relative min-h-[72vh] sm:min-h-[78vh] lg:min-h-[82vh] w-full pt-20 sm:pt-28 lg:pt-32 pb-12 sm:pb-16 flex flex-col justify-center overflow-hidden">
-        {/* Foto de fondo en el título, encuadrada de forma totalmente responsive para móvil y desktop */}
-        <div className="absolute top-0 inset-x-0 h-[380px] sm:h-[460px] md:h-full z-0 overflow-hidden pointer-events-none">
+      <div className="relative min-h-[72vh] sm:min-h-[78vh] lg:min-h-[82vh] w-full pt-24 sm:pt-28 lg:pt-32 pb-12 sm:pb-16 flex flex-col justify-center overflow-hidden">
+        {/* Foto de fondo en el título, encuadrada con espacio respirable sobre las cabezas */}
+        <div className="absolute top-0 inset-x-0 h-[400px] sm:h-[460px] md:h-full z-0 overflow-hidden pointer-events-none">
           <img
             src={heroGrowthImg}
             alt="NEXO Creative — Estrategias y Crecimiento"
-            className="w-full h-full object-cover object-[52%_14%] sm:object-[58%_16%] md:object-[66%_16%] lg:object-[68%_12%] scale-[1.01]"
+            className="w-full h-full object-cover object-[52%_6%] sm:object-[58%_16%] md:object-[66%_16%] lg:object-[68%_12%] scale-[1.01]"
             loading="eager"
             decoding="async"
           />
-          {/* Overlays móvil: gradientes suaves que permiten ver claramente el casco amarillo, los rostros y la flecha verde, fusionando abajo */}
-          <div className="md:hidden absolute inset-0 bg-gradient-to-b from-[#111111]/45 via-transparent to-[#111111]" />
-          <div className="md:hidden absolute inset-0 bg-gradient-to-t from-[#111111] via-[#111111]/70 to-transparent" />
+          {/* Overlays móvil: gradientes suaves que dejan ver el casco amarillo, los rostros y la flecha verde */}
+          <div className="md:hidden absolute inset-0 bg-gradient-to-b from-[#111111]/30 via-transparent to-[#111111]" />
+          <div className="md:hidden absolute inset-0 bg-gradient-to-t from-[#111111] via-[#111111]/60 to-transparent" />
 
           {/* Overlays desktop: oscurecido progresivo a la izquierda para máxima legibilidad del texto */}
           <div className="hidden md:block absolute inset-0 bg-[#111111]/40" />
@@ -73,34 +73,48 @@ export default function Hero({ onOpenConsultationModal, onOpenPlanFinder }) {
               className="pt-2 flex flex-wrap items-center gap-3 sm:gap-4"
             >
               <motion.button
-                type="button"
-                whileHover={prefersReducedMotion ? {} : { scale: 1.015 }}
-                whileTap={prefersReducedMotion ? {} : { scale: 0.985 }}
+                whileHover={prefersReducedMotion ? {} : { scale: 1.02 }}
+                whileTap={prefersReducedMotion ? {} : { scale: 0.98 }}
                 onClick={() =>
                   onOpenConsultationModal?.("Asesoramiento Gratuito General")
                 }
-                className="inline-flex items-center gap-2 bg-[#BCE838] hover:bg-[#add92b] text-[#111111] font-extrabold px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl text-xs sm:text-sm tracking-wide transition-colors cursor-pointer group shadow-md"
+                className="inline-flex items-center justify-center gap-2 bg-[#BCE838] hover:bg-[#cbf446] text-[#111111] font-extrabold px-5 sm:px-7 py-3 sm:py-4 rounded-xl text-xs sm:text-sm tracking-wide transition-all cursor-pointer shadow-[0_0_24px_rgba(188,232,56,0.35)] hover:shadow-[0_0_32px_rgba(188,232,56,0.5)] group"
               >
                 <span>{NEXO_CONFIG.hero.ctaText}</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
               </motion.button>
 
               <motion.button
-                type="button"
-                whileHover={prefersReducedMotion ? {} : { scale: 1.015 }}
-                whileTap={prefersReducedMotion ? {} : { scale: 0.985 }}
-                onClick={() => onOpenPlanFinder?.()}
-                className="inline-flex items-center gap-2 bg-[#111111]/70 hover:bg-[#111111]/90 backdrop-blur-md text-white border border-white/15 px-5 sm:px-6 py-3.5 sm:py-4 rounded-xl text-xs sm:text-sm font-bold transition-colors cursor-pointer"
+                whileHover={prefersReducedMotion ? {} : { scale: 1.02 }}
+                whileTap={prefersReducedMotion ? {} : { scale: 0.98 }}
+                onClick={onOpenPlanFinder}
+                className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 text-white font-bold px-4 sm:px-6 py-3 sm:py-4 rounded-xl text-xs sm:text-sm transition-colors cursor-pointer border border-white/15 backdrop-blur-sm"
               >
                 <Compass className="w-4 h-4 text-[#BCE838]" />
                 <span>Encontrá tu plan</span>
               </motion.button>
             </motion.div>
+
+            {/* Pastillas de beneficios clave */}
+            <motion.div
+              initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              className="pt-4 flex flex-wrap gap-2 sm:gap-3"
+            >
+              {NEXO_CONFIG.hero.pills.map((pill, index) => (
+                <div
+                  key={index}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#181a20]/90 border border-white/12 text-xs font-semibold text-gray-200 backdrop-blur-sm"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#BCE838]" />
+                  <span>{pill.text}</span>
+                </div>
+              ))}
+            </motion.div>
           </div>
         </div>
       </div>
-
-      <div className="w-full h-16 sm:h-24 lg:h-32 section-dark-to-light pointer-events-none" />
     </section>
   );
 }
