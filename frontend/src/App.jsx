@@ -18,6 +18,7 @@ const InteractiveContactModal = lazy(() => import("./components/InteractiveConta
 const PlanFinderModal = lazy(() => import("./components/PlanFinderModal"));
 const VirtualAssistantChat = lazy(() => import("./components/VirtualAssistantChat"));
 const LegalPagesModal = lazy(() => import("./components/LegalPagesModal"));
+const CrmApp = lazy(() => import("./crm/CrmApp"));
 
 const Hero = memo(HeroBase);
 const AboutSection = memo(AboutSectionBase);
@@ -39,6 +40,14 @@ const TRACKED_SECTION_IDS = [
 ];
 
 export default function App() {
+  const [currentRoute, setCurrentRoute] = useState(() => {
+    const path = window.location.pathname;
+    const hash = window.location.hash;
+    return path === "/crm" || path === "/admin" || hash.startsWith("#/crm") || hash.startsWith("#/admin")
+      ? "crm"
+      : "landing";
+  });
+
   const [activeSectionId, setActiveSectionId] = useState("inicio");
   const [modalOpen, setModalOpen] = useState(false);
   const [planFinderOpen, setPlanFinderOpen] = useState(false);
@@ -50,6 +59,24 @@ export default function App() {
   const overlaysReady = idleReady || modalOpen || planFinderOpen || activeLegalDoc !== null;
 
   const scrollLockUntilRef = useRef(0);
+
+  useEffect(() => {
+    const checkRoute = () => {
+      const path = window.location.pathname;
+      const hash = window.location.hash;
+      if (path === "/crm" || path === "/admin" || hash.startsWith("#/crm") || hash.startsWith("#/admin")) {
+        setCurrentRoute("crm");
+      } else {
+        setCurrentRoute("landing");
+      }
+    };
+    window.addEventListener("popstate", checkRoute);
+    window.addEventListener("hashchange", checkRoute);
+    return () => {
+      window.removeEventListener("popstate", checkRoute);
+      window.removeEventListener("hashchange", checkRoute);
+    };
+  }, []);
 
   const handleNavigateSection = useCallback((secId) => {
     setActiveSectionId(secId);
@@ -97,6 +124,8 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (currentRoute === "crm") return;
+
     const arm = () => setIdleReady(true);
     const idleId =
       typeof window.requestIdleCallback === "function"
@@ -106,9 +135,11 @@ export default function App() {
       if (typeof window.cancelIdleCallback === "function") window.cancelIdleCallback(idleId);
       else window.clearTimeout(idleId);
     };
-  }, []);
+  }, [currentRoute]);
 
   useEffect(() => {
+    if (currentRoute === "crm") return;
+
     getCsrfToken();
 
     const syncFromHash = () => {
@@ -170,7 +201,26 @@ export default function App() {
       window.removeEventListener("scroll", handleScrollSpy);
       if (scrollRafId !== null) cancelAnimationFrame(scrollRafId);
     };
-  }, []);
+  }, [currentRoute]);
+
+  if (currentRoute === "crm") {
+    return (
+      <Suspense
+        fallback={
+          <div className="min-h-screen bg-[#0d0f12] text-white flex items-center justify-center">
+            <div className="w-8 h-8 border-2 border-[#BCE838] border-t-transparent rounded-full animate-spin" />
+          </div>
+        }
+      >
+        <CrmApp
+          onNavigateLanding={() => {
+            window.history.pushState(null, "", "/");
+            setCurrentRoute("landing");
+          }}
+        />
+      </Suspense>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#111111] text-white flex flex-col selection:bg-[#BCE838] selection:text-black">

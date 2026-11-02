@@ -12,6 +12,7 @@ const rateLimitStore = {
   contact: new Map(),
   assistant: new Map(),
   privacy: new Map(),
+  crmLogin: new Map(),
 };
 
 const ALLOWED_SERVICES = new Set([
@@ -168,21 +169,163 @@ function sendJson(res, statusCode, data, extraHeaders = {}) {
   res.end(JSON.stringify(data));
 }
 
+const CRM_ADMIN_PASSWORD = process.env.CRM_PASSWORD || "nexo2026admin";
+
+function getStorageFilePath(filename) {
+  const storageDir = process.env.VERCEL
+    ? path.join(os.tmpdir(), "nexo-storage")
+    : path.resolve(process.cwd(), "backend", "storage");
+  if (!fs.existsSync(storageDir)) {
+    fs.mkdirSync(storageDir, { recursive: true });
+  }
+  return path.join(storageDir, filename);
+}
+
 function appendProtectedRecord(filename, record) {
   try {
-    const storageDir = process.env.VERCEL
-      ? path.join(os.tmpdir(), "nexo-storage")
-      : path.resolve(process.cwd(), "backend", "storage");
-    if (!fs.existsSync(storageDir)) {
-      fs.mkdirSync(storageDir, { recursive: true });
-    }
-    const filePath = path.join(storageDir, filename);
+    const filePath = getStorageFilePath(filename);
     fs.appendFileSync(filePath, JSON.stringify(record) + "\n", {
       encoding: "utf8",
       mode: 0o600,
     });
   } catch {
     return;
+  }
+}
+
+function readProtectedRecords(filename) {
+  try {
+    const filePath = getStorageFilePath(filename);
+    if (!fs.existsSync(filePath)) return [];
+    const raw = fs.readFileSync(filePath, "utf8");
+    return raw
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .map((l) => {
+        try {
+          return JSON.parse(l);
+        } catch {
+          return null;
+        }
+      })
+      .filter(Boolean)
+      .reverse();
+  } catch {
+    return [];
+  }
+}
+
+function updateProtectedRecord(filename, id, updates) {
+  try {
+    const filePath = getStorageFilePath(filename);
+    if (!fs.existsSync(filePath)) return null;
+    const raw = fs.readFileSync(filePath, "utf8");
+    const records = raw
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .map((l) => {
+        try {
+          return JSON.parse(l);
+        } catch {
+          return null;
+        }
+      })
+      .filter(Boolean);
+
+    let updated = null;
+    const nextList = records.map((r) => {
+      if (r.id === id || r.refId === id) {
+        updated = { ...r, ...updates, updatedAt: new Date().toISOString() };
+        return updated;
+      }
+      return r;
+    });
+
+    if (!updated) return null;
+
+    fs.writeFileSync(
+      filePath,
+      nextList.map((r) => JSON.stringify(r)).join("\n") + "\n",
+      { encoding: "utf8", mode: 0o600 }
+    );
+    return updated;
+  } catch {
+    return null;
+  }
+}
+
+function deleteProtectedRecord(filename, id) {
+  try {
+    const filePath = getStorageFilePath(filename);
+    if (!fs.existsSync(filePath)) return false;
+    const raw = fs.readFileSync(filePath, "utf8");
+    const records = raw
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .map((l) => {
+        try {
+          return JSON.parse(l);
+        } catch {
+          return null;
+        }
+      })
+      .filter(Boolean);
+
+    const nextList = records.filter((r) => r.id !== id && r.refId !== id);
+    fs.writeFileSync(
+      filePath,
+      nextList.map((r) => JSON.stringify(r)).join("\n") + "\n",
+      { encoding: "utf8", mode: 0o600 }
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function generateCrmSessionToken() {
+  const timestamp = Date.now();
+  const signature = crypto
+    .createHmac("sha256", SERVER_SECRET)
+    .update(`crm_session_${timestamp}`)
+    .digest("hex");
+  return Buffer.from(`${timestamp}:${signature}`).toString("base64");
+}
+
+function verifyCrmSession(req) {
+  const cookies = parseCookies(req);
+  let rawToken = cookies["nexo_crm_session"];
+  const authHeader = req.headers.authorization;
+  if (!rawToken && authHeader && authHeader.startsWith("Bearer ")) {
+    rawToken = authHeader.slice(7).trim();
+  }
+  if (!rawToken) return false;
+
+  try {
+    const decoded = Buffer.from(rawToken, "base64").toString("utf8");
+    const [timestampStr, signature] = decoded.split(":");
+    const timestamp = Number(timestampStr);
+    if (!timestamp || isNaN(timestamp)) return false;
+
+    // Session valid for 48 hours
+    if (Date.now() - timestamp > 48 * 60 * 60 * 1000) return false;
+
+    const expectedSignature = crypto
+      .createHmac("sha256", SERVER_SECRET)
+      .update(`crm_session_${timestamp}`)
+      .digest("hex");
+
+    if (expectedSignature.length !== signature.length) return false;
+
+    return crypto.timingSafeEqual(
+      Buffer.from(expectedSignature, "utf8"),
+      Buffer.from(signature, "utf8")
+    );
+  } catch {
+    return false;
   }
 }
 
@@ -702,6 +845,187 @@ export function createSecurityMiddleware() {
       return sendJson(res, 200, {
         ok: true,
         trackingId,
+      });
+    }
+
+// CRM: Iniciar Sesión Admin
+    if (url === "/api/crm/auth/login" && req.method === "POST") {
+      const ipHash = getClientIpHash(req);
+      const rate = checkRateLimit("crmLogin", ipHash, 8, 10 * 60 * 1000);
+      if (!rate.allowed) {
+        return sendJson(res, 429, {
+          ok: false,
+          error: "Demasiados intentos de acceso al CRM. Aguardá unos minutos.",
+        });
+      }
+
+      let body;
+      try {
+        body = await readJsonBody(req);
+      } catch {
+        return sendJson(res, 400, { ok: false, error: "Datos inválidos." });
+      }
+
+      const pass = String(body.password || "");
+      const expected = String(CRM_ADMIN_PASSWORD);
+      const match =
+        pass.length === expected.length &&
+        crypto.timingSafeEqual(Buffer.from(pass, "utf8"), Buffer.from(expected, "utf8"));
+
+      if (!match) {
+        return sendJson(res, 401, {
+          ok: false,
+          error: "Contraseña incorrecta de acceso al CRM.",
+        });
+      }
+
+      const token = generateCrmSessionToken();
+      const isProd = process.env.NODE_ENV === "production";
+      return sendJson(
+        res,
+        200,
+        {
+          ok: true,
+          token,
+          user: { name: "Administrador NEXO", email: "admin@nexocreative.com" },
+        },
+        {
+          "Set-Cookie": `nexo_crm_session=${token}; HttpOnly; Path=/; SameSite=Lax${isProd ? "; Secure" : ""}; Max-Age=172800`,
+        }
+      );
+    }
+
+    // CRM: Cerrar Sesión Admin
+    if (url === "/api/crm/auth/logout" && req.method === "POST") {
+      return sendJson(
+        res,
+        200,
+        { ok: true },
+        {
+          "Set-Cookie": "nexo_crm_session=; HttpOnly; Path=/; Max-Age=0",
+        }
+      );
+    }
+
+    // CRM: Verificar Sesión Activa
+    if (url === "/api/crm/auth/me" && req.method === "GET") {
+      if (!verifyCrmSession(req)) {
+        return sendJson(res, 401, { ok: false, authenticated: false });
+      }
+      return sendJson(res, 200, {
+        ok: true,
+        authenticated: true,
+        user: { name: "Administrador NEXO", email: "admin@nexocreative.com" },
+      });
+    }
+
+    // CRM: Obtener Leads & Reuniones
+    if (url === "/api/crm/leads" && req.method === "GET") {
+      if (!verifyCrmSession(req)) {
+        return sendJson(res, 401, { ok: false, error: "No autorizado." });
+      }
+      const records = readProtectedRecords("leads.jsonl");
+      return sendJson(res, 200, { ok: true, leads: records });
+    }
+
+    // CRM: Actualizar Estado o Notas de un Lead
+    if (url === "/api/crm/leads" && req.method === "PATCH") {
+      if (!verifyCrmSession(req)) {
+        return sendJson(res, 401, { ok: false, error: "No autorizado." });
+      }
+      let body;
+      try {
+        body = await readJsonBody(req);
+      } catch {
+        return sendJson(res, 400, { ok: false, error: "Datos inválidos." });
+      }
+      const { id, status, notes } = body;
+      if (!id) {
+        return sendJson(res, 400, { ok: false, error: "Falta el ID del lead." });
+      }
+      const updates = {};
+      if (status !== undefined) updates.status = sanitizeText(status, 40);
+      if (notes !== undefined) updates.notes = sanitizeText(notes, 1000);
+
+      const updated = updateProtectedRecord("leads.jsonl", id, updates);
+      if (!updated) {
+        return sendJson(res, 404, { ok: false, error: "Lead no encontrado." });
+      }
+      return sendJson(res, 200, { ok: true, lead: updated });
+    }
+
+    // CRM: Crear Lead Manual
+    if (url === "/api/crm/leads" && req.method === "POST") {
+      if (!verifyCrmSession(req)) {
+        return sendJson(res, 401, { ok: false, error: "No autorizado." });
+      }
+      let body;
+      try {
+        body = await readJsonBody(req);
+      } catch {
+        return sendJson(res, 400, { ok: false, error: "Datos inválidos." });
+      }
+      const refId = "NEXO-MANUAL-" + crypto.randomBytes(2).toString("hex").toUpperCase();
+      const newRecord = {
+        id: refId,
+        refId,
+        createdAt: new Date().toISOString(),
+        fullName: sanitizeText(body.fullName || "Sin nombre", 80),
+        businessName: sanitizeText(body.businessName || "No especificado", 80),
+        email: sanitizeText(body.email || "", 120),
+        phone: sanitizeText(body.phone || "", 30),
+        service: sanitizeText(body.service || "Contacto Directo", 80),
+        message: sanitizeText(body.message || "Lead ingresado manualmente en CRM", 500),
+        meetingDate: body.meetingDate ? sanitizeText(body.meetingDate, 30) : null,
+        meetingTime: body.meetingTime ? sanitizeText(body.meetingTime, 10) : null,
+        status: sanitizeText(body.status || "nuevo", 40),
+        notes: sanitizeText(body.notes || "", 1000),
+      };
+      appendProtectedRecord("leads.jsonl", newRecord);
+      return sendJson(res, 201, { ok: true, lead: newRecord });
+    }
+
+    // CRM: Eliminar Lead
+    if (url === "/api/crm/leads" && req.method === "DELETE") {
+      if (!verifyCrmSession(req)) {
+        return sendJson(res, 401, { ok: false, error: "No autorizado." });
+      }
+      let body;
+      try {
+        body = await readJsonBody(req);
+      } catch {
+        return sendJson(res, 400, { ok: false, error: "Datos inválidos." });
+      }
+      if (!body.id) {
+        return sendJson(res, 400, { ok: false, error: "Falta el ID del lead." });
+      }
+      deleteProtectedRecord("leads.jsonl", body.id);
+      return sendJson(res, 200, { ok: true });
+    }
+
+    // CRM: Estadísticas Generales
+    if (url === "/api/crm/stats" && req.method === "GET") {
+      if (!verifyCrmSession(req)) {
+        return sendJson(res, 401, { ok: false, error: "No autorizado." });
+      }
+      const records = readProtectedRecords("leads.jsonl");
+      const totalLeads = records.length;
+      const meetings = records.filter(
+        (r) => r.service === "Reunión Gratuita 20 min" || r.meetingDate
+      );
+      const activeMeetings = meetings.filter((r) => r.status === "reunion_agendada");
+      const pendingLeads = records.filter((r) => r.status === "nuevo");
+      const wonLeads = records.filter((r) => r.status === "ganado");
+
+      return sendJson(res, 200, {
+        ok: true,
+        stats: {
+          totalLeads,
+          totalMeetings: meetings.length,
+          activeMeetings: activeMeetings.length,
+          pendingLeads: pendingLeads.length,
+          wonLeads: wonLeads.length,
+        },
       });
     }
 
