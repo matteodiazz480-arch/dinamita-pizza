@@ -7,6 +7,13 @@ import {
   crmUpdateLead,
   crmCreateLead,
   crmDeleteLead,
+  crmGetClients,
+  crmCreateClient,
+  crmUpdateClient,
+  crmDeleteClient,
+  crmGetExpenses,
+  crmCreateExpense,
+  crmDeleteExpense,
   crmLogout,
 } from "./crmApi";
 
@@ -14,15 +21,32 @@ export default function CrmApp({ onNavigateLanding }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [leads, setLeads] = useState([]);
+  const [clients, setClients] = useState([]);
+  const [expenses, setExpenses] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const loadLeads = useCallback(async () => {
+  const loadAllData = useCallback(async () => {
     try {
-      const res = await crmGetLeads();
-      if (res.ok) {
-        setLeads(res.leads || []);
+      setRefreshing(true);
+      const [leadsRes, clientsRes, expensesRes] = await Promise.all([
+        crmGetLeads(),
+        crmGetClients(),
+        crmGetExpenses(),
+      ]);
+
+      if (leadsRes.ok && Array.isArray(leadsRes.leads)) {
+        setLeads(leadsRes.leads);
+      }
+      if (clientsRes.ok && Array.isArray(clientsRes.clients)) {
+        setClients(clientsRes.clients);
+      }
+      if (expensesRes.ok && Array.isArray(expensesRes.expenses)) {
+        setExpenses(expensesRes.expenses);
       }
     } catch {
       // ignore
+    } finally {
+      setTimeout(() => setRefreshing(false), 300);
     }
   }, []);
 
@@ -31,7 +55,7 @@ export default function CrmApp({ onNavigateLanding }) {
       .then((res) => {
         if (res.ok && res.authenticated) {
           setIsAuthenticated(true);
-          loadLeads();
+          loadAllData();
         } else {
           setIsAuthenticated(false);
         }
@@ -39,11 +63,11 @@ export default function CrmApp({ onNavigateLanding }) {
       .finally(() => {
         setLoadingAuth(false);
       });
-  }, [loadLeads]);
+  }, [loadAllData]);
 
   const handleLoginSuccess = async () => {
     setIsAuthenticated(true);
-    await loadLeads();
+    await loadAllData();
   };
 
   const handleLogout = async () => {
@@ -51,36 +75,104 @@ export default function CrmApp({ onNavigateLanding }) {
     setIsAuthenticated(false);
   };
 
-  const handleUpdateLead = async (id, status, notes) => {
+  // --------------------------------------------------------------------------
+  // HANDLERS: LEADS & PIPELINE COMERCIAL
+  // --------------------------------------------------------------------------
+  const handleUpdateLead = async (id, updatesOrStatus, maybeNotes) => {
+    let updates = {};
+    if (typeof updatesOrStatus === "object" && updatesOrStatus !== null) {
+      updates = updatesOrStatus;
+    } else {
+      if (updatesOrStatus !== undefined) updates.status = updatesOrStatus;
+      if (maybeNotes !== undefined) updates.notes = maybeNotes;
+    }
+
     // Optimistic update
     setLeads((prev) =>
-      prev.map((l) => {
-        if (l.id === id || l.refId === id) {
-          return {
-            ...l,
-            ...(status !== undefined ? { status } : {}),
-            ...(notes !== undefined ? { notes } : {}),
-          };
-        }
-        return l;
-      })
+      prev.map((l) => (l.id === id || l.refId === id ? { ...l, ...updates } : l))
     );
-    await crmUpdateLead(id, status, notes);
-    loadLeads();
+
+    await crmUpdateLead(id, updates);
+    loadAllData();
   };
 
   const handleCreateLead = async (leadData) => {
     const res = await crmCreateLead(leadData);
     if (res.ok && res.lead) {
       setLeads((prev) => [res.lead, ...prev]);
-    } else {
-      loadLeads();
     }
+    loadAllData();
   };
 
   const handleDeleteLead = async (id) => {
     setLeads((prev) => prev.filter((l) => l.id !== id && l.refId !== id));
     await crmDeleteLead(id);
+    loadAllData();
+  };
+
+  // Convertir oportunidad ganada a Cliente Activo
+  const handleConvertToClient = async (lead) => {
+    const clientData = {
+      clientName: lead.businessName || lead.fullName,
+      service: lead.service || "Publicidad Digital (Meta Ads)",
+      responsible: lead.responsible || "Mateo Díaz",
+      startDate: new Date().toISOString().slice(0, 10),
+      renewalDate: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
+      feeARS: Number(lead.feeARS) || 180000,
+      adBudget: Number(lead.adBudget) || 100000,
+      status: "activo",
+      contact: lead.phone || "",
+      notes: `Convertido desde oportunidad comercial ${lead.refId || lead.id}. ${lead.notes || ""}`.trim(),
+    };
+
+    const res = await crmCreateClient(clientData);
+    if (res.ok && res.client) {
+      setClients((prev) => [res.client, ...prev]);
+    }
+    await handleUpdateLead(lead.id || lead.refId, { status: "ganado" });
+    loadAllData();
+  };
+
+  // --------------------------------------------------------------------------
+  // HANDLERS: CLIENTES ACTIVOS
+  // --------------------------------------------------------------------------
+  const handleCreateClient = async (clientData) => {
+    const res = await crmCreateClient(clientData);
+    if (res.ok && res.client) {
+      setClients((prev) => [res.client, ...prev]);
+    }
+    loadAllData();
+  };
+
+  const handleUpdateClient = async (id, updates) => {
+    setClients((prev) =>
+      prev.map((c) => (c.id === id || c.refId === id ? { ...c, ...updates } : c))
+    );
+    await crmUpdateClient(id, updates);
+    loadAllData();
+  };
+
+  const handleDeleteClient = async (id) => {
+    setClients((prev) => prev.filter((c) => c.id !== id && c.refId !== id));
+    await crmDeleteClient(id);
+    loadAllData();
+  };
+
+  // --------------------------------------------------------------------------
+  // HANDLERS: GASTOS DEL MES
+  // --------------------------------------------------------------------------
+  const handleCreateExpense = async (expenseData) => {
+    const res = await crmCreateExpense(expenseData);
+    if (res.ok && res.expense) {
+      setExpenses((prev) => [res.expense, ...prev]);
+    }
+    loadAllData();
+  };
+
+  const handleDeleteExpense = async (id) => {
+    setExpenses((prev) => prev.filter((e) => e.id !== id));
+    await crmDeleteExpense(id);
+    loadAllData();
   };
 
   if (loadingAuth) {
@@ -106,10 +198,19 @@ export default function CrmApp({ onNavigateLanding }) {
   return (
     <CrmDashboard
       leads={leads}
-      onRefresh={loadLeads}
+      clients={clients}
+      expenses={expenses}
+      onRefresh={loadAllData}
+      refreshing={refreshing}
       onUpdateLead={handleUpdateLead}
       onCreateLead={handleCreateLead}
       onDeleteLead={handleDeleteLead}
+      onUpdateClient={handleUpdateClient}
+      onCreateClient={handleCreateClient}
+      onDeleteClient={handleDeleteClient}
+      onCreateExpense={handleCreateExpense}
+      onDeleteExpense={handleDeleteExpense}
+      onConvertToClient={handleConvertToClient}
       onLogout={handleLogout}
       onNavigateLanding={onNavigateLanding}
     />

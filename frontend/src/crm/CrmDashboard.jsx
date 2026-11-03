@@ -1,205 +1,175 @@
 import React, { useState } from "react";
-import {
-  RefreshCw,
-  LogOut,
-  Download,
-  Plus,
-  Calendar,
-  Table,
-  ExternalLink,
-} from "lucide-react";
-import { BrandLogo } from "../components/Icons";
-import CrmStatsCards from "./CrmStatsCards";
+import CrmNavbar from "./CrmNavbar";
+import CrmDashboardView from "./CrmDashboardView";
+import CrmCommercialView from "./CrmCommercialView";
+import CrmClientsView from "./CrmClientsView";
+import CrmExpensesView from "./CrmExpensesView";
+import CrmResponsesView from "./CrmResponsesView";
 import CrmMeetingsView from "./CrmMeetingsView";
-import CrmLeadsTable from "./CrmLeadsTable";
 import CrmNewLeadModal from "./CrmNewLeadModal";
+import CrmNewClientModal from "./CrmNewClientModal";
+import CrmNewExpenseModal from "./CrmNewExpenseModal";
 
 export default function CrmDashboard({
-  leads,
+  leads = [],
+  clients = [],
+  expenses = [],
   onRefresh,
+  refreshing = false,
   onUpdateLead,
   onCreateLead,
   onDeleteLead,
+  onUpdateClient,
+  onCreateClient,
+  onDeleteClient,
+  onCreateExpense,
+  onDeleteExpense,
+  onConvertToClient,
   onLogout,
   onNavigateLanding,
 }) {
-  const [activeTab, setActiveTab] = useState("meetings"); // "meetings" | "table"
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState("dashboard"); // "dashboard" | "commercial" | "clients" | "meetings" | "responses" | "expenses"
+  const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
+  const [isNewClientOpen, setIsNewClientOpen] = useState(false);
+  const [isNewExpenseOpen, setIsNewExpenseOpen] = useState(false);
 
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await onRefresh();
-    setTimeout(() => setRefreshing(false), 500);
-  };
+  // Active meetings count
+  const meetingsCount = leads.filter(
+    (l) => (l.service === "Reunión Gratuita 20 min" || l.meetingDate) && l.status === "reunion_agendada"
+  ).length;
 
-  const exportCsv = () => {
-    if (leads.length === 0) return;
-    const headers = [
-      "ID",
-      "Fecha Alta",
-      "Nombre",
-      "Negocio",
-      "Telefono",
-      "Email",
-      "Servicio",
-      "Fecha Reunion",
-      "Hora Reunion",
-      "Estado",
-      "Mensaje",
-      "Notas Internas",
-    ];
-    const rows = leads.map((l) => [
-      `"${l.refId || l.id || ""}"`,
-      `"${l.createdAt || ""}"`,
-      `"${(l.fullName || "").replace(/"/g, '""')}"`,
-      `"${(l.businessName || "").replace(/"/g, '""')}"`,
-      `"${(l.phone || "").replace(/"/g, '""')}"`,
-      `"${(l.email || "").replace(/"/g, '""')}"`,
-      `"${(l.service || "").replace(/"/g, '""')}"`,
-      `"${l.meetingDate || ""}"`,
-      `"${l.meetingTime || ""}"`,
-      `"${l.status || ""}"`,
-      `"${(l.message || "").replace(/"/g, '""')}"`,
-      `"${(l.notes || "").replace(/"/g, '""')}"`,
-    ]);
+  const exportAllCsv = () => {
+    // Generate comprehensive CSV matching the Excel sheets
+    let csv = "\uFEFF"; // UTF-8 BOM for Excel compatibility
 
-    const csvContent =
-      "data:text/csv;charset=utf-8," +
-      [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
-    const encodedUri = encodeURI(csvContent);
+    // 1. CLIENTES ACTIVOS
+    csv += "--- HOJA: CLIENTES ACTIVOS ---\n";
+    csv += "ID,Cliente / Negocio,Servicio Contratado,Responsable,Inicio,Próxima Renovación,Honorarios Mensuales ARS,Inversión Anuncios ARS,Estado,Contacto,Notas\n";
+    clients.forEach((c) => {
+      csv += `"${c.refId || c.id || ""}","${(c.clientName || "").replace(/"/g, '""')}","${(c.service || "").replace(/"/g, '""')}","${(c.responsible || "").replace(/"/g, '""')}","${c.startDate || ""}","${c.renewalDate || ""}","${c.feeARS || 0}","${c.adBudget || 0}","${c.status || "activo"}","${(c.contact || "").replace(/"/g, '""')}","${(c.notes || "").replace(/"/g, '""')}"\n`;
+    });
+    csv += "\n\n";
+
+    // 2. CRM COMERCIAL
+    csv += "--- HOJA: CRM COMERCIAL ---\n";
+    csv += "ID,Fecha Ingreso,Nombre,Negocio,Rubro,WhatsApp,Redes,Origen,Servicio,Estado,Prioridad,Responsable,Próximo Contacto,Honorarios ARS,Probabilidad %,Ingreso Estimado ARS,Observaciones\n";
+    leads.forEach((l) => {
+      const fee = Number(l.feeARS) || 0;
+      const prob = Number(l.probability) || 50;
+      const est = Math.round(fee * (prob / 100));
+      csv += `"${l.refId || l.id || ""}","${l.createdAt ? l.createdAt.slice(0, 10) : ""}","${(l.fullName || "").replace(/"/g, '""')}","${(l.businessName || "").replace(/"/g, '""')}","${(l.rubro || "").replace(/"/g, '""')}","${(l.phone || "").replace(/"/g, '""')}","${(l.socials || "").replace(/"/g, '""')}","${(l.origin || "").replace(/"/g, '""')}","${(l.service || "").replace(/"/g, '""')}","${l.status || "nuevo"}","${l.priority || "media"}","${(l.responsible || "").replace(/"/g, '""')}","${l.nextContactDate || ""}","${fee}","${prob}%","${est}","${(l.notes || "").replace(/"/g, '""')}"\n`;
+    });
+    csv += "\n\n";
+
+    // 3. GASTOS DEL MES
+    csv += "--- HOJA: GASTOS DEL MES ---\n";
+    csv += "ID,Fecha,Categoría,Detalle,Monto ARS\n";
+    expenses.forEach((e) => {
+      csv += `"${e.id || ""}","${e.date || ""}","${(e.category || "").replace(/"/g, '""')}","${(e.description || "").replace(/"/g, '""')}","${e.amount || 0}"\n`;
+    });
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute(
-      "download",
-      `nexo_leads_${new Date().toISOString().slice(0, 10)}.csv`
-    );
+    link.setAttribute("href", url);
+    link.setAttribute("download", `NEXO_Creative_CRM_Export_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   return (
-    <div className="min-h-screen bg-[#0d0f12] text-white flex flex-col">
-      {/* Barra de Navegación Superior del CRM */}
-      <header className="bg-[#141519] border-b border-white/10 sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <BrandLogo size="default" />
-            <div className="hidden sm:block border-l border-white/10 pl-3">
-              <span className="text-xs font-black text-white tracking-wide uppercase">
-                Panel CRM & Agenda
-              </span>
-              <div className="flex items-center gap-1.5 text-[10px] text-gray-400">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#22C55E]" />
-                <span>Base de Datos Conectada</span>
-              </div>
-            </div>
-          </div>
+    <div className="min-h-screen bg-[#0d0f12] text-white flex flex-col relative select-none">
+      {/* Barra de Navegación (Desktop superior + Mobile inferior con 'Más') */}
+      <CrmNavbar
+        activeTab={activeTab}
+        onSelectTab={setActiveTab}
+        leadsCount={leads.length}
+        clientsCount={clients.length}
+        meetingsCount={meetingsCount}
+        onOpenNewLead={() => setIsNewLeadOpen(true)}
+        onOpenNewClient={() => setIsNewClientOpen(true)}
+        onOpenNewExpense={() => setIsNewExpenseOpen(true)}
+        onExportCsv={exportAllCsv}
+        onRefresh={onRefresh}
+        refreshing={refreshing}
+        onLogout={onLogout}
+        onNavigateLanding={onNavigateLanding}
+      />
 
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleRefresh}
-              className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white transition-colors"
-              title="Actualizar datos"
-            >
-              <RefreshCw
-                className={`w-4 h-4 ${refreshing ? "animate-spin text-[#22C55E]" : ""}`}
-              />
-            </button>
+      {/* Contenido Principal con Espaciado para Celular */}
+      <main className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-5 sm:py-8 flex-1 w-full pb-24 md:pb-12">
+        {activeTab === "dashboard" && (
+          <CrmDashboardView
+            leads={leads}
+            clients={clients}
+            expenses={expenses}
+            onNavigateTab={setActiveTab}
+          />
+        )}
 
-            <button
-              type="button"
-              onClick={exportCsv}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-gray-300 border border-white/10 transition-colors"
-              title="Exportar a Excel / CSV"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>Exportar CSV</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setIsModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white text-xs font-black transition-colors shadow-sm"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Nuevo Lead</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={onNavigateLanding}
-              className="hidden md:inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-gray-400 hover:text-white transition-colors"
-            >
-              <span>Ver Landing</span>
-              <ExternalLink className="w-3 h-3" />
-            </button>
-
-            <button
-              type="button"
-              onClick={onLogout}
-              className="p-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-colors"
-              title="Cerrar Sesión"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Contenido Principal */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1 w-full space-y-6">
-        {/* Métricas / Estadísticas */}
-        <CrmStatsCards leads={leads} />
-
-        {/* Pestañas de Vista */}
-        <div className="flex items-center gap-2 border-b border-white/10 pb-3">
-          <button
-            type="button"
-            onClick={() => setActiveTab("meetings")}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-colors cursor-pointer ${
-              activeTab === "meetings"
-                ? "bg-[#16A34A] text-white"
-                : "bg-white/5 text-gray-400 hover:text-white"
-            }`}
-          >
-            <Calendar className="w-4 h-4" />
-            <span>Reuniones 20 min</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab("table")}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-colors cursor-pointer ${
-              activeTab === "table"
-                ? "bg-[#16A34A] text-white"
-                : "bg-white/5 text-gray-400 hover:text-white"
-            }`}
-          >
-            <Table className="w-4 h-4" />
-            <span>Todos los Leads ({leads.length})</span>
-          </button>
-        </div>
-
-        {/* Contenido de la Pestaña Activa */}
-        {activeTab === "meetings" ? (
-          <CrmMeetingsView leads={leads} onUpdateLead={onUpdateLead} />
-        ) : (
-          <CrmLeadsTable
+        {activeTab === "commercial" && (
+          <CrmCommercialView
             leads={leads}
             onUpdateLead={onUpdateLead}
             onDeleteLead={onDeleteLead}
+            onConvertToClient={onConvertToClient}
+            onOpenNewLead={() => setIsNewLeadOpen(true)}
+          />
+        )}
+
+        {activeTab === "clients" && (
+          <CrmClientsView
+            clients={clients}
+            onUpdateClient={onUpdateClient}
+            onDeleteClient={onDeleteClient}
+            onOpenNewClient={() => setIsNewClientOpen(true)}
+          />
+        )}
+
+        {activeTab === "meetings" && (
+          <CrmMeetingsView
+            leads={leads}
+            onUpdateLead={onUpdateLead}
+          />
+        )}
+
+        {activeTab === "responses" && (
+          <CrmResponsesView
+            leads={leads}
+            onUpdateLead={onUpdateLead}
+            onDeleteLead={onDeleteLead}
+            onNavigateCommercial={() => setActiveTab("commercial")}
+          />
+        )}
+
+        {activeTab === "expenses" && (
+          <CrmExpensesView
+            expenses={expenses}
+            onDeleteExpense={onDeleteExpense}
+            onOpenNewExpense={() => setIsNewExpenseOpen(true)}
           />
         )}
       </main>
 
-      {/* Modal para Crear Lead Manual */}
+      {/* Modales de Creación */}
       <CrmNewLeadModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={isNewLeadOpen}
+        onClose={() => setIsNewLeadOpen(false)}
         onCreateLead={onCreateLead}
+      />
+
+      <CrmNewClientModal
+        isOpen={isNewClientOpen}
+        onClose={() => setIsNewClientOpen(false)}
+        onCreateClient={onCreateClient}
+      />
+
+      <CrmNewExpenseModal
+        isOpen={isNewExpenseOpen}
+        onClose={() => setIsNewExpenseOpen(false)}
+        onCreateExpense={onCreateExpense}
       />
     </div>
   );

@@ -1141,7 +1141,7 @@ export function createSecurityMiddleware() {
       return sendJson(res, 200, { ok: true, leads: records });
     }
 
-    // CRM: Actualizar Estado o Notas de un Lead
+    // CRM: Actualizar Lead / Oportunidad Comercial
     if (url === "/api/crm/leads" && req.method === "PATCH") {
       if (!verifyCrmSession(req)) {
         return sendJson(res, 401, { ok: false, error: "No autorizado." });
@@ -1152,22 +1152,67 @@ export function createSecurityMiddleware() {
       } catch {
         return sendJson(res, 400, { ok: false, error: "Datos inválidos." });
       }
-      const { id, status, notes } = body;
+      const { id } = body;
       if (!id) {
         return sendJson(res, 400, { ok: false, error: "Falta el ID del lead." });
       }
       const updates = {};
-      if (status !== undefined) updates.status = sanitizeText(status, 40);
-      if (notes !== undefined) updates.notes = sanitizeText(notes, 1000);
+      if (body.status !== undefined) updates.status = sanitizeText(body.status, 40);
+      if (body.notes !== undefined) updates.notes = sanitizeText(body.notes, 1000);
+      if (body.priority !== undefined) updates.priority = sanitizeText(body.priority, 20);
+      if (body.responsible !== undefined) updates.responsible = sanitizeText(body.responsible, 60);
+      if (body.nextContactDate !== undefined) updates.nextContactDate = sanitizeText(body.nextContactDate, 30);
+      if (body.adBudget !== undefined) updates.adBudget = Number(body.adBudget) || 0;
+      if (body.feeARS !== undefined) updates.feeARS = Number(body.feeARS) || 0;
+      if (body.probability !== undefined) {
+        const prob = Math.min(100, Math.max(0, Number(body.probability) || 0));
+        updates.probability = prob;
+        const fee = updates.feeARS !== undefined ? updates.feeARS : (Number(body.feeARS) || 0);
+        updates.estimatedRevenue = Math.round(fee * (prob / 100));
+      }
+      if (body.rubro !== undefined) updates.rubro = sanitizeText(body.rubro, 80);
+      if (body.socials !== undefined) updates.socials = sanitizeText(body.socials, 100);
+      if (body.businessName !== undefined) updates.businessName = sanitizeText(body.businessName, 80);
+      if (body.fullName !== undefined) updates.fullName = sanitizeText(body.fullName, 80);
+      if (body.phone !== undefined) updates.phone = sanitizeText(body.phone, 30);
+      if (body.service !== undefined) updates.service = sanitizeText(body.service, 80);
 
       const updated = await updateLeadRecord(id, updates);
       if (!updated) {
         return sendJson(res, 404, { ok: false, error: "Lead no encontrado." });
       }
+
+      // Si el lead se marcó como "ganado", verificar si debe crearse en clientes activos
+      if (body.autoConvertToClient && updates.status === "ganado") {
+        const existingClients = readProtectedRecords("clients.jsonl");
+        const alreadyExists = existingClients.some(
+          (c) => c.contact === updated.phone || c.clientName === updated.businessName
+        );
+        if (!alreadyExists) {
+          const clientRef = "CLI-" + crypto.randomBytes(2).toString("hex").toUpperCase();
+          const newClient = {
+            id: clientRef,
+            refId: clientRef,
+            clientName: updated.businessName || updated.fullName,
+            service: updated.service || "Servicio Integral",
+            responsible: updated.responsible || "Mateo Díaz",
+            startDate: new Date().toISOString().slice(0, 10),
+            renewalDate: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
+            feeARS: updated.feeARS || 180000,
+            adBudget: updated.adBudget || 100000,
+            status: "activo",
+            contact: updated.phone || "",
+            notes: `Convertido automáticamente desde lead ${updated.refId || updated.id}. ${updated.notes || ""}`.trim(),
+            createdAt: new Date().toISOString(),
+          };
+          appendProtectedRecord("clients.jsonl", newClient);
+        }
+      }
+
       return sendJson(res, 200, { ok: true, lead: updated });
     }
 
-    // CRM: Crear Lead Manual
+    // CRM: Crear Lead / Oportunidad Manual
     if (url === "/api/crm/leads" && req.method === "POST") {
       if (!verifyCrmSession(req)) {
         return sendJson(res, 401, { ok: false, error: "No autorizado." });
@@ -1178,20 +1223,32 @@ export function createSecurityMiddleware() {
       } catch {
         return sendJson(res, 400, { ok: false, error: "Datos inválidos." });
       }
-      const refId = "NEXO-MANUAL-" + crypto.randomBytes(2).toString("hex").toUpperCase();
+      const refId = "NEXO-" + crypto.randomBytes(2).toString("hex").toUpperCase();
+      const fee = Number(body.feeARS) || 0;
+      const prob = Math.min(100, Math.max(0, Number(body.probability) || 50));
       const newRecord = {
         id: refId,
         refId,
         createdAt: new Date().toISOString(),
         fullName: sanitizeText(body.fullName || "Sin nombre", 80),
         businessName: sanitizeText(body.businessName || "No especificado", 80),
+        rubro: sanitizeText(body.rubro || "Comercios y Locales", 80),
         email: sanitizeText(body.email || "", 120),
         phone: sanitizeText(body.phone || "", 30),
+        socials: sanitizeText(body.socials || "", 100),
         service: sanitizeText(body.service || "Contacto Directo", 80),
-        message: sanitizeText(body.message || "Lead ingresado manualmente en CRM", 500),
+        origin: sanitizeText(body.origin || "Carga Manual", 50),
+        message: sanitizeText(body.message || "Lead ingresado en CRM Comercial", 500),
         meetingDate: body.meetingDate ? sanitizeText(body.meetingDate, 30) : null,
         meetingTime: body.meetingTime ? sanitizeText(body.meetingTime, 10) : null,
         status: sanitizeText(body.status || "nuevo", 40),
+        priority: sanitizeText(body.priority || "media", 20),
+        responsible: sanitizeText(body.responsible || "Mateo Díaz", 60),
+        nextContactDate: body.nextContactDate ? sanitizeText(body.nextContactDate, 30) : null,
+        adBudget: Number(body.adBudget) || 0,
+        feeARS: fee,
+        probability: prob,
+        estimatedRevenue: Math.round(fee * (prob / 100)),
         notes: sanitizeText(body.notes || "", 1000),
       };
       await saveLeadRecord(newRecord);
@@ -1216,28 +1273,214 @@ export function createSecurityMiddleware() {
       return sendJson(res, 200, { ok: true });
     }
 
-    // CRM: Estadísticas Generales
+    // ------------------------------------------------------------------------
+    // CRM: Clientes Activos (Hoja Clientes Activos del Excel)
+    // ------------------------------------------------------------------------
+    if (url === "/api/crm/clients" && req.method === "GET") {
+      if (!verifyCrmSession(req)) {
+        return sendJson(res, 401, { ok: false, error: "No autorizado." });
+      }
+      const clients = readProtectedRecords("clients.jsonl");
+      return sendJson(res, 200, { ok: true, clients });
+    }
+
+    if (url === "/api/crm/clients" && req.method === "POST") {
+      if (!verifyCrmSession(req)) {
+        return sendJson(res, 401, { ok: false, error: "No autorizado." });
+      }
+      let body;
+      try {
+        body = await readJsonBody(req);
+      } catch {
+        return sendJson(res, 400, { ok: false, error: "Datos inválidos." });
+      }
+      const refId = "CLI-" + crypto.randomBytes(2).toString("hex").toUpperCase();
+      const newClient = {
+        id: refId,
+        refId,
+        clientName: sanitizeText(body.clientName || "Cliente", 80),
+        service: sanitizeText(body.service || "Servicio Integral", 80),
+        responsible: sanitizeText(body.responsible || "Mateo Díaz", 60),
+        startDate: body.startDate ? sanitizeText(body.startDate, 30) : new Date().toISOString().slice(0, 10),
+        renewalDate: body.renewalDate ? sanitizeText(body.renewalDate, 30) : new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
+        feeARS: Number(body.feeARS) || 0,
+        adBudget: Number(body.adBudget) || 0,
+        status: sanitizeText(body.status || "activo", 30),
+        contact: sanitizeText(body.contact || "", 50),
+        notes: sanitizeText(body.notes || "", 1000),
+        createdAt: new Date().toISOString(),
+      };
+      appendProtectedRecord("clients.jsonl", newClient);
+      return sendJson(res, 201, { ok: true, client: newClient });
+    }
+
+    if (url === "/api/crm/clients" && req.method === "PATCH") {
+      if (!verifyCrmSession(req)) {
+        return sendJson(res, 401, { ok: false, error: "No autorizado." });
+      }
+      let body;
+      try {
+        body = await readJsonBody(req);
+      } catch {
+        return sendJson(res, 400, { ok: false, error: "Datos inválidos." });
+      }
+      const { id } = body;
+      if (!id) {
+        return sendJson(res, 400, { ok: false, error: "Falta el ID del cliente." });
+      }
+      const updates = {};
+      if (body.clientName !== undefined) updates.clientName = sanitizeText(body.clientName, 80);
+      if (body.service !== undefined) updates.service = sanitizeText(body.service, 80);
+      if (body.responsible !== undefined) updates.responsible = sanitizeText(body.responsible, 60);
+      if (body.startDate !== undefined) updates.startDate = sanitizeText(body.startDate, 30);
+      if (body.renewalDate !== undefined) updates.renewalDate = sanitizeText(body.renewalDate, 30);
+      if (body.feeARS !== undefined) updates.feeARS = Number(body.feeARS) || 0;
+      if (body.adBudget !== undefined) updates.adBudget = Number(body.adBudget) || 0;
+      if (body.status !== undefined) updates.status = sanitizeText(body.status, 30);
+      if (body.contact !== undefined) updates.contact = sanitizeText(body.contact, 50);
+      if (body.notes !== undefined) updates.notes = sanitizeText(body.notes, 1000);
+
+      const updated = updateProtectedRecord("clients.jsonl", id, updates);
+      if (!updated) {
+        return sendJson(res, 404, { ok: false, error: "Cliente no encontrado." });
+      }
+      return sendJson(res, 200, { ok: true, client: updated });
+    }
+
+    if (url === "/api/crm/clients" && req.method === "DELETE") {
+      if (!verifyCrmSession(req)) {
+        return sendJson(res, 401, { ok: false, error: "No autorizado." });
+      }
+      let body;
+      try {
+        body = await readJsonBody(req);
+      } catch {
+        return sendJson(res, 400, { ok: false, error: "Datos inválidos." });
+      }
+      if (!body.id) {
+        return sendJson(res, 400, { ok: false, error: "Falta el ID del cliente." });
+      }
+      deleteProtectedRecord("clients.jsonl", body.id);
+      return sendJson(res, 200, { ok: true });
+    }
+
+    // ------------------------------------------------------------------------
+    // CRM: Gastos del Mes & Control Financiero
+    // ------------------------------------------------------------------------
+    if (url === "/api/crm/expenses" && req.method === "GET") {
+      if (!verifyCrmSession(req)) {
+        return sendJson(res, 401, { ok: false, error: "No autorizado." });
+      }
+      const expenses = readProtectedRecords("expenses.jsonl");
+      return sendJson(res, 200, { ok: true, expenses });
+    }
+
+    if (url === "/api/crm/expenses" && req.method === "POST") {
+      if (!verifyCrmSession(req)) {
+        return sendJson(res, 401, { ok: false, error: "No autorizado." });
+      }
+      let body;
+      try {
+        body = await readJsonBody(req);
+      } catch {
+        return sendJson(res, 400, { ok: false, error: "Datos inválidos." });
+      }
+      const refId = "EXP-" + crypto.randomBytes(2).toString("hex").toUpperCase();
+      const newExpense = {
+        id: refId,
+        date: body.date ? sanitizeText(body.date, 30) : new Date().toISOString().slice(0, 10),
+        category: sanitizeText(body.category || "Varios", 50),
+        amount: Math.max(0, Number(body.amount) || 0),
+        description: sanitizeText(body.description || "Gasto operativo", 200),
+        createdAt: new Date().toISOString(),
+      };
+      appendProtectedRecord("expenses.jsonl", newExpense);
+      return sendJson(res, 201, { ok: true, expense: newExpense });
+    }
+
+    if (url === "/api/crm/expenses" && req.method === "DELETE") {
+      if (!verifyCrmSession(req)) {
+        return sendJson(res, 401, { ok: false, error: "No autorizado." });
+      }
+      let body;
+      try {
+        body = await readJsonBody(req);
+      } catch {
+        return sendJson(res, 400, { ok: false, error: "Datos inválidos." });
+      }
+      if (!body.id) {
+        return sendJson(res, 400, { ok: false, error: "Falta el ID del gasto." });
+      }
+      deleteProtectedRecord("expenses.jsonl", body.id);
+      return sendJson(res, 200, { ok: true });
+    }
+
+    // ------------------------------------------------------------------------
+    // CRM: Estadísticas y Métricas del Dashboard (Excel exacto)
+    // ------------------------------------------------------------------------
     if (url === "/api/crm/stats" && req.method === "GET") {
       if (!verifyCrmSession(req)) {
         return sendJson(res, 401, { ok: false, error: "No autorizado." });
       }
       const records = await getLeadRecords();
-      const totalLeads = records.length;
+      const clients = readProtectedRecords("clients.jsonl");
+      const expenses = readProtectedRecords("expenses.jsonl");
+
+      // Clientes activos y honorarios mensuales
+      const activeClients = clients.filter(
+        (c) => c.status === "activo" || c.status === "por_renovar"
+      );
+      const monthlyRevenue = activeClients.reduce((acc, c) => acc + (Number(c.feeARS) || 0), 0);
+      const totalAdSpendManaged = activeClients.reduce((acc, c) => acc + (Number(c.adBudget) || 0), 0);
+
+      // Gastos del mes actual
+      const currentYearMonth = new Date().toISOString().slice(0, 7); // "YYYY-MM"
+      const monthlyExpenses = expenses
+        .filter((e) => (e.date || "").startsWith(currentYearMonth) || !e.date)
+        .reduce((acc, e) => acc + (Number(e.amount) || 0), 0);
+
+      const monthlyBalance = monthlyRevenue - monthlyExpenses;
+
+      // Pipeline Comercial
+      const commercialLeads = records.filter((r) => r.status !== "archivado");
+      const pipelineValue = commercialLeads.reduce((acc, l) => {
+        if (l.status === "ganado" || l.status === "perdido") return acc;
+        const fee = Number(l.feeARS) || 0;
+        const prob = Number(l.probability) || 50;
+        return acc + Math.round(fee * (prob / 100));
+      }, 0);
+
+      // Etapas comerciales exactas del Excel Dashboard
+      const stages = {
+        nuevo: records.filter((r) => r.status === "nuevo").length,
+        contactado: records.filter((r) => r.status === "contactado").length,
+        reunion_agendada: records.filter((r) => r.status === "reunion_agendada").length,
+        propuesta_enviada: records.filter((r) => r.status === "propuesta_enviada").length,
+        negociacion: records.filter((r) => r.status === "negociacion").length,
+        ganado: records.filter((r) => r.status === "ganado").length,
+        perdido: records.filter((r) => r.status === "perdido").length,
+      };
+
+      // Reuniones de 20 min
       const meetings = records.filter(
         (r) => r.service === "Reunión Gratuita 20 min" || r.meetingDate
       );
       const activeMeetings = meetings.filter((r) => r.status === "reunion_agendada");
-      const pendingLeads = records.filter((r) => r.status === "nuevo");
-      const wonLeads = records.filter((r) => r.status === "ganado");
 
       return sendJson(res, 200, {
         ok: true,
         stats: {
-          totalLeads,
+          monthlyRevenue,
+          monthlyExpenses,
+          monthlyBalance,
+          totalClients: clients.length,
+          activeClientsCount: activeClients.length,
+          totalAdSpendManaged,
+          pipelineValue,
+          totalOpportunities: commercialLeads.length,
+          stages,
           totalMeetings: meetings.length,
           activeMeetings: activeMeetings.length,
-          pendingLeads: pendingLeads.length,
-          wonLeads: wonLeads.length,
         },
       });
     }
