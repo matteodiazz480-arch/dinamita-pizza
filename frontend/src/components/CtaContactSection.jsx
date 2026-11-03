@@ -288,12 +288,12 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
               >
                 <div className="flex items-center justify-between pb-2.5 border-b border-white/5 text-xs">
                   <span className="font-extrabold text-white flex items-center gap-1.5">
-                    <span className="w-5 h-5 rounded-full bg-white text-[#111111] font-black flex items-center justify-center text-[10px]">
+                    <span className="w-5 h-5 rounded-full bg-[#16A34A] text-white font-black flex items-center justify-center text-[10px]">
                       1
                     </span>
                     <span>Elegí tu día y horario</span>
                   </span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-white border border-white/15">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#16A34A]/15 text-[#22C55E] border border-[#16A34A]/30">
                     Duración: 20 min
                   </span>
                 </div>
@@ -302,7 +302,7 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="text-[11px] font-bold text-gray-400 flex items-center gap-1">
-                      <CalendarIcon className="w-3.5 h-3.5 text-white" />
+                      <CalendarIcon className="w-3.5 h-3.5 text-[#22C55E]" />
                       <span>Días disponibles</span>
                     </label>
                     <div className="flex items-center gap-1">
@@ -339,7 +339,7 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
                           onClick={() => handleSelectDay(day)}
                           className={`flex flex-col items-center justify-center min-w-[50px] sm:min-w-[58px] py-1.5 sm:py-2 px-1 rounded-xl border transition-all cursor-pointer flex-shrink-0 select-none ${
                             isSelected
-                              ? "bg-white border-white text-[#111111] scale-102 font-black shadow-sm"
+                              ? "bg-[#16A34A] border-[#16A34A] text-white scale-102 font-black shadow-sm"
                               : "bg-[#181a20] border-white/10 text-gray-300 hover:border-white/20"
                           }`}
                         >
@@ -361,7 +361,7 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
                 {/* Selector de Horarios en Grilla Compacta */}
                 <div>
                   <label className="text-[11px] font-bold text-gray-400 flex items-center gap-1 mb-2">
-                    <Clock className="w-3.5 h-3.5 text-white" />
+                    <Clock className="w-3.5 h-3.5 text-[#22C55E]" />
                     <span>Horario disponible</span>
                   </label>
 
@@ -375,7 +375,7 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
                           onClick={() => handleSelectTime(time)}
                           className={`py-1.5 px-1 rounded-lg text-xs font-bold border transition-all cursor-pointer text-center ${
                             isSelected
-                              ? "bg-white border-white text-[#111111] font-black shadow-sm"
+                              ? "bg-[#16A34A] border-[#16A34A] text-white font-black shadow-sm"
                               : "bg-[#181a20] border-white/10 text-gray-300 hover:border-white/25"
                           }`}
                         >
@@ -389,14 +389,14 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
                 {/* Resumen y Botón para Continuar a Etapa 2 */}
                 {selectedDay && (
                   <div className="pt-2">
-                    <div className="p-2.5 rounded-xl bg-[#181a20] border border-white/15 flex items-center justify-between text-xs mb-3">
+                    <div className="p-2.5 rounded-xl bg-[#181a20] border border-[#16A34A]/30 flex items-center justify-between text-xs mb-3">
                       <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-white" />
+                        <span className="w-2 h-2 rounded-full bg-[#22C55E]" />
                         <span className="font-bold text-white text-[11px] sm:text-xs">
                           {selectedDay.dayOfWeek} {selectedDay.dayNumber} {selectedDay.monthName} · {selectedTime} hs
                         </span>
                       </div>
-                      <span className="text-[10px] text-white font-bold">
+                      <span className="text-[10px] text-[#22C55E] font-bold">
                         Paso 1 listo
                       </span>
                     </div>
@@ -404,7 +404,7 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
                     <button
                       type="button"
                       onClick={handleGoToStep2}
-                      className="w-full inline-flex items-center justify-center gap-2 bg-white hover:bg-neutral-200 text-[#111111] font-black text-xs sm:text-sm py-2.5 sm:py-3 rounded-xl transition-all cursor-pointer shadow-sm active:scale-98"
+                      className="w-full inline-flex items-center justify-center gap-2 bg-[#16A34A] hover:bg-[#15803D] text-white font-black text-xs sm:text-sm py-2.5 sm:py-3 rounded-xl transition-all cursor-pointer shadow-sm active:scale-98"
                     >
                       <span>Continuar con este horario</span>
                       <ArrowRight className="w-4 h-4" />
@@ -433,7 +433,7 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
                     <ArrowLeft className="w-3.5 h-3.5" />
                     <span>Volver a horario</span>
                   </button>
-                  <span className="font-extrabold text-white text-[11px]">
+                  <span className="font-extrabold text-[#22C55E] text-[11px]">
                     {selectedDay?.dayOfWeek} {selectedDay?.dayNumber} {selectedDay?.monthName} · {selectedTime} hs
                   </span>
                 </div>
@@ -473,7 +473,7 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
                         className={`w-full bg-[#181a20] border rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none transition-colors ${
                           errors.fullName
                             ? "border-red-500"
-                            : "border-white/12 focus:border-white"
+                            : "border-white/12 focus:border-[#16A34A]"
                         }`}
                       />
                       {errors.fullName && (
@@ -496,7 +496,7 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
                         className={`w-full bg-[#181a20] border rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none transition-colors ${
                           errors.phone
                             ? "border-red-500"
-                            : "border-white/12 focus:border-white"
+                            : "border-white/12 focus:border-[#16A34A]"
                         }`}
                       />
                       {errors.phone && (
@@ -521,7 +521,7 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
                         className={`w-full bg-[#181a20] border rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none transition-colors ${
                           errors.email
                             ? "border-red-500"
-                            : "border-white/12 focus:border-white"
+                            : "border-white/12 focus:border-[#16A34A]"
                         }`}
                       />
                       {errors.email && (
@@ -540,7 +540,7 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
                           setFormData({ ...formData, businessName: e.target.value })
                         }
                         placeholder="Nombre de tu negocio (opcional)"
-                        className="w-full bg-[#181a20] border border-white/12 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-white transition-colors"
+                        className="w-full bg-[#181a20] border border-white/12 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#16A34A] transition-colors"
                       />
                     </div>
                   </div>
@@ -556,14 +556,14 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
                           privacyConsent: e.target.checked,
                         })
                       }
-                      className="mt-0.5 rounded border-gray-600 text-white focus:ring-white"
+                      className="mt-0.5 rounded border-gray-600 text-[#16A34A] focus:ring-[#16A34A]"
                     />
                     <span className="text-[10px] text-gray-400 leading-tight">
                       Acepto el uso de mis datos para coordinar la reunión según la{" "}
                       <button
                         type="button"
                         onClick={() => onOpenLegalDoc?.("privacidad")}
-                        className="text-gray-300 underline hover:text-white cursor-pointer"
+                        className="text-gray-300 underline hover:text-[#22C55E] cursor-pointer"
                       >
                         Política de Privacidad
                       </button>
@@ -580,10 +580,10 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
                   <button
                     type="submit"
                     disabled={status === "submitting"}
-                    className="w-full mt-1.5 inline-flex items-center justify-center gap-1.5 bg-white hover:bg-neutral-200 text-[#111111] font-black text-xs sm:text-sm px-4 py-2.5 sm:py-3 rounded-xl transition-all cursor-pointer shadow-sm active:scale-98 disabled:opacity-50"
+                    className="w-full mt-1.5 inline-flex items-center justify-center gap-1.5 bg-[#16A34A] hover:bg-[#15803D] text-white font-black text-xs sm:text-sm px-4 py-2.5 sm:py-3 rounded-xl transition-all cursor-pointer shadow-sm active:scale-98 disabled:opacity-50"
                   >
                     {status === "submitting" ? (
-                      <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     ) : (
                       <>
                         <span>Confirmar reunión de 20 min</span>
@@ -595,10 +595,10 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
 
                 <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[9px] text-gray-400">
                   <span className="flex items-center gap-1">
-                    <ShieldCheck className="w-3 h-3 text-white" />
+                    <ShieldCheck className="w-3 h-3 text-[#22C55E]" />
                     <span>Datos protegidos · Ley 25.326</span>
                   </span>
-                  <span>100% Sin Costo</span>
+                  <span className="text-[#22C55E] font-semibold">100% Sin Costo</span>
                 </div>
               </motion.div>
             )}
@@ -613,12 +613,12 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
                 transition={{ duration: 0.3 }}
                 className="text-center py-4 space-y-3.5"
               >
-                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/10 border-2 border-white flex items-center justify-center mx-auto text-white">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[#16A34A]/15 border-2 border-[#16A34A] flex items-center justify-center mx-auto text-[#22C55E]">
                   <CheckCircle2 className="w-7 h-7 sm:w-8 sm:h-8" />
                 </div>
 
                 <div>
-                  <span className="text-[10px] font-mono tracking-widest text-white uppercase font-bold">
+                  <span className="text-[10px] font-mono tracking-widest text-[#22C55E] uppercase font-bold">
                     Código: {confirmedBooking.refId}
                   </span>
                   <h3 className="text-lg sm:text-xl font-black text-white mt-0.5">
@@ -632,7 +632,7 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
                 <div className="bg-[#181a20] border border-white/10 rounded-xl p-3 text-left text-xs space-y-1.5">
                   <div className="flex items-center justify-between text-gray-400">
                     <span>Fecha y hora</span>
-                    <span className="font-bold text-white">
+                    <span className="font-bold text-[#22C55E]">
                       {confirmedBooking.dateString} · {confirmedBooking.timeString} hs
                     </span>
                   </div>
@@ -686,9 +686,9 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
             href={getWhatsAppUrl()}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-[11px] font-bold text-gray-400 hover:text-white transition-colors"
+            className="inline-flex items-center gap-1.5 text-[11px] font-bold text-gray-400 hover:text-[#22C55E] transition-colors"
           >
-            <WhatsAppIcon className="w-3.5 h-3.5 fill-white" />
+            <WhatsAppIcon className="w-3.5 h-3.5 fill-[#25D366]" />
             <span>O contactanos por WhatsApp directo</span>
           </a>
         </div>

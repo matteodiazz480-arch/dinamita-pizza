@@ -110,7 +110,7 @@ export default function PlanFinderModal({
 
             {recommendedPlan ? (
               <div className="space-y-5">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-white">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#22C55E]">
                   <Compass className="w-4 h-4" />
                   <span>Resultado para tu negocio</span>
                 </div>
@@ -122,7 +122,7 @@ export default function PlanFinderModal({
                   >
                     {recommendedPlan.name}
                   </h3>
-                  <p className="text-xs sm:text-sm font-semibold text-white mt-1">
+                  <p className="text-xs sm:text-sm font-semibold text-[#22C55E] mt-1">
                     {recommendedPlan.tagline}
                   </p>
                   <p className="text-xs sm:text-sm text-gray-300 mt-2 leading-relaxed">
@@ -135,7 +135,7 @@ export default function PlanFinderModal({
                     <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
                       Qué incluye este plan
                     </span>
-                    <span className="text-xs font-extrabold text-white">
+                    <span className="text-xs font-extrabold text-[#22C55E]">
                       {recommendedPlan.priceInfo}
                     </span>
                   </div>
@@ -146,7 +146,7 @@ export default function PlanFinderModal({
                         key={idx}
                         className="flex items-start gap-2.5 text-xs sm:text-sm text-gray-200"
                       >
-                        <span className="w-4 h-4 rounded-full bg-white text-[#111111] flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="w-4 h-4 rounded-full bg-[#16A34A] text-white flex items-center justify-center flex-shrink-0 mt-0.5">
                           <Check className="w-2.5 h-2.5 stroke-[3]" />
                         </span>
                         <span>{srv}</span>
@@ -159,7 +159,7 @@ export default function PlanFinderModal({
                   <button
                     type="button"
                     onClick={() => handleRequestPlan(recommendedPlan.name)}
-                    className="w-full sm:flex-1 bg-white hover:bg-neutral-200 text-[#111111] font-extrabold py-3.5 px-5 rounded-xl text-xs sm:text-sm inline-flex items-center justify-center gap-2 transition-colors cursor-pointer group"
+                    className="w-full sm:flex-1 bg-[#16A34A] hover:bg-[#15803D] text-white font-extrabold py-3.5 px-5 rounded-xl text-xs sm:text-sm inline-flex items-center justify-center gap-2 transition-colors cursor-pointer group"
                   >
                     <span>Solicitar cotización de este plan</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
@@ -179,7 +179,7 @@ export default function PlanFinderModal({
               <div className="space-y-5">
                 <div className="pr-8">
                   <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
-                    <span className="text-white">Encontrá tu plan</span>
+                    <span className="text-[#22C55E]">Encontrá tu plan</span>
                     <span>
                       Paso 0{stepIndex + 1} / 0{questions.length}
                     </span>
@@ -187,7 +187,7 @@ export default function PlanFinderModal({
 
                   <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden mb-4">
                     <div
-                      className="h-full bg-white transition-all duration-300"
+                      className="h-full bg-[#16A34A] transition-all duration-300"
                       style={{
                         width: `${((stepIndex + 1) / questions.length) * 100}%`,
                       }}
@@ -208,12 +208,12 @@ export default function PlanFinderModal({
                       key={idx}
                       type="button"
                       onClick={() => handleSelectOption(opt.targetPlan)}
-                      className="w-full text-left rounded-xl bg-[#0d0f12] hover:bg-[#1a1c22] border border-white/10 hover:border-white/30 p-4 transition-all flex items-center justify-between gap-3 group cursor-pointer"
+                      className="w-full text-left rounded-xl bg-[#0d0f12] hover:bg-[#1a1c22] border border-white/10 hover:border-[#16A34A]/50 p-4 transition-all flex items-center justify-between gap-3 group cursor-pointer"
                     >
                       <span className="text-xs sm:text-sm font-semibold text-gray-200 group-hover:text-white leading-snug">
                         {opt.label}
                       </span>
-                      <span className="w-7 h-7 rounded-lg bg-white/5 group-hover:bg-white text-gray-400 group-hover:text-[#111111] flex items-center justify-center flex-shrink-0 transition-colors">
+                      <span className="w-7 h-7 rounded-lg bg-white/5 group-hover:bg-[#16A34A] text-gray-400 group-hover:text-white flex items-center justify-center flex-shrink-0 transition-colors">
                         <ArrowRight className="w-3.5 h-3.5" />
                       </span>
                     </button>

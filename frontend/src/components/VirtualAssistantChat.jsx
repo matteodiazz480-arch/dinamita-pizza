@@ -298,7 +298,7 @@ export default function VirtualAssistantChat({
           className="relative w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-[#17181c] hover:bg-[#1f2127] text-white border border-white/15 flex items-center justify-center shadow-lg cursor-pointer transition-colors"
           aria-label={isOpen ? "Cerrar asistente virtual" : "Abrir asistente virtual"}
         >
-          <span className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full bg-white border-2 border-[#111111]" />
+          <span className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full bg-[#22C55E] border-2 border-[#111111]" />
           {isOpen ? (
             <X className="w-6 h-6 text-white" />
           ) : (
@@ -318,7 +318,7 @@ export default function VirtualAssistantChat({
           >
             <div className="px-4 py-3 bg-[#111111] border-b border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <span className="w-2 h-2 rounded-full bg-white" />
+                <span className="w-2 h-2 rounded-full bg-[#22C55E]" />
                 <div>
                   <h4 className="text-xs font-extrabold text-white tracking-wide">
                     Asistente NEXO Creative
@@ -361,7 +361,7 @@ export default function VirtualAssistantChat({
                     <div
                       className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 leading-relaxed whitespace-pre-line ${
                         isUser
-                          ? "bg-white text-[#111111] font-semibold rounded-br-xs"
+                          ? "bg-[#16A34A] text-white font-semibold rounded-br-xs"
                           : "bg-[#1c1e24] text-gray-200 border border-white/5 rounded-bl-xs"
                       }`}
                     >
@@ -372,7 +372,7 @@ export default function VirtualAssistantChat({
                           <button
                             type="button"
                             onClick={() => handleActionClick(msg.action)}
-                            className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white hover:bg-neutral-200 text-[#111111] font-black text-xs sm:text-sm transition-colors cursor-pointer shadow-sm min-h-[40px]"
+                            className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white font-black text-xs sm:text-sm transition-colors cursor-pointer shadow-sm min-h-[40px]"
                           >
                             <span>{msg.action.label}</span>
                             <ArrowRight className="w-3 h-3" />
@@ -422,12 +422,12 @@ export default function VirtualAssistantChat({
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
                   placeholder="Escribí tu consulta..."
-                  className="flex-1 bg-[#17181c] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:border-white transition-colors"
+                  className="flex-1 bg-[#17181c] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#16A34A] transition-colors"
                 />
                 <button
                   type="submit"
                   disabled={!inputMessage.trim() || isTyping}
-                  className="w-10 h-10 rounded-xl bg-white hover:bg-neutral-200 disabled:opacity-30 text-[#111111] flex items-center justify-center transition-all cursor-pointer flex-shrink-0"
+                  className="w-10 h-10 rounded-xl bg-[#16A34A] hover:bg-[#15803D] disabled:opacity-30 text-white flex items-center justify-center transition-all cursor-pointer flex-shrink-0"
                   aria-label="Enviar mensaje"
                 >
                   <Send className="w-4 h-4 sm:w-5 sm:h-5" />

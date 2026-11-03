@@ -38,7 +38,7 @@ export default function Hero({ onOpenConsultationModal, onOpenPlanFinder }) {
             >
               <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.08] text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)]">
                 <span className="block">{NEXO_CONFIG.hero.fixedHeadline}</span>
-                <span className="flex items-baseline min-h-[1.22em] mt-1 text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)]">
+                <span className="flex items-baseline min-h-[1.22em] mt-1 text-[#22C55E] drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)]">
                   <RotatingText
                     texts={NEXO_CONFIG.hero.rotatingWords}
                     effect="slide"
@@ -49,7 +49,7 @@ export default function Hero({ onOpenConsultationModal, onOpenPlanFinder }) {
                     staggerFrom="last"
                     loop={true}
                     animatePresenceMode="wait"
-                    mainClassName="text-white font-black tracking-tight"
+                    mainClassName="text-[#22C55E] font-black tracking-tight"
                     splitLevelClassName="overflow-hidden pb-0.5"
                   />
                 </span>
@@ -77,7 +77,7 @@ export default function Hero({ onOpenConsultationModal, onOpenPlanFinder }) {
                 onClick={() =>
                   onOpenConsultationModal?.("Asesoramiento Gratuito General")
                 }
-                className="inline-flex items-center justify-center gap-2 bg-white hover:bg-neutral-200 text-[#111111] font-extrabold px-5 sm:px-7 py-3 sm:py-4 rounded-xl text-xs sm:text-sm tracking-wide transition-all cursor-pointer shadow-sm group"
+                className="inline-flex items-center justify-center gap-2 bg-[#16A34A] hover:bg-[#15803D] text-white font-extrabold px-5 sm:px-7 py-3 sm:py-4 rounded-xl text-xs sm:text-sm tracking-wide transition-all cursor-pointer shadow-sm group"
               >
                 <span>{NEXO_CONFIG.hero.ctaText}</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
@@ -89,7 +89,7 @@ export default function Hero({ onOpenConsultationModal, onOpenPlanFinder }) {
                 onClick={onOpenPlanFinder}
                 className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 text-white font-bold px-4 sm:px-6 py-3 sm:py-4 rounded-xl text-xs sm:text-sm transition-colors cursor-pointer border border-white/15 backdrop-blur-sm"
               >
-                <Compass className="w-4 h-4 text-white" />
+                <Compass className="w-4 h-4 text-[#22C55E]" />
                 <span>Encontrá tu plan</span>
               </motion.button>
             </motion.div>

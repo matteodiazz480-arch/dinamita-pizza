@@ -223,7 +223,7 @@ function ProcessSection() {
                         reached
                           ? isLast
                             ? "bg-[#9333EA] text-white scale-105"
-                            : "bg-[#111111] text-white scale-105"
+                            : "bg-[#16A34A] text-white scale-105"
                           : "bg-white border border-gray-300 text-gray-400"
                       }`}
                     >
@@ -257,7 +257,7 @@ function ProcessSection() {
 
             <div
               ref={travelerRef}
-              className="absolute top-0 left-1/2 rounded-full bg-[#111111] border-2 border-white pointer-events-none z-20 shadow-xs will-change-transform"
+              className="absolute top-0 left-1/2 rounded-full bg-[#16A34A] border-2 border-white pointer-events-none z-20 shadow-xs will-change-transform"
               style={{
                 width: TRAVELER_SIZE,
                 height: TRAVELER_SIZE,
@@ -341,7 +341,7 @@ function ProcessSection() {
                         isActivated
                           ? isFinalStep
                             ? "bg-[#111111] text-white ring-4 ring-[#9333EA]/15 shadow-sm scale-105"
-                            : "bg-[#111111] text-white ring-4 ring-black/[0.06] shadow-sm scale-105"
+                            : "bg-[#111111] text-[#22C55E] ring-4 ring-black/[0.06] shadow-sm scale-105"
                           : "bg-white text-gray-400 border-2 border-gray-300 scale-100"
                       }`}
                     >
@@ -350,7 +350,7 @@ function ProcessSection() {
                           isActivated
                             ? isFinalStep
                               ? "text-[#a855f7]"
-                              : "text-white"
+                              : "text-[#22C55E]"
                             : "text-gray-400"
                         }`}
                       >
@@ -425,7 +425,7 @@ function EditorialStageMeta({ step, isActivated, isFinalStep, align }) {
             isActivated
               ? isFinalStep
                 ? "bg-[#9333EA]"
-                : "bg-[#111111]"
+                : "bg-[#16A34A]"
               : "bg-gray-300"
           }`}
         />
@@ -462,7 +462,7 @@ function StageCard({
             useDarkSurface
               ? "bg-[#9333EA]/20 text-[#c084fc]"
               : isActivated
-              ? "bg-[#111111] text-white"
+              ? "bg-[#16A34A]/15 text-[#15803D]"
               : "bg-gray-100 text-gray-400"
           }`}
         >
@@ -475,7 +475,7 @@ function StageCard({
               className={`w-4 h-4 rounded-full flex items-center justify-center transition-transform duration-300 ${
                 useDarkSurface
                   ? "bg-[#9333EA] text-white"
-                  : "bg-[#111111] text-white"
+                  : "bg-[#16A34A] text-white"
               }`}
             >
               <Check className="w-2.5 h-2.5 stroke-[3]" />
@@ -486,7 +486,7 @@ function StageCard({
                 isActivated
                   ? isFinalStep
                     ? "bg-[#9333EA]"
-                    : "bg-[#111111]"
+                    : "bg-[#16A34A]"
                   : "bg-gray-300"
               }`}
             />

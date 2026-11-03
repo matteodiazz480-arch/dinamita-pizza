@@ -2,10 +2,11 @@
 
 @layer base {
   :root {
-    --brand-primary: #FFFFFF;
-    --brand-primary-hover: #E5E7EB;
-    --brand-lime: #FFFFFF;
-    --brand-lime-hover: #E5E7EB;
+    --brand-primary: #16A34A;
+    --brand-primary-hover: #15803D;
+    --brand-green: #16A34A;
+    --brand-green-hover: #15803D;
+    --brand-green-light: #22C55E;
     --brand-dark: #111111;
     --brand-dark-card: #17181c;
     --brand-purple: #9333EA;
@@ -24,16 +25,16 @@
   }
 
   ::selection {
-    background-color: #ffffff;
-    color: #111111;
+    background-color: #16A34A;
+    color: #ffffff;
   }
 
   input, textarea, select {
-    caret-color: #ffffff;
+    caret-color: #22C55E;
   }
 
   :focus-visible {
-    outline: 2px solid #ffffff;
+    outline: 2px solid #16A34A;
     outline-offset: 2px;
   }
 }
@@ -53,7 +54,7 @@
 }
 
 .card-surface:hover {
-  border-color: rgba(255, 255, 255, 0.25);
+  border-color: rgba(34, 197, 94, 0.3);
 }
 
 /* Colores lisos y uniformes sin gradientes */

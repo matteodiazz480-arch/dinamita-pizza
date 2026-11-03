@@ -92,7 +92,7 @@ export default function Navbar({
               onClick={() =>
                 onOpenConsultationModal?.("Asesoramiento Gratuito General")
               }
-              className="text-[11px] sm:text-sm font-black tracking-wide text-[#111111] bg-white hover:bg-neutral-200 px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full sm:rounded-xl transition-all cursor-pointer hover:scale-102 active:scale-95 whitespace-nowrap"
+              className="text-[11px] sm:text-sm font-black tracking-wide text-white bg-[#16A34A] hover:bg-[#15803D] px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full sm:rounded-xl transition-all cursor-pointer hover:scale-102 active:scale-95 whitespace-nowrap shadow-sm"
             >
               <span className="sm:hidden">Diagnóstico</span>
               <span className="hidden sm:inline">Diagnóstico gratis</span>

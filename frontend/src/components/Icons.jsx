@@ -10,7 +10,7 @@ export function BrandLogo({ size = "default" }) {
         }`}
       >
         <span className="text-white">NE</span>
-        <span className="text-white">X</span>
+        <span className="text-[#22C55E]">X</span>
         <span className="text-white">O</span>
       </div>
       <span

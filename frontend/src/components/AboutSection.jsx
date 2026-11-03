@@ -103,7 +103,7 @@ export default function AboutSection() {
             >
               <div className="flex items-center justify-between gap-4">
                 <div className="space-y-0.5">
-                  <div className="text-sm sm:text-lg font-extrabold text-white transition-colors">
+                  <div className="text-sm sm:text-lg font-extrabold text-[#22C55E] transition-colors">
                     {NEXO_CONFIG.about.highlightCard.tag}
                   </div>
                   <div className="text-xs sm:text-sm text-gray-300 font-medium">
@@ -111,8 +111,8 @@ export default function AboutSection() {
                   </div>
                 </div>
 
-                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/10 group-hover:bg-white flex items-center justify-center flex-shrink-0 transition-colors">
-                  <ArrowRight className="w-4 h-4 text-white group-hover:text-[#111111] group-hover:translate-x-0.5 transition-all" />
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/10 group-hover:bg-[#16A34A] flex items-center justify-center flex-shrink-0 transition-colors">
+                  <ArrowRight className="w-4 h-4 text-white group-hover:text-white group-hover:translate-x-0.5 transition-all" />
                 </div>
               </div>
             </motion.a>

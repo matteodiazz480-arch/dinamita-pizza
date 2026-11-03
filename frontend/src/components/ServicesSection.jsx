@@ -92,8 +92,8 @@ export default function ServicesSection({ onOpenConsultationModal }) {
                   <div className="flex items-center justify-between w-full">
                     <div
                       className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-105 ${
-                        service.badgeTheme === "lime"
-                          ? "bg-white text-[#111111]"
+                        service.badgeTheme === "green"
+                          ? "bg-[#16A34A] text-white"
                           : "bg-[#9333EA] text-white"
                       }`}
                     >
@@ -123,7 +123,7 @@ export default function ServicesSection({ onOpenConsultationModal }) {
                   <div className="pt-3.5 sm:pt-5 space-y-1.5">
                     <p
                       className={`text-[11px] font-bold leading-snug ${
-                        isDark ? "text-gray-300" : "text-gray-700"
+                        isDark ? "text-[#22C55E]" : "text-[#16A34A]"
                       }`}
                     >
                       {service.problemSolved}

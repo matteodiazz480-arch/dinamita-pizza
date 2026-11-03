@@ -92,7 +92,7 @@ export const NEXO_CONFIG = {
           "Campañas en Facebook e Instagram diseñadas para atraer clientes potenciales e impulsar tus ventas.",
         icon: "Megaphone",
         theme: "dark",
-        badgeTheme: "lime",
+        badgeTheme: "green",
       },
       {
         id: "social",
@@ -114,7 +114,7 @@ export const NEXO_CONFIG = {
           "Contenido visual que refuerza la identidad de tu marca y conecta con tu público.",
         icon: "Palette",
         theme: "dark",
-        badgeTheme: "lime",
+        badgeTheme: "green",
       },
       {
         id: "strategy",
@@ -259,21 +259,21 @@ export const NEXO_CONFIG = {
         number: "01",
         title: "Análisis",
         desc: "Conocemos tu negocio, tu público y tus objetivos comerciales.",
-        accent: "lime",
+        accent: "green",
       },
       {
         step: 2,
         number: "02",
         title: "Estrategia",
         desc: "Diseñamos un plan de acción a medida para tu marca.",
-        accent: "lime",
+        accent: "green",
       },
       {
         step: 3,
         number: "03",
         title: "Implementación",
         desc: "Creamos las piezas visuales y activamos las campañas.",
-        accent: "lime",
+        accent: "green",
       },
       {
         step: 4,
@@ -299,7 +299,7 @@ export const NEXO_CONFIG = {
       },
       {
         tag: "ALCANCE",
-        tagType: "lime",
+        tagType: "green",
         title: "TU MARCA EN TODAS PARTES",
         metric: "+280%",
         footer: "en ventas",

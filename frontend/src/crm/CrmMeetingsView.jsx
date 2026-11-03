@@ -12,7 +12,7 @@ import {
 import { WhatsAppIcon } from "../components/Icons";
 
 const STATUS_LABELS = {
-  reunion_agendada: { label: "Reunión Agendada", color: "bg-white/10 text-white border-white/20" },
+  reunion_agendada: { label: "Reunión Agendada", color: "bg-[#16A34A]/15 text-[#22C55E] border-[#16A34A]/30" },
   contactado: { label: "En Contacto", color: "bg-blue-500/15 text-blue-300 border-blue-500/30" },
   ganado: { label: "Cerrado / Cliente", color: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30" },
   nuevo: { label: "Pendiente", color: "bg-amber-500/15 text-amber-300 border-amber-500/30" },
@@ -69,7 +69,7 @@ export default function CrmMeetingsView({ leads, onUpdateLead }) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-extrabold uppercase tracking-wider text-gray-400 flex items-center gap-2">
-          <Clock className="w-4 h-4 text-white" />
+          <Clock className="w-4 h-4 text-[#22C55E]" />
           <span>Agenda de Reuniones Estratégicas ({meetingLeads.length})</span>
         </h2>
         <a
@@ -78,7 +78,7 @@ export default function CrmMeetingsView({ leads, onUpdateLead }) {
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-semibold text-gray-200 border border-white/10 transition-colors"
         >
-          <Video className="w-3.5 h-3.5 text-white" />
+          <Video className="w-3.5 h-3.5 text-[#22C55E]" />
           <span>Crear sala Google Meet</span>
           <ExternalLink className="w-3 h-3 text-gray-400" />
         </a>
@@ -125,7 +125,7 @@ export default function CrmMeetingsView({ leads, onUpdateLead }) {
                   )}
                   <div className="pt-1 space-y-1 text-xs text-gray-400">
                     <p className="flex items-center gap-1.5">
-                      <Phone className="w-3.5 h-3.5 text-white" />
+                      <Phone className="w-3.5 h-3.5 text-[#22C55E]" />
                       <span className="text-gray-200 font-mono">{lead.phone}</span>
                     </p>
                     {lead.email && (
@@ -153,7 +153,7 @@ export default function CrmMeetingsView({ leads, onUpdateLead }) {
                         value={tempNotes}
                         onChange={(e) => setTempNotes(e.target.value)}
                         placeholder="Escribí notas de la reunión..."
-                        className="w-full bg-[#181a20] border border-white/15 rounded-lg p-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-white"
+                        className="w-full bg-[#181a20] border border-white/15 rounded-lg p-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#16A34A]"
                       />
                       <div className="flex items-center justify-end gap-1.5">
                         <button
@@ -167,7 +167,7 @@ export default function CrmMeetingsView({ leads, onUpdateLead }) {
                           type="button"
                           disabled={savingId === id}
                           onClick={() => handleSaveNotes(id)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-white text-[#111111] font-bold text-[11px] hover:bg-neutral-200"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-[#16A34A] text-white font-bold text-[11px] hover:bg-[#15803D]"
                         >
                           <Save className="w-3 h-3" />
                           <span>Guardar</span>
@@ -216,7 +216,7 @@ export default function CrmMeetingsView({ leads, onUpdateLead }) {
                 <select
                   value={lead.status || "reunion_agendada"}
                   onChange={(e) => handleStatusChange(id, e.target.value)}
-                  className="w-full bg-[#181a20] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-gray-300 focus:outline-none focus:border-white cursor-pointer"
+                  className="w-full bg-[#181a20] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-gray-300 focus:outline-none focus:border-[#16A34A] cursor-pointer"
                 >
                   <option value="reunion_agendada">Reunión Agendada</option>
                   <option value="contactado">En Contacto / Realizada</option>

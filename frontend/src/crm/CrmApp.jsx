@@ -87,7 +87,7 @@ export default function CrmApp({ onNavigateLanding }) {
     return (
       <div className="min-h-screen bg-[#0d0f12] text-white flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-[#16A34A] border-t-transparent rounded-full animate-spin" />
           <span className="text-xs text-gray-400">Verificando acceso al CRM...</span>
         </div>
       </div>

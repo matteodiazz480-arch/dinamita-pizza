@@ -56,7 +56,7 @@ export default function CookieConsentBanner({
             <div className="space-y-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-white flex-shrink-0" />
+                  <Shield className="w-4 h-4 text-[#22C55E] flex-shrink-0" />
                   <h3 className="text-xs sm:text-sm font-extrabold tracking-tight text-white">
                     Privacidad y uso de cookies
                   </h3>
@@ -87,7 +87,7 @@ export default function CookieConsentBanner({
                 <button
                   type="button"
                   onClick={handleAcceptAll}
-                  className="flex-1 bg-white hover:bg-neutral-200 text-[#111111] font-extrabold px-3.5 py-2 rounded-xl text-xs transition-colors cursor-pointer"
+                  className="flex-1 bg-[#16A34A] hover:bg-[#15803D] text-white font-extrabold px-3.5 py-2 rounded-xl text-xs transition-colors cursor-pointer"
                 >
                   Aceptar todas
                 </button>
@@ -152,7 +152,7 @@ export default function CookieConsentBanner({
                     <span className="text-xs sm:text-sm font-extrabold text-white">
                       1. Cookies estrictamente necesarias
                     </span>
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/10 text-[10px] font-bold text-white uppercase tracking-wider">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#16A34A]/15 text-[10px] font-bold text-[#22C55E] uppercase tracking-wider">
                       <Check className="w-3 h-3" />
                       Siempre activas
                     </span>
@@ -177,13 +177,13 @@ export default function CookieConsentBanner({
                       aria-checked={draftAnalytics}
                       onClick={() => setDraftAnalytics((v) => !v)}
                       className={`w-11 h-6 rounded-full transition-colors p-0.5 cursor-pointer flex items-center ${
-                        draftAnalytics ? "bg-white" : "bg-white/15"
+                        draftAnalytics ? "bg-[#16A34A]" : "bg-white/15"
                       }`}
                     >
                       <span
                         className={`w-5 h-5 rounded-full transition-transform ${
                           draftAnalytics
-                            ? "translate-x-5 bg-[#111111]"
+                            ? "translate-x-5 bg-white"
                             : "translate-x-0 bg-gray-300"
                         }`}
                       />
@@ -209,13 +209,13 @@ export default function CookieConsentBanner({
                       aria-checked={draftMarketing}
                       onClick={() => setDraftMarketing((v) => !v)}
                       className={`w-11 h-6 rounded-full transition-colors p-0.5 cursor-pointer flex items-center ${
-                        draftMarketing ? "bg-white" : "bg-white/15"
+                        draftMarketing ? "bg-[#16A34A]" : "bg-white/15"
                       }`}
                     >
                       <span
                         className={`w-5 h-5 rounded-full transition-transform ${
                           draftMarketing
-                            ? "translate-x-5 bg-[#111111]"
+                            ? "translate-x-5 bg-white"
                             : "translate-x-0 bg-gray-300"
                         }`}
                       />
@@ -230,7 +230,7 @@ export default function CookieConsentBanner({
                   <button
                     type="button"
                     onClick={handleSaveCustom}
-                    className="w-full sm:flex-1 bg-white hover:bg-neutral-200 text-[#111111] font-extrabold py-2.5 px-4 rounded-xl text-xs transition-colors cursor-pointer"
+                    className="w-full sm:flex-1 bg-[#16A34A] hover:bg-[#15803D] text-white font-extrabold py-2.5 px-4 rounded-xl text-xs transition-colors cursor-pointer"
                   >
                     Guardar preferencias
                   </button>

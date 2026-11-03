@@ -24,7 +24,7 @@ function PlanCard({ plan, onOpenConsultationModal, prefersReducedMotion }) {
             <div className="flex items-center gap-2">
               <span
                 className={`font-display-condensed text-xl sm:text-2xl leading-none tracking-wider ${
-                  isFeatured ? "text-white" : "text-black/30"
+                  isFeatured ? "text-[#22C55E]" : "text-black/30"
                 }`}
               >
                 {plan.code}
@@ -39,7 +39,7 @@ function PlanCard({ plan, onOpenConsultationModal, prefersReducedMotion }) {
             </div>
             <p
               className={`text-xs font-bold mt-1 ${
-                isFeatured ? "text-gray-300" : "text-gray-600"
+                isFeatured ? "text-[#22C55E]" : "text-[#16A34A]"
               }`}
             >
               {plan.tagline}
@@ -47,7 +47,7 @@ function PlanCard({ plan, onOpenConsultationModal, prefersReducedMotion }) {
           </div>
 
           {isFeatured && (
-            <span className="px-2.5 py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-white text-[#111111] flex-shrink-0 shadow-xs">
+            <span className="px-2.5 py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-[#16A34A] text-white flex-shrink-0 shadow-xs">
               Más elegido
             </span>
           )}
@@ -70,7 +70,7 @@ function PlanCard({ plan, onOpenConsultationModal, prefersReducedMotion }) {
         >
           <span
             className={`text-xs font-extrabold ${
-              isFeatured ? "text-white" : "text-[#111111]"
+              isFeatured ? "text-[#22C55E]" : "text-[#111111]"
             }`}
           >
             {plan.priceInfo}
@@ -96,8 +96,8 @@ function PlanCard({ plan, onOpenConsultationModal, prefersReducedMotion }) {
                 <span
                   className={`w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
                     isFeatured
-                      ? "bg-white text-[#111111]"
-                      : "bg-[#111111] text-white"
+                      ? "bg-[#16A34A] text-white"
+                      : "bg-[#16A34A]/10 text-[#16A34A]"
                   }`}
                 >
                   <Check className="w-2.5 h-2.5 stroke-[3]" />
@@ -115,15 +115,13 @@ function PlanCard({ plan, onOpenConsultationModal, prefersReducedMotion }) {
           onClick={() => onOpenConsultationModal?.(plan.name)}
           className={`w-full py-3 px-4 rounded-xl text-xs sm:text-sm font-extrabold inline-flex items-center justify-center gap-2 transition-colors cursor-pointer group shadow-xs active:scale-[0.99] ${
             isFeatured
-              ? "bg-white hover:bg-neutral-200 text-[#111111]"
+              ? "bg-[#16A34A] hover:bg-[#15803D] text-white"
               : "bg-[#111111] hover:bg-[#1e2026] text-white"
           }`}
         >
           <span>Consultar por este plan</span>
           <ArrowRight
-            className={`w-4 h-4 group-hover:translate-x-0.5 transition-transform ${
-              isFeatured ? "text-[#111111]" : "text-white"
-            }`}
+            className="w-4 h-4 group-hover:translate-x-0.5 transition-transform text-white"
           />
         </button>
       </div>
@@ -183,7 +181,7 @@ export default function PlansSection({ onOpenConsultationModal, onOpenPlanFinder
                   onClick={() => setSelectedMobileIdx(idx)}
                   className={`py-2 px-2 rounded-lg text-[11px] font-extrabold transition-all cursor-pointer truncate ${
                     isSelected
-                      ? "bg-white text-[#111111] shadow-xs"
+                      ? "bg-[#16A34A] text-white shadow-xs"
                       : "text-gray-300 hover:text-white"
                   }`}
                 >
@@ -236,7 +234,7 @@ export default function PlansSection({ onOpenConsultationModal, onOpenPlanFinder
           className="mt-5 sm:mt-8 rounded-2xl bg-[#111111] text-white p-4 sm:px-7 sm:py-5 border border-white/10 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5"
         >
           <div className="flex items-start sm:items-center gap-3">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center flex-shrink-0 text-white">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#16A34A]/15 border border-[#16A34A]/30 flex items-center justify-center flex-shrink-0 text-[#22C55E]">
               <Compass className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
@@ -252,7 +250,7 @@ export default function PlansSection({ onOpenConsultationModal, onOpenPlanFinder
           <button
             type="button"
             onClick={() => onOpenPlanFinder?.()}
-            className="w-full sm:w-auto flex-shrink-0 inline-flex items-center justify-center gap-2 bg-white hover:bg-neutral-200 text-[#111111] font-extrabold px-5 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm transition-colors cursor-pointer group"
+            className="w-full sm:w-auto flex-shrink-0 inline-flex items-center justify-center gap-2 bg-[#16A34A] hover:bg-[#15803D] text-white font-extrabold px-5 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm transition-colors cursor-pointer group shadow-sm"
           >
             <span>{NEXO_CONFIG.planFinder.buttonLabel}</span>
             <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />

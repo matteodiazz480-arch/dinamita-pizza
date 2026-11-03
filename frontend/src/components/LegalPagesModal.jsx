@@ -113,7 +113,7 @@ export default function LegalPagesModal({
             <div className="p-4 sm:px-6 bg-[#111111] border-b border-white/10 flex flex-col gap-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <span className="px-2.5 py-0.5 rounded-md bg-white/[0.06] border border-white/10 text-[11px] font-bold text-white tracking-wide">
+                  <span className="px-2.5 py-0.5 rounded-md bg-[#16A34A]/15 border border-[#16A34A]/30 text-[11px] font-bold text-[#22C55E] tracking-wide">
                     {currentDoc.lawBadge}
                   </span>
                   <span className="text-xs text-gray-400">
@@ -146,7 +146,7 @@ export default function LegalPagesModal({
                       }}
                       className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-colors cursor-pointer ${
                         isActive
-                          ? "bg-white text-[#111111]"
+                          ? "bg-[#16A34A] text-white"
                           : "bg-white/[0.04] hover:bg-white/[0.08] text-gray-300 border border-white/[0.06]"
                       }`}
                     >
@@ -231,12 +231,12 @@ export default function LegalPagesModal({
                     </div>
 
                     {arcoStatus === "success" ? (
-                      <div className="rounded-xl bg-[#141519] border border-white/20 p-4 flex items-start gap-3">
-                        <span className="w-6 h-6 rounded-full bg-white text-[#111111] flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <div className="rounded-xl bg-[#16A34A]/10 border border-[#16A34A]/30 p-4 flex items-start gap-3">
+                        <span className="w-6 h-6 rounded-full bg-[#16A34A] text-white flex items-center justify-center flex-shrink-0 mt-0.5">
                           <Check className="w-3.5 h-3.5 stroke-[3]" />
                         </span>
                         <div className="space-y-1 text-xs">
-                          <p className="font-bold text-white">
+                          <p className="font-bold text-[#22C55E]">
                             Solicitud registrada correctamente (Código: {arcoTrackingId})
                           </p>
                           <p className="text-gray-300">
@@ -268,7 +268,7 @@ export default function LegalPagesModal({
                               value={arcoForm.fullName}
                               onChange={handleArcoChange}
                               placeholder="Tu nombre"
-                              className="w-full bg-[#141519] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-white"
+                              className="w-full bg-[#141519] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#16A34A]"
                             />
                           </div>
 
@@ -282,7 +282,7 @@ export default function LegalPagesModal({
                               value={arcoForm.email}
                               onChange={handleArcoChange}
                               placeholder="correo@ejemplo.com"
-                              className="w-full bg-[#141519] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-white"
+                              className="w-full bg-[#141519] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#16A34A]"
                             />
                           </div>
 
@@ -294,7 +294,7 @@ export default function LegalPagesModal({
                               name="rightType"
                               value={arcoForm.rightType}
                               onChange={handleArcoChange}
-                              className="w-full bg-[#141519] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-white"
+                              className="w-full bg-[#141519] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#16A34A]"
                             >
                               <option value="acceso">Acceso a mis datos</option>
                               <option value="rectificacion">Rectificación de datos</option>
@@ -314,7 +314,7 @@ export default function LegalPagesModal({
                             value={arcoForm.details}
                             onChange={handleArcoChange}
                             placeholder="Indicá qué dato deseás consultar, rectificar o eliminar de nuestros registros."
-                            className="w-full bg-[#141519] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-white resize-none"
+                            className="w-full bg-[#141519] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#16A34A] resize-none"
                           />
                         </div>
 
@@ -328,7 +328,7 @@ export default function LegalPagesModal({
                         <button
                           type="submit"
                           disabled={arcoStatus === "loading"}
-                          className="px-5 py-2.5 rounded-xl bg-white hover:bg-neutral-200 disabled:opacity-60 text-[#111111] font-extrabold text-xs transition-colors cursor-pointer"
+                          className="px-5 py-2.5 rounded-xl bg-[#16A34A] hover:bg-[#15803D] disabled:opacity-60 text-white font-extrabold text-xs transition-colors cursor-pointer"
                         >
                           {arcoStatus === "loading"
                             ? "Enviando solicitud..."
