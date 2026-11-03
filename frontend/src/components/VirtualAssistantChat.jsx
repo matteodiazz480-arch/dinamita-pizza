@@ -289,7 +289,7 @@ export default function VirtualAssistantChat({
 
   return (
     <>
-      <div className="fixed bottom-[calc(4.35rem+env(safe-area-inset-bottom,0px))] md:bottom-5 right-3 sm:right-6 z-40 flex items-center justify-end">
+      <div className="fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom,0px))] md:bottom-5 right-3 sm:right-6 z-40 flex items-center justify-end">
         <motion.button
           type="button"
           whileHover={prefersReducedMotion ? {} : { scale: 1.05 }}
@@ -314,7 +314,7 @@ export default function VirtualAssistantChat({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={prefersReducedMotion ? false : { opacity: 0, y: 12, scale: 0.96 }}
             transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
-            className="fixed bottom-[calc(7.2rem+env(safe-area-inset-bottom,0px))] md:bottom-19 right-3 sm:right-6 w-[calc(100vw-1.5rem)] sm:w-[380px] h-[440px] max-h-[68vh] md:max-h-[520px] bg-[#141519] border border-white/12 rounded-2xl shadow-[0_24px_60px_rgba(0,0,0,0.85)] z-40 flex flex-col overflow-hidden text-white origin-bottom-right"
+            className="fixed bottom-[calc(8.1rem+env(safe-area-inset-bottom,0px))] md:bottom-19 right-3 sm:right-6 w-[calc(100vw-1.5rem)] sm:w-[380px] h-[440px] max-h-[68vh] md:max-h-[520px] bg-[#141519] border border-white/12 rounded-2xl shadow-[0_24px_60px_rgba(0,0,0,0.85)] z-40 flex flex-col overflow-hidden text-white origin-bottom-right"
           >
             <div className="px-4 py-3 bg-[#111111] border-b border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
