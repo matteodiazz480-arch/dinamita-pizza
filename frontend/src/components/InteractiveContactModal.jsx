@@ -180,7 +180,7 @@ ${sData.message}
             initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.96, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={prefersReducedMotion ? false : { opacity: 0, scale: 0.96, y: 12 }}
-            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
             role="dialog"
             aria-modal="true"
             aria-labelledby="contact-modal-title"
@@ -499,7 +499,7 @@ ${sData.message}
                     <button
                       type="submit"
                       disabled={status === "loading"}
-                      className="w-full bg-[#16A34A] hover:bg-[#15803D] disabled:opacity-75 text-white font-extrabold py-3.5 px-6 rounded-xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 group cursor-pointer shadow-sm"
+                      className="w-full bg-[#16A34A] hover:bg-[#15803D] disabled:opacity-75 text-white font-extrabold py-3.5 px-6 rounded-xl text-xs sm:text-sm transition-[background-color,transform,opacity] duration-150 active:scale-98 flex items-center justify-center gap-2 group cursor-pointer shadow-sm"
                     >
                       {status === "loading" ? (
                         <>

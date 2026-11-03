@@ -9,10 +9,11 @@ import {
   Calendar,
   ArrowRight,
   Clock,
-  CheckCircle2,
-  AlertCircle,
 } from "lucide-react";
-import { WhatsAppIcon } from "../components/Icons";
+
+function getCurrentYearMonth() {
+  return new Date().toISOString().slice(0, 7);
+}
 
 const STAGE_CONFIGS = [
   { key: "nuevo", label: "Nuevo", color: "bg-amber-500/15 text-amber-300 border-amber-500/30" },
@@ -40,7 +41,7 @@ export default function CrmDashboardView({
   );
 
   // Total de gastos del mes actual
-  const currentYearMonth = new Date().toISOString().slice(0, 7);
+  const currentYearMonth = getCurrentYearMonth();
   const monthlyExpenses = expenses
     .filter((e) => !e.date || (e.date || "").startsWith(currentYearMonth))
     .reduce((acc, e) => acc + (Number(e.amount) || 0), 0);
@@ -187,7 +188,7 @@ export default function CrmDashboardView({
               <div
                 key={stage.key}
                 onClick={() => onNavigateTab("commercial")}
-                className="bg-[#181a20] border border-white/8 hover:border-[#16A34A]/50 rounded-xl p-3 flex flex-col justify-between transition-all cursor-pointer group select-none"
+                className="bg-[#181a20] border border-white/8 hover:border-[#16A34A]/50 rounded-xl p-3 flex flex-col justify-between transition-[border-color,transform] duration-150 active:scale-97 cursor-pointer group select-none"
               >
                 <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider truncate">
                   {stage.label}

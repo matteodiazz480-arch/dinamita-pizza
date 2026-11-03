@@ -91,7 +91,7 @@ export default function PlanFinderModal({
             initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.96, y: 14 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={prefersReducedMotion ? false : { opacity: 0, scale: 0.96, y: 14 }}
-            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
             role="dialog"
             aria-modal="true"
             aria-labelledby="plan-finder-title"
@@ -187,9 +187,9 @@ export default function PlanFinderModal({
 
                   <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden mb-4">
                     <div
-                      className="h-full bg-[#16A34A] transition-all duration-300"
+                      className="h-full bg-[#16A34A] origin-left transition-transform duration-300"
                       style={{
-                        width: `${((stepIndex + 1) / questions.length) * 100}%`,
+                        transform: `scaleX(${(stepIndex + 1) / questions.length})`,
                       }}
                     />
                   </div>
@@ -208,7 +208,7 @@ export default function PlanFinderModal({
                       key={idx}
                       type="button"
                       onClick={() => handleSelectOption(opt.targetPlan)}
-                      className="w-full text-left rounded-xl bg-[#0d0f12] hover:bg-[#1a1c22] border border-white/10 hover:border-[#16A34A]/50 p-4 transition-all flex items-center justify-between gap-3 group cursor-pointer"
+                      className="w-full text-left rounded-xl bg-[#0d0f12] hover:bg-[#1a1c22] border border-white/10 hover:border-[#16A34A]/50 p-4 transition-[background-color,border-color,transform] duration-150 active:scale-98 flex items-center justify-between gap-3 group cursor-pointer"
                     >
                       <span className="text-xs sm:text-sm font-semibold text-gray-200 group-hover:text-white leading-snug">
                         {opt.label}

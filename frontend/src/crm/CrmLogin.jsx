@@ -50,7 +50,7 @@ export default function CrmLogin({ onLoginSuccess, onNavigateLanding }) {
           </p>
         </div>
 
-        <div className="bg-[#141519] border border-white/10 rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
+        <div className="bg-[#141519] border border-white/10 rounded-2xl p-6 sm:p-8 shadow-2xl">
           <div className="flex items-center gap-2.5 pb-4 mb-5 border-b border-white/8 text-xs font-bold text-gray-300">
             <Lock className="w-4 h-4 text-[#22C55E]" />
             <span>Acceso Privado de Administración</span>
@@ -95,7 +95,7 @@ export default function CrmLogin({ onLoginSuccess, onNavigateLanding }) {
             <button
               type="submit"
               disabled={loading || !password}
-              className="w-full inline-flex items-center justify-center gap-2 bg-[#16A34A] hover:bg-[#15803D] text-white font-black text-xs sm:text-sm px-5 py-3.5 rounded-xl transition-all cursor-pointer shadow-sm active:scale-98 disabled:opacity-50"
+              className="w-full inline-flex items-center justify-center gap-2 bg-[#16A34A] hover:bg-[#15803D] text-white font-black text-xs sm:text-sm px-5 py-3.5 rounded-xl transition-[background-color,transform,opacity] duration-150 cursor-pointer shadow-sm active:scale-98 disabled:opacity-50"
             >
               {loading ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />

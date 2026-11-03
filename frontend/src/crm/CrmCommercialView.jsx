@@ -3,16 +3,10 @@ import {
   Search,
   Filter,
   Phone,
-  Building2,
   Calendar,
   Trash2,
-  CheckCircle2,
-  ExternalLink,
-  ChevronDown,
   UserCheck,
   Edit3,
-  Save,
-  X,
 } from "lucide-react";
 import { WhatsAppIcon } from "../components/Icons";
 

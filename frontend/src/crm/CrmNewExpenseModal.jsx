@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { X, Receipt, ArrowRight } from "lucide-react";
 
 const EXPENSE_CATEGORIES = [
@@ -11,16 +12,19 @@ const EXPENSE_CATEGORIES = [
   "Varios",
 ];
 
+function getTodayIso() {
+  return new Date().toISOString().slice(0, 10);
+}
+
 export default function CrmNewExpenseModal({ isOpen, onClose, onCreateExpense }) {
-  const [formData, setFormData] = useState({
-    date: new Date().toISOString().slice(0, 10),
+  const prefersReducedMotion = useReducedMotion();
+  const [formData, setFormData] = useState(() => ({
+    date: getTodayIso(),
     category: "Herramientas & Software",
     amount: "",
     description: "",
-  });
+  }));
   const [submitting, setSubmitting] = useState(false);
-
-  if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -37,8 +41,24 @@ export default function CrmNewExpenseModal({ isOpen, onClose, onCreateExpense })
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm select-none overflow-y-auto">
-      <div className="bg-[#141519] border border-white/10 rounded-2xl w-full max-w-md p-5 sm:p-6 shadow-2xl relative text-white my-auto">
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+          onClick={onClose}
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm select-none overflow-y-auto"
+        >
+          <motion.div
+            initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.96, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={prefersReducedMotion ? false : { opacity: 0, scale: 0.96, y: 8 }}
+            transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
+            onClick={(e) => e.stopPropagation()}
+            className="bg-[#141519] border border-white/10 rounded-2xl w-full max-w-md p-5 sm:p-6 shadow-2xl relative text-white my-auto"
+          >
         <div className="flex items-center justify-between pb-3.5 mb-4 border-b border-white/8">
           <div className="flex items-center gap-2">
             <Receipt className="w-5 h-5 text-amber-400" />
@@ -127,7 +147,9 @@ export default function CrmNewExpenseModal({ isOpen, onClose, onCreateExpense })
             </button>
           </div>
         </form>
-      </div>
-    </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

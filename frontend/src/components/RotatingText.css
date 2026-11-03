@@ -32,7 +32,8 @@
 
 .text-rotate-element {
   display: inline-block;
-  will-change: transform, opacity;
+  backface-visibility: hidden;
+  transform: translateZ(0);
 }
 
 .text-rotate-space {

@@ -42,17 +42,16 @@ export default function Hero({ onOpenConsultationModal, onOpenPlanFinder }) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.45, ease: [0.23, 1, 0.32, 1] }}
             >
-              <h1 className="text-[1.75rem] sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.08] text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)]">
+              <h1 className="text-[1.75rem] sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.08] text-white [text-shadow:0_2px_10px_rgba(0,0,0,0.85)]">
                 <span className="block">{NEXO_CONFIG.hero.fixedHeadline}</span>
-                <span className="flex items-baseline min-h-[1.2em] mt-0.5 sm:mt-1 text-[#22C55E] drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)]">
+                <span className="flex items-baseline min-h-[1.2em] mt-0.5 sm:mt-1 text-[#22C55E] [text-shadow:0_2px_10px_rgba(0,0,0,0.85)]">
                   <RotatingText
                     texts={NEXO_CONFIG.hero.rotatingWords}
                     effect="slide"
                     direction="up"
+                    splitBy="words"
                     highlight={false}
-                    rotationInterval={2500}
-                    staggerDuration={0.025}
-                    staggerFrom="last"
+                    rotationInterval={2800}
                     loop={true}
                     animatePresenceMode="wait"
                     mainClassName="text-[#22C55E] font-black tracking-tight"

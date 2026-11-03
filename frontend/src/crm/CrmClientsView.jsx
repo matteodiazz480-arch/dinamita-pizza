@@ -3,11 +3,9 @@ import {
   Search,
   Plus,
   Briefcase,
-  Calendar,
   Phone,
   Trash2,
   DollarSign,
-  Edit3,
 } from "lucide-react";
 import { WhatsAppIcon } from "../components/Icons";
 

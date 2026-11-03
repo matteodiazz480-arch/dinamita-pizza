@@ -1,14 +1,16 @@
 import React, { useState, useMemo } from "react";
 import {
-  Receipt,
   Plus,
   Trash2,
   Calendar,
   Wallet,
-  Tag,
   Search,
   Filter,
 } from "lucide-react";
+
+function getCurrentYearMonth() {
+  return new Date().toISOString().slice(0, 7);
+}
 
 export default function CrmExpensesView({
   expenses = [],
@@ -18,7 +20,7 @@ export default function CrmExpensesView({
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
 
-  const currentYearMonth = new Date().toISOString().slice(0, 7);
+  const currentYearMonth = getCurrentYearMonth();
 
   const filteredExpenses = useMemo(() => {
     return expenses.filter((e) => {

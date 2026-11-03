@@ -4,19 +4,25 @@ import React, {
   useEffect,
   useImperativeHandle,
   useMemo,
+  useRef,
   useState,
 } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import "./RotatingText.css";
 
 function cn(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
+const DEFAULT_TRANSITION = {
+  duration: 0.32,
+  ease: [0.23, 1, 0.32, 1],
+};
+
 const RotatingText = forwardRef((props, ref) => {
   const {
     texts = [],
-    transition = { type: "spring", damping: 28, stiffness: 320 },
+    transition = DEFAULT_TRANSITION,
     effect = "slide",
     direction = "up",
     highlight = false,
@@ -25,12 +31,12 @@ const RotatingText = forwardRef((props, ref) => {
     exit,
     animatePresenceMode = "wait",
     animatePresenceInitial = false,
-    rotationInterval = 2500,
-    staggerDuration = 0.025,
-    staggerFrom = "last",
+    rotationInterval = 2800,
+    staggerDuration = 0.02,
+    staggerFrom = "first",
     loop = true,
     auto = true,
-    splitBy = "characters",
+    splitBy = "words",
     onNext,
     mainClassName,
     splitLevelClassName,
@@ -38,28 +44,48 @@ const RotatingText = forwardRef((props, ref) => {
     ...rest
   } = props;
 
+  const prefersReducedMotion = useReducedMotion();
+  const containerRef = useRef(null);
+  const [isInView, setIsInView] = useState(true);
   const [currentTextIndex, setCurrentTextIndex] = useState(0);
 
+  // Pausar la rotación automáticamente cuando el Hero no está visible en pantalla
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInView(entry.isIntersecting);
+      },
+      { threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   const resolvedInitial = useMemo(() => {
+    if (prefersReducedMotion) return { opacity: 0 };
     if (initial !== undefined) return initial;
     if (effect === "fade") return { opacity: 0 };
     if (effect === "blur") return { opacity: 0, filter: "blur(6px)" };
-    return { y: direction === "down" ? "-100%" : "100%", opacity: 0 };
-  }, [initial, effect, direction]);
+    return { y: direction === "down" ? "-90%" : "90%", opacity: 0 };
+  }, [prefersReducedMotion, initial, effect, direction]);
 
   const resolvedAnimate = useMemo(() => {
+    if (prefersReducedMotion) return { opacity: 1 };
     if (animate !== undefined) return animate;
     if (effect === "fade") return { opacity: 1 };
     if (effect === "blur") return { opacity: 1, filter: "blur(0px)" };
-    return { y: 0, opacity: 1 };
-  }, [animate, effect]);
+    return { y: "0%", opacity: 1 };
+  }, [prefersReducedMotion, animate, effect]);
 
   const resolvedExit = useMemo(() => {
+    if (prefersReducedMotion) return { opacity: 0 };
     if (exit !== undefined) return exit;
     if (effect === "fade") return { opacity: 0 };
     if (effect === "blur") return { opacity: 0, filter: "blur(6px)" };
-    return { y: direction === "down" ? "110%" : "-110%", opacity: 0 };
-  }, [exit, effect, direction]);
+    return { y: direction === "down" ? "90%" : "-90%", opacity: 0 };
+  }, [prefersReducedMotion, exit, effect, direction]);
 
   const splitIntoCharacters = (text) => {
     if (typeof Intl !== "undefined" && Intl.Segmenter) {
@@ -98,6 +124,7 @@ const RotatingText = forwardRef((props, ref) => {
 
   const getStaggerDelay = useCallback(
     (index, totalChars) => {
+      if (totalChars <= 1) return 0;
       if (staggerFrom === "first") return index * staggerDuration;
       if (staggerFrom === "last") return (totalChars - 1 - index) * staggerDuration;
       if (staggerFrom === "center") {
@@ -173,10 +200,10 @@ const RotatingText = forwardRef((props, ref) => {
   );
 
   useEffect(() => {
-    if (!auto || texts.length <= 1) return;
+    if (!auto || !isInView || texts.length <= 1) return;
     const intervalId = setInterval(next, rotationInterval);
     return () => clearInterval(intervalId);
-  }, [next, rotationInterval, auto, texts.length]);
+  }, [next, rotationInterval, auto, isInView, texts.length]);
 
   const totalCharacters = elements.reduce(
     (sum, word) => sum + word.characters.length,
@@ -184,14 +211,14 @@ const RotatingText = forwardRef((props, ref) => {
   );
 
   return (
-    <motion.span
+    <span
+      ref={containerRef}
       className={cn(
         "text-rotate",
         highlight && "text-rotate-highlight",
         mainClassName
       )}
       {...rest}
-      transition={transition}
     >
       <span className="text-rotate-sr-only">{texts[currentTextIndex]}</span>
       <AnimatePresence mode={animatePresenceMode} initial={animatePresenceInitial}>
@@ -237,7 +264,7 @@ const RotatingText = forwardRef((props, ref) => {
           })}
         </motion.span>
       </AnimatePresence>
-    </motion.span>
+    </span>
   );
 });
 

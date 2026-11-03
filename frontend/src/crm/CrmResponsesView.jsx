@@ -1,14 +1,9 @@
 import React, { useState, useMemo } from "react";
 import {
-  FileText,
   Search,
-  Calendar,
   Phone,
-  Building2,
   Trash2,
   ArrowRight,
-  ShieldCheck,
-  CheckCircle,
 } from "lucide-react";
 import { WhatsAppIcon } from "../components/Icons";
 
