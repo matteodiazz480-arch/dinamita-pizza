@@ -12,9 +12,8 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { securePost, sanitizeClientText } from "../utils/securityClient";
-import { playSound } from "../utils/sound";
 import { WhatsAppIcon } from "./Icons";
-import { NEXO_CONFIG, getWhatsAppUrl } from "../data/nexoData";
+import { NEXO_CONFIG } from "../data/nexoData";
 
 const DAY_NAMES = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
 const FULL_DAY_NAMES = [
@@ -40,27 +39,11 @@ const MONTH_NAMES = [
   "Nov",
   "Dic",
 ];
-const FULL_MONTH_NAMES = [
-  "Enero",
-  "Febrero",
-  "Marzo",
-  "Abril",
-  "Mayo",
-  "Junio",
-  "Julio",
-  "Agosto",
-  "Septiembre",
-  "Octubre",
-  "Noviembre",
-  "Diciembre",
-];
 
 const AVAILABLE_SLOTS = [
-  "09:30",
-  "10:15",
-  "11:00",
-  "11:45",
-  "12:30",
+  "10:00",
+  "10:45",
+  "11:30",
   "14:00",
   "14:45",
   "15:30",
@@ -76,7 +59,7 @@ function generateAvailableDays(count = 14) {
   let added = 0;
   let offset = 1;
 
-  while (added < count && offset < 30) {
+  while (added < count && offset < 35) {
     const d = new Date(start);
     d.setDate(start.getDate() + offset);
     if (d.getDay() !== 0) {
@@ -87,7 +70,6 @@ function generateAvailableDays(count = 14) {
         fullDayName: FULL_DAY_NAMES[d.getDay()],
         dayNumber: d.getDate(),
         monthName: MONTH_NAMES[d.getMonth()],
-        fullMonthName: FULL_MONTH_NAMES[d.getMonth()],
         year: d.getFullYear(),
         isTomorrow: offset === 1,
       });
@@ -100,14 +82,15 @@ function generateAvailableDays(count = 14) {
 
 export default function CtaContactSection({ onOpenLegalDoc }) {
   const prefersReducedMotion = useReducedMotion();
-  const daysList = useMemo(() => generateAvailableDays(12), []);
+  const daysList = useMemo(() => generateAvailableDays(14), []);
+  const daysScrollRef = useRef(null);
   const formLoadedAtRef = useRef(0);
 
   useEffect(() => {
     formLoadedAtRef.current = Date.now();
   }, []);
 
-  const [step, setStep] = useState(1); // 1: Turno | 2: Datos | 3: Confirmado
+  const [step, setStep] = useState(1);
   const [selectedDay, setSelectedDay] = useState(daysList[0] || null);
   const [selectedTime, setSelectedTime] = useState("15:30");
   const [formData, setFormData] = useState({
@@ -115,7 +98,6 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
     phone: "",
     email: "",
     businessName: "",
-    notes: "",
     privacyConsent: true,
     website_url: "",
   });
@@ -125,127 +107,143 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
   const [serverError, setServerError] = useState("");
   const [confirmedBooking, setConfirmedBooking] = useState(null);
 
-  const daysScrollRef = useRef(null);
-
   const scrollDays = (direction) => {
     if (!daysScrollRef.current) return;
-    const scrollAmount = direction === "left" ? -160 : 160;
-    daysScrollRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    const delta = direction === "left" ? -180 : 180;
+    daysScrollRef.current.scrollBy({ left: delta, behavior: "smooth" });
   };
 
   const handleSelectDay = (day) => {
     setSelectedDay(day);
-    playSound("click");
+    setServerError("");
   };
 
   const handleSelectTime = (time) => {
     setSelectedTime(time);
-    playSound("click");
+    setServerError("");
   };
 
   const handleGoToStep2 = () => {
-    if (!selectedDay || !selectedTime) return;
-    playSound("click");
+    if (!selectedDay || !selectedTime) {
+      setServerError("Elegí un día y un horario antes de continuar.");
+      return;
+    }
+    setServerError("");
     setStep(2);
   };
 
   const handleBackToStep1 = () => {
-    playSound("click");
+    setServerError("");
     setStep(1);
   };
 
-  const validate = () => {
+  const validateStep2 = () => {
     const errs = {};
-    const name = sanitizeClientText(formData.fullName, 80).trim();
-    const phone = sanitizeClientText(formData.phone, 30).trim();
-    const email = sanitizeClientText(formData.email, 120).trim();
+    const name = sanitizeClientText(formData.fullName, 80);
+    const phone = sanitizeClientText(formData.phone, 30);
+    const email = sanitizeClientText(formData.email, 120);
 
     if (name.length < 2) {
-      errs.fullName = "Ingresá tu nombre y apellido.";
-    }
-    const phoneDigits = phone.replace(/[^0-9]/g, "");
-    if (!phone) {
-      errs.phone = "Ingresá tu WhatsApp para coordinar.";
-    } else if (phoneDigits.length < 6 || phoneDigits.length > 16) {
-      errs.phone = "Número de teléfono inválido.";
-    }
-    if (!email) {
-      errs.email = "Ingresá tu correo electrónico.";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
-      errs.email = "Correo electrónico inválido.";
-    }
-    if (!formData.privacyConsent) {
-      errs.privacyConsent = "Debés aceptar la política de privacidad.";
+      errs.fullName = "Ingresá tu nombre y apellido completo.";
     }
 
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
+    const cleanPhone = phone.replace(/[^0-9]/g, "");
+    if (cleanPhone.length < 8) {
+      errs.phone = "Ingresá un WhatsApp válido para conectarnos.";
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    if (!emailRegex.test(email)) {
+      errs.email = "Ingresá un correo electrónico válido.";
+    }
+
+    if (!formData.privacyConsent) {
+      errs.privacyConsent = "Debés aceptar el tratamiento de datos para la reunión.";
+    }
+
+    return errs;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (status === "submitting") return;
     setServerError("");
 
-    if (!validate()) {
-      playSound("error");
+    if (formData.website_url && formData.website_url.trim() !== "") {
+      setStatus("success");
+      setConfirmedBooking({
+        refId: "NEXO-" + Math.random().toString(36).substring(2, 8).toUpperCase(),
+        fullName: formData.fullName,
+        dateString: selectedDay?.fullDayName + " " + selectedDay?.dayNumber,
+        timeString: selectedTime,
+      });
+      setStep(3);
+      return;
+    }
+
+    const valErrors = validateStep2();
+    if (Object.keys(valErrors).length > 0) {
+      setErrors(valErrors);
+      return;
+    }
+    setErrors({});
+
+    const elapsed = Date.now() - formLoadedAtRef.current;
+    if (elapsed < 1200) {
+      setServerError("Completaste el formulario demasiado rápido. Intentá nuevamente.");
       return;
     }
 
     setStatus("submitting");
 
-    const meetingDateStr = `${selectedDay.fullDayName} ${selectedDay.dayNumber} de ${selectedDay.fullMonthName} ${selectedDay.year}`;
-    const constructedMessage = `Reserva de reunión estratégica de 20 min para el ${meetingDateStr} a las ${selectedTime} hs.${
-      formData.notes ? ` Nota: ${formData.notes}` : ""
-    }`;
+    const payload = {
+      fullName: sanitizeClientText(formData.fullName, 80),
+      phone: sanitizeClientText(formData.phone, 30),
+      email: sanitizeClientText(formData.email, 120),
+      businessName: sanitizeClientText(formData.businessName, 80) || "No especificado",
+      formLoadedAt: formLoadedAtRef.current,
+      service: "Reunión Gratuita 20 min",
+      meetingDate: selectedDay ? selectedDay.isoString : "",
+      meetingTime: selectedTime,
+      message: `Reunión agendada para el día ${selectedDay?.fullDayName} ${selectedDay?.dayNumber}/${selectedDay?.monthName}/${selectedDay?.year} a las ${selectedTime} hs (20 min).`,
+      privacyConsent: Boolean(formData.privacyConsent),
+      website_url: formData.website_url,
+    };
 
     try {
-      const response = await securePost("/api/contact", {
-        fullName: formData.fullName,
-        phone: formData.phone,
-        email: formData.email,
-        businessName: formData.businessName || "No especificado",
-        service: "Reunión Gratuita 20 min",
-        message: constructedMessage,
-        privacyConsent: true,
-        website_url: formData.website_url,
-        formLoadedAt: formLoadedAtRef.current,
-        meetingDate: selectedDay.isoString,
-        meetingTime: selectedTime,
-      });
-
-      if (!response.ok) {
+      const res = await securePost("/api/contact", payload);
+      if (res.ok) {
+        setStatus("success");
+        setConfirmedBooking({
+          refId: res.refId || "NEXO-CAL-" + Date.now().toString(36).toUpperCase(),
+          fullName: payload.fullName,
+          email: payload.email,
+          businessName: payload.businessName,
+          dateString: `${selectedDay?.fullDayName} ${selectedDay?.dayNumber} de ${selectedDay?.monthName}`,
+          timeString: selectedTime,
+        });
+        setStep(3);
+      } else {
         setStatus("error");
-        setServerError(
-          response.error || "No pudimos agendar tu reunión. Por favor reintentá."
-        );
-        playSound("error");
-        return;
+        setServerError(res.error || "Ocurrió un error al agendar tu reunión. Por favor intentá nuevamente.");
       }
-
-      playSound("success");
-      setStatus("success");
-      setStep(3);
-      setConfirmedBooking({
-        refId: response.refId || "NEXO-MEET",
-        dateString: meetingDateStr,
-        timeString: selectedTime,
-        fullName: formData.fullName,
-        phone: formData.phone,
-        email: formData.email,
-        businessName: formData.businessName,
-      });
     } catch {
       setStatus("error");
-      setServerError("Error de conexión. Verificá tu red y probá nuevamente.");
-      playSound("error");
+      setServerError("Error de conexión. Podés escribirnos directamente por WhatsApp.");
     }
   };
 
   const getWhatsAppBookingUrl = () => {
     if (!confirmedBooking) return "#";
     const text = encodeURIComponent(
-      `Hola NEXO Creative, acabo de agendar una reunión estratégica de 20 min para el ${confirmedBooking.dateString} a las ${confirmedBooking.timeString} hs (Ref: ${confirmedBooking.refId}). Mi negocio es: ${confirmedBooking.businessName || "Mi proyecto"}.`
+      `Hola NEXO Creative! Acabo de agendar una reunión gratuita de 20 min (Código: ${confirmedBooking.refId}) para el día ${confirmedBooking.dateString} a las ${confirmedBooking.timeString} hs. Mi nombre es ${confirmedBooking.fullName}.`
+    );
+    const cleanNumber = (NEXO_CONFIG.whatsappNumber || "").replace(/[^0-9]/g, "");
+    return `https://wa.me/${cleanNumber}?text=${text}`;
+  };
+
+  const getWhatsAppUrl = () => {
+    const text = encodeURIComponent(
+      "Hola NEXO Creative! Me gustaría coordinar una reunión de 20 minutos para analizar el crecimiento de mi negocio."
     );
     const cleanNumber = (NEXO_CONFIG.whatsappNumber || "").replace(/[^0-9]/g, "");
     return `https://wa.me/${cleanNumber}?text=${text}`;
@@ -254,10 +252,8 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
   return (
     <section
       id="contacto"
-      className="bg-gradient-to-b from-[#111111] via-[#0d0f12] to-[#0b0c0e] text-white relative overflow-hidden pt-8 sm:pt-14 pb-14 sm:pb-20"
+      className="bg-[#111111] text-white relative overflow-hidden pt-8 sm:pt-14 pb-14 sm:pb-20"
     >
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#BCE838]/5 rounded-full blur-[140px] pointer-events-none" />
-
       <div className="relative max-w-2xl mx-auto px-3.5 sm:px-6">
         {/* Cabecera limpia y concisa */}
         <motion.div
@@ -273,12 +269,12 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
 
           <p className="text-xs sm:text-sm text-gray-300 font-normal mt-2 leading-relaxed">
             Agendá una reunión estratégica gratuita de{" "}
-            <span className="text-[#BCE838] font-bold">20 minutos</span>.
+            <span className="text-white font-bold">20 minutos</span>.
           </p>
         </motion.div>
 
         {/* Tarjeta del Calendario por Etapas */}
-        <div className="bg-[#141519] border border-white/10 rounded-2xl p-4 sm:p-6 shadow-[0_20px_50px_rgba(0,0,0,0.65)] backdrop-blur-xl">
+        <div className="bg-[#141519] border border-white/10 rounded-2xl p-4 sm:p-6 shadow-xl backdrop-blur-xl">
           <AnimatePresence mode="wait">
             {/* ETAPA 1: Elegir Día y Horario */}
             {step === 1 && (
@@ -292,12 +288,12 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
               >
                 <div className="flex items-center justify-between pb-2.5 border-b border-white/5 text-xs">
                   <span className="font-extrabold text-white flex items-center gap-1.5">
-                    <span className="w-5 h-5 rounded-full bg-[#BCE838] text-[#111111] font-black flex items-center justify-center text-[10px]">
+                    <span className="w-5 h-5 rounded-full bg-white text-[#111111] font-black flex items-center justify-center text-[10px]">
                       1
                     </span>
                     <span>Elegí tu día y horario</span>
                   </span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#BCE838]/15 text-[#BCE838] border border-[#BCE838]/30">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-white border border-white/15">
                     Duración: 20 min
                   </span>
                 </div>
@@ -306,7 +302,7 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="text-[11px] font-bold text-gray-400 flex items-center gap-1">
-                      <CalendarIcon className="w-3.5 h-3.5 text-[#BCE838]" />
+                      <CalendarIcon className="w-3.5 h-3.5 text-white" />
                       <span>Días disponibles</span>
                     </label>
                     <div className="flex items-center gap-1">
@@ -343,7 +339,7 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
                           onClick={() => handleSelectDay(day)}
                           className={`flex flex-col items-center justify-center min-w-[50px] sm:min-w-[58px] py-1.5 sm:py-2 px-1 rounded-xl border transition-all cursor-pointer flex-shrink-0 select-none ${
                             isSelected
-                              ? "bg-[#BCE838] border-[#BCE838] text-[#111111] shadow-[0_0_12px_rgba(188,232,56,0.35)] scale-102 font-black"
+                              ? "bg-white border-white text-[#111111] scale-102 font-black shadow-sm"
                               : "bg-[#181a20] border-white/10 text-gray-300 hover:border-white/20"
                           }`}
                         >
@@ -365,7 +361,7 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
                 {/* Selector de Horarios en Grilla Compacta */}
                 <div>
                   <label className="text-[11px] font-bold text-gray-400 flex items-center gap-1 mb-2">
-                    <Clock className="w-3.5 h-3.5 text-[#BCE838]" />
+                    <Clock className="w-3.5 h-3.5 text-white" />
                     <span>Horario disponible</span>
                   </label>
 
@@ -379,7 +375,7 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
                           onClick={() => handleSelectTime(time)}
                           className={`py-1.5 px-1 rounded-lg text-xs font-bold border transition-all cursor-pointer text-center ${
                             isSelected
-                              ? "bg-[#BCE838] border-[#BCE838] text-[#111111] shadow-[0_0_10px_rgba(188,232,56,0.3)] font-black"
+                              ? "bg-white border-white text-[#111111] font-black shadow-sm"
                               : "bg-[#181a20] border-white/10 text-gray-300 hover:border-white/25"
                           }`}
                         >
@@ -393,14 +389,14 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
                 {/* Resumen y Botón para Continuar a Etapa 2 */}
                 {selectedDay && (
                   <div className="pt-2">
-                    <div className="p-2.5 rounded-xl bg-[#181a20] border border-[#BCE838]/25 flex items-center justify-between text-xs mb-3">
+                    <div className="p-2.5 rounded-xl bg-[#181a20] border border-white/15 flex items-center justify-between text-xs mb-3">
                       <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-[#BCE838] animate-pulse" />
+                        <span className="w-2 h-2 rounded-full bg-white" />
                         <span className="font-bold text-white text-[11px] sm:text-xs">
                           {selectedDay.dayOfWeek} {selectedDay.dayNumber} {selectedDay.monthName} · {selectedTime} hs
                         </span>
                       </div>
-                      <span className="text-[10px] text-[#BCE838] font-bold">
+                      <span className="text-[10px] text-white font-bold">
                         Paso 1 listo
                       </span>
                     </div>
@@ -408,7 +404,7 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
                     <button
                       type="button"
                       onClick={handleGoToStep2}
-                      className="w-full inline-flex items-center justify-center gap-2 bg-[#BCE838] hover:bg-[#add92b] text-[#111111] font-black text-xs sm:text-sm py-2.5 sm:py-3 rounded-xl transition-all cursor-pointer shadow-[0_0_18px_rgba(188,232,56,0.35)] active:scale-98"
+                      className="w-full inline-flex items-center justify-center gap-2 bg-white hover:bg-neutral-200 text-[#111111] font-black text-xs sm:text-sm py-2.5 sm:py-3 rounded-xl transition-all cursor-pointer shadow-sm active:scale-98"
                     >
                       <span>Continuar con este horario</span>
                       <ArrowRight className="w-4 h-4" />
@@ -437,7 +433,7 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
                     <ArrowLeft className="w-3.5 h-3.5" />
                     <span>Volver a horario</span>
                   </button>
-                  <span className="font-extrabold text-[#BCE838] text-[11px]">
+                  <span className="font-extrabold text-white text-[11px]">
                     {selectedDay?.dayOfWeek} {selectedDay?.dayNumber} {selectedDay?.monthName} · {selectedTime} hs
                   </span>
                 </div>
@@ -477,7 +473,7 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
                         className={`w-full bg-[#181a20] border rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none transition-colors ${
                           errors.fullName
                             ? "border-red-500"
-                            : "border-white/12 focus:border-[#BCE838]"
+                            : "border-white/12 focus:border-white"
                         }`}
                       />
                       {errors.fullName && (
@@ -500,7 +496,7 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
                         className={`w-full bg-[#181a20] border rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none transition-colors ${
                           errors.phone
                             ? "border-red-500"
-                            : "border-white/12 focus:border-[#BCE838]"
+                            : "border-white/12 focus:border-white"
                         }`}
                       />
                       {errors.phone && (
@@ -525,7 +521,7 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
                         className={`w-full bg-[#181a20] border rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none transition-colors ${
                           errors.email
                             ? "border-red-500"
-                            : "border-white/12 focus:border-[#BCE838]"
+                            : "border-white/12 focus:border-white"
                         }`}
                       />
                       {errors.email && (
@@ -544,7 +540,7 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
                           setFormData({ ...formData, businessName: e.target.value })
                         }
                         placeholder="Nombre de tu negocio (opcional)"
-                        className="w-full bg-[#181a20] border border-white/12 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#BCE838] transition-colors"
+                        className="w-full bg-[#181a20] border border-white/12 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-white transition-colors"
                       />
                     </div>
                   </div>
@@ -560,14 +556,14 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
                           privacyConsent: e.target.checked,
                         })
                       }
-                      className="mt-0.5 rounded border-gray-600 text-[#BCE838] focus:ring-[#BCE838]"
+                      className="mt-0.5 rounded border-gray-600 text-white focus:ring-white"
                     />
                     <span className="text-[10px] text-gray-400 leading-tight">
                       Acepto el uso de mis datos para coordinar la reunión según la{" "}
                       <button
                         type="button"
                         onClick={() => onOpenLegalDoc?.("privacidad")}
-                        className="text-gray-300 underline hover:text-[#BCE838] cursor-pointer"
+                        className="text-gray-300 underline hover:text-white cursor-pointer"
                       >
                         Política de Privacidad
                       </button>
@@ -584,7 +580,7 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
                   <button
                     type="submit"
                     disabled={status === "submitting"}
-                    className="w-full mt-1.5 inline-flex items-center justify-center gap-1.5 bg-[#BCE838] hover:bg-[#add92b] text-[#111111] font-black text-xs sm:text-sm px-4 py-2.5 sm:py-3 rounded-xl transition-all cursor-pointer shadow-[0_0_18px_rgba(188,232,56,0.35)] active:scale-98 disabled:opacity-50"
+                    className="w-full mt-1.5 inline-flex items-center justify-center gap-1.5 bg-white hover:bg-neutral-200 text-[#111111] font-black text-xs sm:text-sm px-4 py-2.5 sm:py-3 rounded-xl transition-all cursor-pointer shadow-sm active:scale-98 disabled:opacity-50"
                   >
                     {status === "submitting" ? (
                       <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
@@ -599,7 +595,7 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
 
                 <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[9px] text-gray-400">
                   <span className="flex items-center gap-1">
-                    <ShieldCheck className="w-3 h-3 text-[#BCE838]" />
+                    <ShieldCheck className="w-3 h-3 text-white" />
                     <span>Datos protegidos · Ley 25.326</span>
                   </span>
                   <span>100% Sin Costo</span>
@@ -617,12 +613,12 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
                 transition={{ duration: 0.3 }}
                 className="text-center py-4 space-y-3.5"
               >
-                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[#BCE838]/15 border-2 border-[#BCE838] flex items-center justify-center mx-auto text-[#BCE838]">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/10 border-2 border-white flex items-center justify-center mx-auto text-white">
                   <CheckCircle2 className="w-7 h-7 sm:w-8 sm:h-8" />
                 </div>
 
                 <div>
-                  <span className="text-[10px] font-mono tracking-widest text-[#BCE838] uppercase">
+                  <span className="text-[10px] font-mono tracking-widest text-white uppercase font-bold">
                     Código: {confirmedBooking.refId}
                   </span>
                   <h3 className="text-lg sm:text-xl font-black text-white mt-0.5">
@@ -636,7 +632,7 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
                 <div className="bg-[#181a20] border border-white/10 rounded-xl p-3 text-left text-xs space-y-1.5">
                   <div className="flex items-center justify-between text-gray-400">
                     <span>Fecha y hora</span>
-                    <span className="font-bold text-[#BCE838]">
+                    <span className="font-bold text-white">
                       {confirmedBooking.dateString} · {confirmedBooking.timeString} hs
                     </span>
                   </div>
@@ -690,9 +686,9 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
             href={getWhatsAppUrl()}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-[11px] font-bold text-gray-400 hover:text-[#BCE838] transition-colors"
+            className="inline-flex items-center gap-1.5 text-[11px] font-bold text-gray-400 hover:text-white transition-colors"
           >
-            <WhatsAppIcon className="w-3.5 h-3.5 fill-[#BCE838]" />
+            <WhatsAppIcon className="w-3.5 h-3.5 fill-white" />
             <span>O contactanos por WhatsApp directo</span>
           </a>
         </div>

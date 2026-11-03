@@ -27,7 +27,7 @@ export default function Footer({ onOpenLegalDoc, onOpenCookieSettings }) {
               href={NEXO_CONFIG.socialLinks.instagram}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.04] hover:bg-[#BCE838]/12 hover:text-[#BCE838] border border-white/[0.08] text-xs font-semibold text-gray-300 transition-colors"
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.04] hover:bg-white/10 hover:text-white border border-white/[0.08] text-xs font-semibold text-gray-300 transition-colors"
               aria-label="Instagram oficial de NEXO Creative"
             >
               <InstagramIcon className="w-4 h-4" />
@@ -38,7 +38,7 @@ export default function Footer({ onOpenLegalDoc, onOpenCookieSettings }) {
               href={NEXO_CONFIG.socialLinks.facebook}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.04] hover:bg-[#BCE838]/12 hover:text-[#BCE838] border border-white/[0.08] text-xs font-semibold text-gray-300 transition-colors"
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.04] hover:bg-white/10 hover:text-white border border-white/[0.08] text-xs font-semibold text-gray-300 transition-colors"
               aria-label="Facebook oficial de NEXO Creative"
             >
               <FacebookIcon className="w-4 h-4" />
@@ -82,7 +82,7 @@ export default function Footer({ onOpenLegalDoc, onOpenCookieSettings }) {
           <button
             type="button"
             onClick={() => onOpenCookieSettings?.()}
-            className="text-gray-400 hover:text-[#BCE838] font-semibold transition-colors cursor-pointer"
+            className="text-gray-400 hover:text-white font-semibold transition-colors cursor-pointer"
           >
             Configurar cookies
           </button>

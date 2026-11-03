@@ -98,7 +98,7 @@ export default function GooeyNav({
     const existing = holder.querySelectorAll(".gooey-nav-particle");
     existing.forEach((p) => p.remove());
 
-    const colors = ["#BCE838", "#d4f269", "#ffffff"];
+    const colors = ["#ffffff", "#e5e7eb", "#d1d5db"];
 
     for (let i = 0; i < particleCount; i++) {
       const particle = document.createElement("span");

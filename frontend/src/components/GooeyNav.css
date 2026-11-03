@@ -133,8 +133,8 @@
 }
 
 .gooey-nav-effect.filter-layer {
-  background: #BCE838;
-  box-shadow: 0 2px 12px rgba(188, 232, 56, 0.22);
+  background: #ffffff;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.25);
 }
 
 .gooey-nav-particle {

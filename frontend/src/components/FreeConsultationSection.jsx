@@ -44,7 +44,7 @@ export default function FreeConsultationSection({ onOpenModal }) {
                     }}
                     className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs text-gray-600 font-semibold"
                   >
-                    <span className="w-4 h-4 rounded-full bg-[#111111] text-[#BCE838] flex items-center justify-center flex-shrink-0">
+                    <span className="w-4 h-4 rounded-full bg-[#111111] text-white flex items-center justify-center flex-shrink-0">
                       <Check className="w-2.5 h-2.5 stroke-[3]" />
                     </span>
                     <span>{point}</span>
@@ -61,7 +61,7 @@ export default function FreeConsultationSection({ onOpenModal }) {
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#111111] hover:bg-[#1e2026] text-white font-bold px-5 sm:px-6 py-3 sm:py-3.5 rounded-xl text-xs sm:text-sm tracking-wide transition-colors cursor-pointer group shadow-xs"
               >
                 <span>{info.ctaText}</span>
-                <ArrowRight className="w-4 h-4 text-[#BCE838] group-hover:translate-x-0.5 transition-transform" />
+                <ArrowRight className="w-4 h-4 text-white group-hover:translate-x-0.5 transition-transform" />
               </motion.button>
             </div>
           </div>

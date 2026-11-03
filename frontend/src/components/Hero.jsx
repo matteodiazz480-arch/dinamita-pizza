@@ -20,14 +20,13 @@ export default function Hero({ onOpenConsultationModal, onOpenPlanFinder }) {
             loading="eager"
             decoding="async"
           />
-          {/* Overlays móvil: gradientes suaves que dejan ver el casco amarillo, los rostros y la flecha verde */}
-          <div className="md:hidden absolute inset-0 bg-gradient-to-b from-[#111111]/30 via-transparent to-[#111111]" />
-          <div className="md:hidden absolute inset-0 bg-gradient-to-t from-[#111111] via-[#111111]/60 to-transparent" />
+          {/* Overlays móvil: oscurecido para máxima legibilidad del texto */}
+          <div className="md:hidden absolute inset-0 bg-[#111111]/60" />
+          <div className="md:hidden absolute inset-0 bg-gradient-to-t from-[#111111] via-[#111111]/40 to-transparent" />
 
           {/* Overlays desktop: oscurecido progresivo a la izquierda para máxima legibilidad del texto */}
           <div className="hidden md:block absolute inset-0 bg-[#111111]/40" />
-          <div className="hidden md:block absolute inset-0 bg-gradient-to-r from-[#111111]/95 via-[#111111]/70 to-transparent" />
-          <div className="hidden md:block absolute inset-0 bg-gradient-to-t from-[#111111] via-transparent to-[#111111]/70" />
+          <div className="hidden md:block absolute inset-0 bg-[#111111]/60" />
         </div>
 
         <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-8 sm:py-12">
@@ -39,7 +38,7 @@ export default function Hero({ onOpenConsultationModal, onOpenPlanFinder }) {
             >
               <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.08] text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)]">
                 <span className="block">{NEXO_CONFIG.hero.fixedHeadline}</span>
-                <span className="flex items-baseline min-h-[1.22em] mt-1 text-[#BCE838] drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)]">
+                <span className="flex items-baseline min-h-[1.22em] mt-1 text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)]">
                   <RotatingText
                     texts={NEXO_CONFIG.hero.rotatingWords}
                     effect="slide"
@@ -50,7 +49,7 @@ export default function Hero({ onOpenConsultationModal, onOpenPlanFinder }) {
                     staggerFrom="last"
                     loop={true}
                     animatePresenceMode="wait"
-                    mainClassName="text-[#BCE838] font-black tracking-tight"
+                    mainClassName="text-white font-black tracking-tight"
                     splitLevelClassName="overflow-hidden pb-0.5"
                   />
                 </span>
@@ -78,7 +77,7 @@ export default function Hero({ onOpenConsultationModal, onOpenPlanFinder }) {
                 onClick={() =>
                   onOpenConsultationModal?.("Asesoramiento Gratuito General")
                 }
-                className="inline-flex items-center justify-center gap-2 bg-[#BCE838] hover:bg-[#cbf446] text-[#111111] font-extrabold px-5 sm:px-7 py-3 sm:py-4 rounded-xl text-xs sm:text-sm tracking-wide transition-all cursor-pointer shadow-[0_0_24px_rgba(188,232,56,0.35)] hover:shadow-[0_0_32px_rgba(188,232,56,0.5)] group"
+                className="inline-flex items-center justify-center gap-2 bg-white hover:bg-neutral-200 text-[#111111] font-extrabold px-5 sm:px-7 py-3 sm:py-4 rounded-xl text-xs sm:text-sm tracking-wide transition-all cursor-pointer shadow-sm group"
               >
                 <span>{NEXO_CONFIG.hero.ctaText}</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
@@ -90,7 +89,7 @@ export default function Hero({ onOpenConsultationModal, onOpenPlanFinder }) {
                 onClick={onOpenPlanFinder}
                 className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 text-white font-bold px-4 sm:px-6 py-3 sm:py-4 rounded-xl text-xs sm:text-sm transition-colors cursor-pointer border border-white/15 backdrop-blur-sm"
               >
-                <Compass className="w-4 h-4 text-[#BCE838]" />
+                <Compass className="w-4 h-4 text-white" />
                 <span>Encontrá tu plan</span>
               </motion.button>
             </motion.div>

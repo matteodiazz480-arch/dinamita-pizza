@@ -186,7 +186,7 @@ ${sData.message}
             aria-labelledby="contact-modal-title"
             className="relative w-full max-w-xl bg-[#141519] border border-white/10 rounded-2xl p-5 sm:p-8 text-white shadow-2xl z-10 my-auto overflow-hidden"
           >
-            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#BCE838]/60 to-transparent" />
+            <div className="absolute top-0 left-0 right-0 h-px bg-white/10" />
 
             <button
               type="button"
@@ -199,9 +199,9 @@ ${sData.message}
 
             {status === "success" ? (
               <div className="py-8 sm:py-10 text-center space-y-5">
-                <div className="w-16 h-16 mx-auto rounded-full bg-[#BCE838]/12 border border-[#BCE838]/35 flex items-center justify-center">
+                <div className="w-16 h-16 mx-auto rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
                   <svg
-                    className="w-8 h-8 text-[#BCE838]"
+                    className="w-8 h-8 text-white"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -219,7 +219,7 @@ ${sData.message}
                 </div>
 
                 <div className="space-y-1.5">
-                  <span className="inline-block px-2.5 py-0.5 rounded-md bg-white/[0.06] border border-white/10 text-[11px] font-bold text-[#BCE838]">
+                  <span className="inline-block px-2.5 py-0.5 rounded-md bg-white/[0.06] border border-white/10 text-[11px] font-bold text-white">
                     Solicitud registrada: {referenceId}
                   </span>
                   <h3 className="text-xl sm:text-2xl font-black text-white pt-1">
@@ -237,7 +237,7 @@ ${sData.message}
                       href={whatsAppFollowUpUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#BCE838] hover:bg-[#add92b] text-[#111111] font-extrabold rounded-xl text-xs sm:text-sm transition-colors cursor-pointer"
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-white hover:bg-neutral-200 text-[#111111] font-extrabold rounded-xl text-xs sm:text-sm transition-colors cursor-pointer"
                     >
                       <WhatsAppIcon className="w-4 h-4 fill-[#111111]" />
                       <span>Continuar por WhatsApp</span>
@@ -293,7 +293,7 @@ ${sData.message}
                         htmlFor="field-fullName"
                         className="block text-[11px] font-bold uppercase tracking-wider text-gray-300 mb-1"
                       >
-                        Nombre y apellido <span className="text-[#BCE838]">*</span>
+                        Nombre y apellido <span className="text-white">*</span>
                       </label>
                       <input
                         id="field-fullName"
@@ -307,7 +307,7 @@ ${sData.message}
                         className={`w-full bg-[#0d0f12] border rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none transition-colors ${
                           errors.fullName
                             ? "border-rose-500 ring-1 ring-rose-500"
-                            : "border-white/10 focus:border-[#BCE838]"
+                            : "border-white/10 focus:border-white"
                         }`}
                       />
                       {errors.fullName && (
@@ -334,7 +334,7 @@ ${sData.message}
                         value={formData.businessName}
                         onChange={handleChange}
                         placeholder="Nombre o rubro (opcional)"
-                        className="w-full bg-[#0d0f12] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#BCE838] transition-colors"
+                        className="w-full bg-[#0d0f12] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:border-white transition-colors"
                       />
                     </div>
                   </div>
@@ -345,7 +345,7 @@ ${sData.message}
                         htmlFor="field-email"
                         className="block text-[11px] font-bold uppercase tracking-wider text-gray-300 mb-1"
                       >
-                        Correo electrónico <span className="text-[#BCE838]">*</span>
+                        Correo electrónico <span className="text-white">*</span>
                       </label>
                       <input
                         id="field-email"
@@ -359,7 +359,7 @@ ${sData.message}
                         className={`w-full bg-[#0d0f12] border rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none transition-colors ${
                           errors.email
                             ? "border-rose-500 ring-1 ring-rose-500"
-                            : "border-white/10 focus:border-[#BCE838]"
+                            : "border-white/10 focus:border-white"
                         }`}
                       />
                       {errors.email && (
@@ -375,7 +375,7 @@ ${sData.message}
                         htmlFor="field-phone"
                         className="block text-[11px] font-bold uppercase tracking-wider text-gray-300 mb-1"
                       >
-                        WhatsApp <span className="text-[#BCE838]">*</span>
+                        WhatsApp <span className="text-white">*</span>
                       </label>
                       <input
                         id="field-phone"
@@ -389,7 +389,7 @@ ${sData.message}
                         className={`w-full bg-[#0d0f12] border rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none transition-colors ${
                           errors.phone
                             ? "border-rose-500 ring-1 ring-rose-500"
-                            : "border-white/10 focus:border-[#BCE838]"
+                            : "border-white/10 focus:border-white"
                         }`}
                       />
                       {errors.phone && (
@@ -413,7 +413,7 @@ ${sData.message}
                       name="service"
                       value={formData.service || initialService || "Publicidad Digital (Meta Ads)"}
                       onChange={handleChange}
-                      className="w-full bg-[#0d0f12] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-[#BCE838] transition-colors"
+                      className="w-full bg-[#0d0f12] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-white transition-colors"
                     >
                       <option value="Publicidad Digital (Meta Ads)">Publicidad Digital (Meta Ads)</option>
                       <option value="Planes Comercios y Negocios">Planes Comercios y Negocios</option>
@@ -434,7 +434,7 @@ ${sData.message}
                       htmlFor="field-message"
                       className="block text-[11px] font-bold uppercase tracking-wider text-gray-300 mb-1"
                     >
-                      Proyecto o consulta <span className="text-[#BCE838]">*</span>
+                      Proyecto o consulta <span className="text-white">*</span>
                     </label>
                     <textarea
                       id="field-message"
@@ -447,7 +447,7 @@ ${sData.message}
                       className={`w-full bg-[#0d0f12] border rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none transition-colors resize-none ${
                         errors.message
                            ? "border-rose-500 ring-1 ring-rose-500"
-                          : "border-white/10 focus:border-[#BCE838]"
+                          : "border-white/10 focus:border-white"
                       }`}
                     />
                     {errors.message && (
@@ -465,14 +465,14 @@ ${sData.message}
                         name="privacyConsent"
                         checked={formData.privacyConsent}
                         onChange={handleChange}
-                        className="mt-0.5 w-4 h-4 rounded border-white/20 bg-[#0d0f12] accent-[#BCE838] cursor-pointer flex-shrink-0"
+                        className="mt-0.5 w-4 h-4 rounded border-white/20 bg-[#0d0f12] accent-white cursor-pointer flex-shrink-0"
                       />
                       <span className="text-[11px] text-gray-300 leading-relaxed">
                         He leído y acepto la{" "}
                         <button
                           type="button"
                           onClick={() => onOpenLegalDoc?.("privacidad")}
-                          className="text-white underline underline-offset-2 hover:text-[#BCE838] transition-colors cursor-pointer"
+                          className="text-white underline underline-offset-2 hover:text-white transition-colors cursor-pointer"
                         >
                           Política de Privacidad
                         </button>{" "}
@@ -480,7 +480,7 @@ ${sData.message}
                         <button
                           type="button"
                           onClick={() => onOpenLegalDoc?.("terminos")}
-                          className="text-white underline underline-offset-2 hover:text-[#BCE838] transition-colors cursor-pointer"
+                          className="text-white underline underline-offset-2 hover:text-white transition-colors cursor-pointer"
                         >
                           Términos y Condiciones
                         </button>
@@ -499,7 +499,7 @@ ${sData.message}
                     <button
                       type="submit"
                       disabled={status === "loading"}
-                      className="w-full bg-[#BCE838] hover:bg-[#add92b] disabled:opacity-75 text-[#111111] font-extrabold py-3.5 px-6 rounded-xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 group cursor-pointer shadow-sm"
+                      className="w-full bg-white hover:bg-neutral-200 disabled:opacity-75 text-[#111111] font-extrabold py-3.5 px-6 rounded-xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 group cursor-pointer shadow-sm"
                     >
                       {status === "loading" ? (
                         <>
@@ -515,7 +515,7 @@ ${sData.message}
                     </button>
 
                     <div className="flex items-center justify-center gap-1.5 text-[11px] text-gray-400 mt-2.5">
-                      <ShieldCheck className="w-3.5 h-3.5 text-[#BCE838]" />
+                      <ShieldCheck className="w-3.5 h-3.5 text-white" />
                       <span>Protegido contra envíos automatizados · Derechos ARCO garantizados</span>
                     </div>
                   </div>

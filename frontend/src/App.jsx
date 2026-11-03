@@ -208,7 +208,7 @@ export default function App() {
       <Suspense
         fallback={
           <div className="min-h-screen bg-[#0d0f12] text-white flex items-center justify-center">
-            <div className="w-8 h-8 border-2 border-[#BCE838] border-t-transparent rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
           </div>
         }
       >
@@ -223,7 +223,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#111111] text-white flex flex-col selection:bg-[#BCE838] selection:text-black">
+    <div className="min-h-screen bg-[#111111] text-white flex flex-col selection:bg-white selection:text-black">
       <Navbar
         activeSectionId={activeSectionId}
         onNavigateSection={handleNavigateSection}

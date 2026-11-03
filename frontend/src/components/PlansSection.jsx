@@ -1,17 +1,17 @@
 import React, { useState } from "react";
 import { NEXO_CONFIG } from "../data/nexoData";
-import { Check, ArrowRight, Compass } from "lucide-react";
+import { ArrowRight, Check, Compass } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 
 function PlanCard({ plan, onOpenConsultationModal, prefersReducedMotion }) {
-  const isFeatured = plan.featured;
+  const isFeatured = plan.highlighted;
 
   return (
     <motion.div
-      initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }}
+      initial={prefersReducedMotion ? false : { opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={prefersReducedMotion ? undefined : { opacity: 0, y: -8 }}
-      transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
       className={`rounded-3xl p-5 sm:p-6 flex flex-col justify-between relative overflow-hidden transition-all duration-300 h-full ${
         isFeatured
           ? "bg-[#111111] text-white shadow-xl border border-white/12"
@@ -24,7 +24,7 @@ function PlanCard({ plan, onOpenConsultationModal, prefersReducedMotion }) {
             <div className="flex items-center gap-2">
               <span
                 className={`font-display-condensed text-xl sm:text-2xl leading-none tracking-wider ${
-                  isFeatured ? "text-[#BCE838]" : "text-black/30"
+                  isFeatured ? "text-white" : "text-black/30"
                 }`}
               >
                 {plan.code}
@@ -39,7 +39,7 @@ function PlanCard({ plan, onOpenConsultationModal, prefersReducedMotion }) {
             </div>
             <p
               className={`text-xs font-bold mt-1 ${
-                isFeatured ? "text-[#BCE838]" : "text-[#9333EA]"
+                isFeatured ? "text-gray-300" : "text-gray-600"
               }`}
             >
               {plan.tagline}
@@ -47,7 +47,7 @@ function PlanCard({ plan, onOpenConsultationModal, prefersReducedMotion }) {
           </div>
 
           {isFeatured && (
-            <span className="px-2.5 py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-[#BCE838] text-[#111111] flex-shrink-0 shadow-xs">
+            <span className="px-2.5 py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-white text-[#111111] flex-shrink-0 shadow-xs">
               Más elegido
             </span>
           )}
@@ -70,7 +70,7 @@ function PlanCard({ plan, onOpenConsultationModal, prefersReducedMotion }) {
         >
           <span
             className={`text-xs font-extrabold ${
-              isFeatured ? "text-[#BCE838]" : "text-[#111111]"
+              isFeatured ? "text-white" : "text-[#111111]"
             }`}
           >
             {plan.priceInfo}
@@ -96,8 +96,8 @@ function PlanCard({ plan, onOpenConsultationModal, prefersReducedMotion }) {
                 <span
                   className={`w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
                     isFeatured
-                      ? "bg-[#BCE838]/20 text-[#BCE838]"
-                      : "bg-[#111111] text-[#BCE838]"
+                      ? "bg-white text-[#111111]"
+                      : "bg-[#111111] text-white"
                   }`}
                 >
                   <Check className="w-2.5 h-2.5 stroke-[3]" />
@@ -115,14 +115,14 @@ function PlanCard({ plan, onOpenConsultationModal, prefersReducedMotion }) {
           onClick={() => onOpenConsultationModal?.(plan.name)}
           className={`w-full py-3 px-4 rounded-xl text-xs sm:text-sm font-extrabold inline-flex items-center justify-center gap-2 transition-colors cursor-pointer group shadow-xs active:scale-[0.99] ${
             isFeatured
-              ? "bg-[#BCE838] hover:bg-[#cbf446] text-[#111111]"
+              ? "bg-white hover:bg-neutral-200 text-[#111111]"
               : "bg-[#111111] hover:bg-[#1e2026] text-white"
           }`}
         >
           <span>Consultar por este plan</span>
           <ArrowRight
             className={`w-4 h-4 group-hover:translate-x-0.5 transition-transform ${
-              isFeatured ? "text-[#111111]" : "text-[#BCE838]"
+              isFeatured ? "text-[#111111]" : "text-white"
             }`}
           />
         </button>
@@ -136,45 +136,41 @@ export default function PlansSection({ onOpenConsultationModal, onOpenPlanFinder
   const { title, subtitle, items } = NEXO_CONFIG.plans;
   const [selectedMobileIdx, setSelectedMobileIdx] = useState(1);
 
-  const mobileTabLabels = ["01 Presencia", "02 Meta Ads ★", "03 Integral"];
+  const mobileTabLabels = ["Esencial", "Crecimiento", "Avanzado"];
 
   return (
     <section
       id="planes"
-      className="surface-plans text-[#111111] py-9 sm:py-16 relative overflow-hidden"
+      className="py-12 sm:py-20 lg:py-24 surface-plans text-[#111111]"
     >
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-12">
+          <motion.div
+            initial={prefersReducedMotion ? false : { opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-40px" }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#111111]">
+              {title}
+            </h2>
+            <p className="mt-2 sm:mt-3 text-xs sm:text-base text-gray-600 font-medium">
+              {subtitle}
+            </p>
+          </motion.div>
+        </div>
+
         <motion.div
-          initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }}
+          initial={prefersReducedMotion ? false : { opacity: 0, y: 14 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-40px" }}
           transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-          className="flex flex-col lg:flex-row lg:items-end justify-between gap-3 sm:gap-4 mb-5 sm:mb-10 border-b border-black/[0.07] pb-4 sm:pb-5"
-        >
-          <div>
-            <h2 className="text-2xl sm:text-4xl lg:text-[2.6rem] font-black text-[#111111] tracking-tight leading-tight">
-              {title}{" "}
-              <span className="font-editorial-serif italic font-normal text-[#111111]/75">
-                de trabajo
-              </span>
-            </h2>
-          </div>
-          <p className="text-xs sm:text-sm lg:text-base text-gray-600 font-medium lg:max-w-md lg:text-right leading-relaxed">
-            {subtitle}
-          </p>
-        </motion.div>
-
-        <motion.div
-          initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-40px" }}
-          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="lg:hidden mb-4"
+          className="lg:hidden"
         >
           <div
             role="tablist"
-            aria-label="Seleccionar plan"
-            className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-[#111111] text-white"
+            aria-label="Planes de inversión"
+            className="grid grid-cols-3 gap-1 bg-[#111111] p-1 rounded-xl max-w-sm mx-auto shadow-sm"
           >
             {items.map((plan, idx) => {
               const isSelected = selectedMobileIdx === idx;
@@ -187,7 +183,7 @@ export default function PlansSection({ onOpenConsultationModal, onOpenPlanFinder
                   onClick={() => setSelectedMobileIdx(idx)}
                   className={`py-2 px-2 rounded-lg text-[11px] font-extrabold transition-all cursor-pointer truncate ${
                     isSelected
-                      ? "bg-[#BCE838] text-[#111111] shadow-xs"
+                      ? "bg-white text-[#111111] shadow-xs"
                       : "text-gray-300 hover:text-white"
                   }`}
                 >
@@ -240,7 +236,7 @@ export default function PlansSection({ onOpenConsultationModal, onOpenPlanFinder
           className="mt-5 sm:mt-8 rounded-2xl bg-[#111111] text-white p-4 sm:px-7 sm:py-5 border border-white/10 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5"
         >
           <div className="flex items-start sm:items-center gap-3">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#BCE838]/15 border border-[#BCE838]/30 flex items-center justify-center flex-shrink-0 text-[#BCE838]">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center flex-shrink-0 text-white">
               <Compass className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
@@ -256,14 +252,12 @@ export default function PlansSection({ onOpenConsultationModal, onOpenPlanFinder
           <button
             type="button"
             onClick={() => onOpenPlanFinder?.()}
-            className="w-full sm:w-auto flex-shrink-0 inline-flex items-center justify-center gap-2 bg-[#BCE838] hover:bg-[#add92b] text-[#111111] font-extrabold px-5 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm transition-colors cursor-pointer group"
+            className="w-full sm:w-auto flex-shrink-0 inline-flex items-center justify-center gap-2 bg-white hover:bg-neutral-200 text-[#111111] font-extrabold px-5 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm transition-colors cursor-pointer group"
           >
             <span>{NEXO_CONFIG.planFinder.buttonLabel}</span>
             <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
           </button>
         </motion.div>
-
-        <div className="mt-10 sm:mt-14 h-px w-full max-w-4xl mx-auto bg-gradient-to-r from-transparent via-black/[0.06] to-transparent" />
       </div>
     </section>
   );

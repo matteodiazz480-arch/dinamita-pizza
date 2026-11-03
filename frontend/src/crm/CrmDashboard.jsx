@@ -91,7 +91,7 @@ export default function CrmDashboard({
                 Panel CRM & Agenda
               </span>
               <div className="flex items-center gap-1.5 text-[10px] text-gray-400">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#BCE838]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-white" />
                 <span>Base de Datos Conectada</span>
               </div>
             </div>
@@ -105,7 +105,7 @@ export default function CrmDashboard({
               title="Actualizar datos"
             >
               <RefreshCw
-                className={`w-4 h-4 ${refreshing ? "animate-spin text-[#BCE838]" : ""}`}
+                className={`w-4 h-4 ${refreshing ? "animate-spin text-white" : ""}`}
               />
             </button>
 
@@ -122,7 +122,7 @@ export default function CrmDashboard({
             <button
               type="button"
               onClick={() => setIsModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl bg-[#BCE838] hover:bg-[#add92b] text-[#111111] text-xs font-black transition-colors shadow-sm"
+              className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl bg-white hover:bg-neutral-200 text-[#111111] text-xs font-black transition-colors shadow-sm"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Nuevo Lead</span>
@@ -161,7 +161,7 @@ export default function CrmDashboard({
             onClick={() => setActiveTab("meetings")}
             className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-colors cursor-pointer ${
               activeTab === "meetings"
-                ? "bg-[#BCE838] text-[#111111]"
+                ? "bg-white text-[#111111]"
                 : "bg-white/5 text-gray-400 hover:text-white"
             }`}
           >
@@ -174,7 +174,7 @@ export default function CrmDashboard({
             onClick={() => setActiveTab("table")}
             className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-colors cursor-pointer ${
               activeTab === "table"
-                ? "bg-[#BCE838] text-[#111111]"
+                ? "bg-white text-[#111111]"
                 : "bg-white/5 text-gray-400 hover:text-white"
             }`}
           >

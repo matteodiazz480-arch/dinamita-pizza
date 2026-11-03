@@ -59,7 +59,7 @@ export default function RubroCard({ card, image, index, onSelect }) {
           className="w-full inline-flex items-center justify-center gap-2 bg-[#111111] hover:bg-[#202227] text-white font-extrabold py-2.5 sm:py-3 px-4 rounded-xl text-xs sm:text-sm tracking-wide transition-colors cursor-pointer group/btn shadow-xs active:scale-[0.99]"
         >
           <span>{card.ctaText}</span>
-          <ArrowRight className="w-4 h-4 text-[#BCE838] group-hover/btn:translate-x-1 transition-transform" />
+          <ArrowRight className="w-4 h-4 text-white group-hover/btn:translate-x-1 transition-transform" />
         </button>
       </div>
     </motion.article>

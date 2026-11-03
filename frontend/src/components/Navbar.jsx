@@ -44,8 +44,8 @@ export default function Navbar({
     <header
       className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
         isScrolled
-          ? "bg-[#0d0f12]/95 backdrop-blur-xl border-b border-white/12 py-2 sm:py-3.5 shadow-[0_12px_32px_rgba(0,0,0,0.55)]"
-          : "bg-gradient-to-b from-[#0d0f12]/90 via-[#0d0f12]/35 to-transparent py-2 sm:py-4 border-b-0"
+          ? "bg-[#0d0f12]/95 backdrop-blur-xl border-b border-white/12 py-2 sm:py-3.5 shadow-lg"
+          : "bg-[#0d0f12]/90 backdrop-blur-sm py-2 sm:py-4 border-b border-white/5"
       }`}
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -92,7 +92,7 @@ export default function Navbar({
               onClick={() =>
                 onOpenConsultationModal?.("Asesoramiento Gratuito General")
               }
-              className="text-[11px] sm:text-sm font-black tracking-wide text-[#111111] bg-[#BCE838] hover:bg-[#cbf446] px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full sm:rounded-xl transition-all cursor-pointer shadow-[0_0_14px_rgba(188,232,56,0.25)] hover:shadow-[0_0_26px_rgba(188,232,56,0.45)] hover:scale-102 active:scale-95 whitespace-nowrap"
+              className="text-[11px] sm:text-sm font-black tracking-wide text-[#111111] bg-white hover:bg-neutral-200 px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full sm:rounded-xl transition-all cursor-pointer hover:scale-102 active:scale-95 whitespace-nowrap"
             >
               <span className="sm:hidden">Diagnóstico</span>
               <span className="hidden sm:inline">Diagnóstico gratis</span>

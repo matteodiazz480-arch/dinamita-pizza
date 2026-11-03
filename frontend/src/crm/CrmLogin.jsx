@@ -37,9 +37,6 @@ export default function CrmLogin({ onLoginSuccess, onNavigateLanding }) {
 
   return (
     <div className="min-h-screen bg-[#0d0f12] text-white flex flex-col justify-center items-center p-4 relative overflow-hidden select-none">
-      {/* Glow ambiental */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#BCE838]/5 rounded-full blur-[140px] pointer-events-none" />
-
       <div className="w-full max-w-md relative z-10">
         <div className="text-center mb-8">
           <div className="inline-block mb-3">
@@ -53,9 +50,9 @@ export default function CrmLogin({ onLoginSuccess, onNavigateLanding }) {
           </p>
         </div>
 
-        <div className="bg-[#141519] border border-white/10 rounded-2xl p-6 sm:p-8 shadow-[0_24px_64px_rgba(0,0,0,0.7)] backdrop-blur-xl">
+        <div className="bg-[#141519] border border-white/10 rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
           <div className="flex items-center gap-2.5 pb-4 mb-5 border-b border-white/8 text-xs font-bold text-gray-300">
-            <Lock className="w-4 h-4 text-[#BCE838]" />
+            <Lock className="w-4 h-4 text-white" />
             <span>Acceso Privado de Administración</span>
           </div>
 
@@ -82,7 +79,7 @@ export default function CrmLogin({ onLoginSuccess, onNavigateLanding }) {
                   autoCorrect="off"
                   spellCheck="false"
                   autoFocus
-                  className="w-full bg-[#181a20] border border-white/12 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#BCE838] transition-colors pr-10"
+                  className="w-full bg-[#181a20] border border-white/12 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-white transition-colors pr-10"
                 />
                 <button
                   type="button"
@@ -98,7 +95,7 @@ export default function CrmLogin({ onLoginSuccess, onNavigateLanding }) {
             <button
               type="submit"
               disabled={loading || !password}
-              className="w-full inline-flex items-center justify-center gap-2 bg-[#BCE838] hover:bg-[#add92b] text-[#111111] font-black text-xs sm:text-sm px-5 py-3.5 rounded-xl transition-all cursor-pointer shadow-[0_0_20px_rgba(188,232,56,0.3)] hover:shadow-[0_0_28px_rgba(188,232,56,0.5)] active:scale-98 disabled:opacity-50"
+              className="w-full inline-flex items-center justify-center gap-2 bg-white hover:bg-neutral-200 text-[#111111] font-black text-xs sm:text-sm px-5 py-3.5 rounded-xl transition-all cursor-pointer shadow-sm active:scale-98 disabled:opacity-50"
             >
               {loading ? (
                 <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
@@ -116,7 +113,7 @@ export default function CrmLogin({ onLoginSuccess, onNavigateLanding }) {
             <button
               type="button"
               onClick={handleAutofill}
-              className="text-xs font-bold text-[#BCE838] hover:underline cursor-pointer bg-[#BCE838]/10 hover:bg-[#BCE838]/20 px-3 py-1.5 rounded-lg border border-[#BCE838]/30 transition-colors"
+              className="text-xs font-bold text-white hover:underline cursor-pointer bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg border border-white/20 transition-colors"
             >
               Autocompletar clave: <span className="font-mono">nexo2026admin</span>
             </button>
@@ -124,7 +121,7 @@ export default function CrmLogin({ onLoginSuccess, onNavigateLanding }) {
 
           <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-between text-[11px] text-gray-400">
             <span className="flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#BCE838]" />
+              <ShieldCheck className="w-3.5 h-3.5 text-white" />
               <span>Protegido con HMAC</span>
             </span>
             <button

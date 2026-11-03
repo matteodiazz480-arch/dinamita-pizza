@@ -53,7 +53,7 @@ export default function ResultsSection() {
                     className={`inline-block px-2.5 py-0.5 rounded-full text-[9px] sm:text-xs font-black tracking-wider ${
                       stat.tagType === "purple"
                         ? "bg-[#9333EA] text-white"
-                        : "bg-[#BCE838] text-[#111111]"
+                        : "bg-white text-[#111111]"
                     }`}
                   >
                     {stat.tag}
@@ -65,7 +65,7 @@ export default function ResultsSection() {
                 </div>
 
                 <div className="my-3.5 sm:my-6">
-                  <span className="text-3xl sm:text-5xl font-black text-[#BCE838] tracking-tight block tabular-nums">
+                  <span className="text-3xl sm:text-5xl font-black text-white tracking-tight block tabular-nums">
                     {stat.metric}
                   </span>
                 </div>

@@ -61,7 +61,7 @@ export default function CrmLeadsTable({ leads, onUpdateLead, onDeleteLead }) {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Buscar por nombre, negocio, teléfono o email..."
-            className="w-full bg-[#181a20] border border-white/10 rounded-xl pl-10 pr-4 py-2 text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#BCE838]"
+            className="w-full bg-[#181a20] border border-white/10 rounded-xl pl-10 pr-4 py-2 text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:border-white"
           />
         </div>
 
@@ -86,7 +86,7 @@ export default function CrmLeadsTable({ leads, onUpdateLead, onDeleteLead }) {
             onClick={() => setOnlyMeetings(!onlyMeetings)}
             className={`px-3 py-2 rounded-xl text-xs font-bold border transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
               onlyMeetings
-                ? "bg-[#BCE838] border-[#BCE838] text-[#111111]"
+                ? "bg-white border-white text-[#111111]"
                 : "bg-[#181a20] border-white/10 text-gray-300 hover:text-white"
             }`}
           >
@@ -158,14 +158,14 @@ export default function CrmLeadsTable({ leads, onUpdateLead, onDeleteLead }) {
                         <span
                           className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
                             isMeeting
-                              ? "bg-[#BCE838]/15 text-[#BCE838] border border-[#BCE838]/30"
+                              ? "bg-white/10 text-white border border-white/20"
                               : "bg-white/5 text-gray-300"
                           }`}
                         >
                           {lead.service}
                         </span>
                         {lead.meetingDate && (
-                          <div className="text-[#BCE838] font-bold text-[10px] mt-1 flex items-center gap-1">
+                          <div className="text-white font-bold text-[10px] mt-1 flex items-center gap-1">
                             <Calendar className="w-3 h-3" />
                             <span>
                               {lead.meetingDate} {lead.meetingTime ? `· ${lead.meetingTime} hs` : ""}
@@ -191,7 +191,7 @@ export default function CrmLeadsTable({ leads, onUpdateLead, onDeleteLead }) {
                         <select
                           value={lead.status || "nuevo"}
                           onChange={(e) => onUpdateLead(id, e.target.value)}
-                          className="bg-[#181a20] border border-white/10 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-[#BCE838] cursor-pointer"
+                          className="bg-[#181a20] border border-white/10 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-white cursor-pointer"
                         >
                           <option value="nuevo">Nuevo</option>
                           <option value="reunion_agendada">Reunión Agendada</option>

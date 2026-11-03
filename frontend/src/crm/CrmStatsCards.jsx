@@ -13,18 +13,18 @@ export default function CrmStatsCards({ leads }) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
       {/* Tarjeta 1: Reuniones 20 min */}
-      <div className="bg-[#141519] border border-[#BCE838]/25 rounded-2xl p-4 sm:p-5 relative overflow-hidden">
+      <div className="bg-[#141519] border border-white/10 rounded-2xl p-4 sm:p-5 relative overflow-hidden">
         <div className="flex items-center justify-between">
           <span className="text-[11px] font-extrabold uppercase tracking-wider text-gray-400">
             Reuniones 20 min
           </span>
-          <div className="p-2 rounded-xl bg-[#BCE838]/15 text-[#BCE838]">
+          <div className="p-2 rounded-xl bg-white/10 text-white">
             <Calendar className="w-4 h-4" />
           </div>
         </div>
         <div className="mt-2 flex items-baseline gap-2">
           <span className="text-2xl sm:text-3xl font-black text-white">{meetings.length}</span>
-          <span className="text-xs text-[#BCE838] font-bold">
+          <span className="text-xs text-white font-bold">
             ({activeMeetings.length} activas)
           </span>
         </div>
