@@ -1,13 +1,21 @@
 import React from "react";
+import {
+  Home,
+  Users,
+  Briefcase,
+  Layers,
+  GitBranch,
+  MessageSquare,
+} from "lucide-react";
 import GooeyNav from "./GooeyNav";
 
 const MOBILE_GOOEY_ITEMS = [
-  { id: "inicio", label: "Inicio", href: "#inicio" },
-  { id: "nosotros", label: "Nosotros", href: "#nosotros" },
-  { id: "rubros", label: "Rubros", href: "#rubros" },
-  { id: "planes", label: "Planes", href: "#planes" },
-  { id: "proceso", label: "Proceso", href: "#proceso" },
-  { id: "contacto", label: "Contacto", href: "#contacto" },
+  { id: "inicio", label: "Inicio", href: "#inicio", icon: Home },
+  { id: "nosotros", label: "Nosotros", href: "#nosotros", icon: Users },
+  { id: "rubros", label: "Rubros", href: "#rubros", icon: Briefcase },
+  { id: "planes", label: "Planes", href: "#planes", icon: Layers },
+  { id: "proceso", label: "Proceso", href: "#proceso", icon: GitBranch },
+  { id: "contacto", label: "Contacto", href: "#contacto", icon: MessageSquare },
 ];
 
 export default function MobileBottomNav({ activeSectionId, onNavigate }) {
@@ -33,18 +41,18 @@ export default function MobileBottomNav({ activeSectionId, onNavigate }) {
   return (
     <nav
       aria-label="Barra de navegación móvil inferior"
-      className="fixed bottom-3 inset-x-0 z-40 md:hidden flex justify-center px-2 pb-[env(safe-area-inset-bottom)] pointer-events-none"
+      className="fixed bottom-2.5 inset-x-0 z-40 md:hidden flex justify-center px-2.5 pb-[env(safe-area-inset-bottom,0px)] pointer-events-none"
     >
-      <div className="pointer-events-auto max-w-[calc(100vw-0.75rem)] overflow-x-auto no-scrollbar py-0.5">
+      <div className="pointer-events-auto w-full max-w-md">
         <GooeyNav
           items={MOBILE_GOOEY_ITEMS}
           theme="light"
           size="sm"
           frame={true}
-          particleCount={12}
-          spread={34}
-          animationTime={500}
-          timeVariance={200}
+          particleCount={10}
+          spread={32}
+          animationTime={420}
+          timeVariance={160}
           gooeyness={0.4}
           wobble={0.3}
           hoverEffect={true}

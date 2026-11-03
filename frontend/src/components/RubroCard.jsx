@@ -13,15 +13,17 @@ export default function RubroCard({ card, image, index, onSelect }) {
       transition={{
         duration: 0.4,
         delay: index * 0.08,
-        ease: [0.16, 1, 0.3, 1],
+        ease: [0.23, 1, 0.32, 1],
       }}
-      className="bg-white/95 backdrop-blur-xl border border-white/80 rounded-3xl p-4 sm:p-5 flex flex-col justify-between shadow-[0_8px_24px_-10px_rgba(0,0,0,0.05),0_2px_6px_rgba(0,0,0,0.02)] hover:shadow-[0_18px_36px_-10px_rgba(0,0,0,0.09)] hover:-translate-y-1 transition-all duration-300 group"
+      className="bg-white border border-black/[0.06] rounded-3xl p-4 sm:p-5 flex flex-col justify-between shadow-[0_8px_24px_-10px_rgba(0,0,0,0.05),0_2px_6px_rgba(0,0,0,0.02)] hover:shadow-[0_18px_36px_-10px_rgba(0,0,0,0.09)] hover:-translate-y-1 transition-shadow duration-300 group"
     >
       <div>
         {/* Imagen representativa limpia y proporcional (sin textos encima) */}
         <div className="relative w-full h-36 sm:h-44 md:h-48 rounded-2xl overflow-hidden bg-gray-100 border border-black/[0.05] mb-4">
           <img
             src={image}
+            width={800}
+            height={534}
             alt={card.headline}
             className="w-full h-full object-cover object-center group-hover:scale-103 transition-transform duration-500"
             loading="lazy"
@@ -56,7 +58,7 @@ export default function RubroCard({ card, image, index, onSelect }) {
         <button
           type="button"
           onClick={() => onSelect(card.serviceName)}
-          className="w-full inline-flex items-center justify-center gap-2 bg-[#111111] hover:bg-[#202227] text-white font-extrabold py-2.5 sm:py-3 px-4 rounded-xl text-xs sm:text-sm tracking-wide transition-colors cursor-pointer group/btn shadow-xs active:scale-[0.99]"
+          className="w-full inline-flex items-center justify-center gap-2 bg-[#111111] hover:bg-[#202227] text-white font-extrabold py-2.5 sm:py-3 px-4 rounded-xl text-xs sm:text-sm tracking-wide transition-[background-color,transform] duration-150 cursor-pointer group/btn shadow-xs active:scale-[0.98]"
         >
           <span>{card.ctaText}</span>
           <ArrowRight className="w-4 h-4 text-[#22C55E] group-hover/btn:translate-x-1 transition-transform" />

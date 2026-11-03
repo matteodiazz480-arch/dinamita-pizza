@@ -6,7 +6,7 @@ export function BrandLogo({ size = "default" }) {
     <div className="inline-flex flex-col items-start select-none leading-none">
       <div
         className={`font-black tracking-tight flex items-center ${
-          isLarge ? "text-xl sm:text-3xl" : "text-lg sm:text-2xl"
+          isLarge ? "text-lg sm:text-3xl" : "text-base sm:text-2xl"
         }`}
       >
         <span className="text-white">NE</span>
@@ -14,8 +14,8 @@ export function BrandLogo({ size = "default" }) {
         <span className="text-white">O</span>
       </div>
       <span
-        className={`font-semibold text-white/90 uppercase tracking-[0.34em] mt-0.5 sm:mt-1 ${
-          isLarge ? "text-[8px] sm:text-[10px]" : "text-[7px] sm:text-[9px]"
+        className={`font-semibold text-white/90 uppercase tracking-[0.32em] mt-0.5 sm:mt-1 ${
+          isLarge ? "text-[7px] sm:text-[10px]" : "text-[6.5px] sm:text-[9px]"
         }`}
       >
         CREATIVE

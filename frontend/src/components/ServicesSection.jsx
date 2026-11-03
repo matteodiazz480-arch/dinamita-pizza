@@ -3,7 +3,7 @@ import { NEXO_CONFIG } from "../data/nexoData";
 import { Megaphone, Palette, BarChart3, ArrowUpRight } from "lucide-react";
 import { InstagramIcon } from "./Icons";
 import { motion, useReducedMotion } from "framer-motion";
-import socialShowcaseImg from "../assets/nexo-social-showcase.jpg";
+import socialShowcaseImg from "../assets/nexo-social-showcase.webp";
 
 export default function ServicesSection({ onOpenConsultationModal }) {
   const prefersReducedMotion = useReducedMotion();

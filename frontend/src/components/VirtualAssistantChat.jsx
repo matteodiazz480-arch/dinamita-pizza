@@ -289,7 +289,7 @@ export default function VirtualAssistantChat({
 
   return (
     <>
-      <div className="fixed bottom-20 md:bottom-6 right-3 sm:right-6 z-40 flex items-center justify-end">
+      <div className="fixed bottom-22 md:bottom-6 right-3 sm:right-6 z-40 flex items-center justify-end">
         <motion.button
           type="button"
           whileHover={prefersReducedMotion ? {} : { scale: 1.05 }}

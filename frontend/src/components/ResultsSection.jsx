@@ -1,7 +1,7 @@
 import React from "react";
 import { NEXO_CONFIG } from "../data/nexoData";
 import { motion, useReducedMotion } from "framer-motion";
-import campaignBillboardImg from "../assets/nexo-campaign-billboard.jpg";
+import campaignBillboardImg from "../assets/nexo-campaign-billboard.webp";
 
 export default function ResultsSection() {
   const prefersReducedMotion = useReducedMotion();

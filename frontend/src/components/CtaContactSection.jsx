@@ -274,7 +274,7 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
         </motion.div>
 
         {/* Tarjeta del Calendario por Etapas */}
-        <div className="bg-[#141519] border border-white/10 rounded-2xl p-4 sm:p-6 shadow-xl backdrop-blur-xl">
+        <div className="bg-[#141519] border border-white/10 rounded-2xl p-4 sm:p-6 shadow-xl">
           <AnimatePresence mode="wait">
             {/* ETAPA 1: Elegir Día y Horario */}
             {step === 1 && (
@@ -334,7 +334,7 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
                           key={day.isoString}
                           type="button"
                           onClick={() => handleSelectDay(day)}
-                          className={`flex flex-col items-center justify-center min-w-[50px] sm:min-w-[58px] py-1.5 sm:py-2 px-1 rounded-xl border transition-all cursor-pointer flex-shrink-0 select-none ${
+                          className={`flex flex-col items-center justify-center min-w-[50px] sm:min-w-[58px] py-1.5 sm:py-2 px-1 rounded-xl border transition-[background-color,border-color,color,transform] duration-150 cursor-pointer flex-shrink-0 select-none ${
                             isSelected
                               ? "bg-[#16A34A] border-[#16A34A] text-white scale-102 font-black shadow-sm"
                               : "bg-[#181a20] border-white/10 text-gray-300 hover:border-white/20"

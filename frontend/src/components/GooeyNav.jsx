@@ -53,13 +53,25 @@ export default function GooeyNav({
     const enableAnim = hasMeasuredRef.current && shouldAnimate;
     hasMeasuredRef.current = true;
 
-    setPillStyle({
-      x,
-      y,
-      width,
-      height,
-      ready: true,
-      animated: enableAnim,
+    setPillStyle((prev) => {
+      if (
+        prev.ready &&
+        prev.x === x &&
+        prev.y === y &&
+        prev.width === width &&
+        prev.height === height &&
+        prev.animated === enableAnim
+      ) {
+        return prev;
+      }
+      return {
+        x,
+        y,
+        width,
+        height,
+        ready: true,
+        animated: enableAnim,
+      };
     });
   }, []);
 
@@ -69,7 +81,7 @@ export default function GooeyNav({
 
   useEffect(() => {
     const handleResize = () => updatePillPosition(activeIndex, false);
-    window.addEventListener("resize", handleResize);
+    window.addEventListener("resize", handleResize, { passive: true });
 
     if (document.fonts && document.fonts.ready) {
       document.fonts.ready.then(() => {
@@ -155,7 +167,7 @@ export default function GooeyNav({
     if (item?.href && item.href.startsWith("#")) {
       const target = document.querySelector(item.href);
       if (target) {
-        const headerOffset = 72;
+        const headerOffset = window.innerWidth < 768 ? 52 : 72;
         const elementPosition = target.getBoundingClientRect().top;
         const offsetPosition = elementPosition + window.scrollY - headerOffset;
 
@@ -198,6 +210,7 @@ export default function GooeyNav({
 
           {items.map((item, idx) => {
             const isActive = activeIndex === idx;
+            const IconComp = item.icon;
             return (
               <li
                 key={item.href || item.label}
@@ -209,6 +222,9 @@ export default function GooeyNav({
                   aria-current={isActive ? "page" : undefined}
                   className="gooey-nav-link"
                 >
+                  {IconComp && (
+                    <IconComp className="gooey-nav-icon" aria-hidden="true" />
+                  )}
                   <span>{item.label}</span>
                 </a>
               </li>

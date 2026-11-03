@@ -158,6 +158,16 @@ export default function App() {
     window.addEventListener("hashchange", syncFromHash);
 
     let scrollRafId = null;
+    let cachedSections = [];
+    let cachedScrollHeight = 0;
+
+    const measureSections = () => {
+      cachedScrollHeight = document.documentElement.scrollHeight;
+      cachedSections = TRACKED_SECTION_IDS.map((id) => {
+        const el = document.getElementById(id);
+        return el ? { id, top: el.offsetTop } : null;
+      }).filter(Boolean);
+    };
 
     const handleScrollSpy = () => {
       if (scrollRafId !== null) return;
@@ -166,12 +176,12 @@ export default function App() {
         scrollRafId = null;
 
         if (Date.now() < scrollLockUntilRef.current) return;
+        if (cachedSections.length === 0) measureSections();
 
         const scrollY = window.scrollY;
         const windowH = window.innerHeight;
-        const scrollHeight = document.documentElement.scrollHeight;
 
-        if (windowH + scrollY >= scrollHeight - 140) {
+        if (cachedScrollHeight > 0 && windowH + scrollY >= cachedScrollHeight - 140) {
           setActiveSectionId((prev) => (prev === "contacto" ? prev : "contacto"));
           return;
         }
@@ -179,13 +189,9 @@ export default function App() {
         const scrollTriggerY = scrollY + windowH * 0.36;
         let currentId = "inicio";
 
-        for (const id of TRACKED_SECTION_IDS) {
-          const el = document.getElementById(id);
-          if (el) {
-            const top = el.offsetTop;
-            if (scrollTriggerY >= top) {
-              currentId = id;
-            }
+        for (let i = 0; i < cachedSections.length; i++) {
+          if (scrollTriggerY >= cachedSections[i].top) {
+            currentId = cachedSections[i].id;
           }
         }
 
@@ -193,12 +199,22 @@ export default function App() {
       });
     };
 
+    measureSections();
     window.addEventListener("scroll", handleScrollSpy, { passive: true });
+    window.addEventListener("resize", measureSections, { passive: true });
     handleScrollSpy();
+
+    let bodyRo;
+    if (typeof ResizeObserver !== "undefined") {
+      bodyRo = new ResizeObserver(measureSections);
+      bodyRo.observe(document.body);
+    }
 
     return () => {
       window.removeEventListener("hashchange", syncFromHash);
       window.removeEventListener("scroll", handleScrollSpy);
+      window.removeEventListener("resize", measureSections);
+      if (bodyRo) bodyRo.disconnect();
       if (scrollRafId !== null) cancelAnimationFrame(scrollRafId);
     };
   }, [currentRoute]);

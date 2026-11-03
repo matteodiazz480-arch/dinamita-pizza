@@ -14,7 +14,6 @@ function ProcessSection() {
   const travelerRef = useRef(null);
   const headerFillRef = useRef(null);
   const stepRefs = useRef([]);
-  const dirtyRef = useRef(true);
   const prefersReducedMotion = useReducedMotion();
 
   const [activeStep, setActiveStep] = useState(1);
@@ -22,43 +21,57 @@ function ProcessSection() {
 
   useEffect(() => {
     let rafId = null;
-    let running = false;
-    let lastScrollY = -1;
-    let lastViewportH = -1;
+    let isVisible = false;
     let lastStep = 1;
     let lastCompletedKey = "";
+    let cachedCentersDocY = [];
+    let cachedSpan = 0;
 
-    const update = () => {
+    const measureGeometry = () => {
       const steps = stepRefs.current;
       const first = steps[0];
       const last = steps[STEP_COUNT - 1];
       const track = trackRef.current;
-      if (!first || !last || !track) return;
+      if (!first || !last || !track) return false;
 
+      const scrollY = window.scrollY;
       const trackRect = track.getBoundingClientRect();
-      const centers = steps.map((el) => {
+      const trackTopDocY = trackRect.top + scrollY;
+
+      cachedCentersDocY = steps.map((el) => {
+        if (!el) return 0;
         const r = el.getBoundingClientRect();
-        return r.top + r.height / 2;
+        return r.top + scrollY + r.height / 2;
       });
 
-      const y0 = centers[0];
-      const yLast = centers[STEP_COUNT - 1];
-      const span = yLast - y0;
-      if (span <= 0) return;
+      const y0Doc = cachedCentersDocY[0];
+      const yLastDoc = cachedCentersDocY[STEP_COUNT - 1];
+      cachedSpan = yLastDoc - y0Doc;
 
-      const trigger = window.innerHeight * 0.56;
-      const progress = Math.min(1, Math.max(0, (trigger - y0) / span));
-
-      if (lineRef.current) {
-        lineRef.current.style.top = `${Math.round(y0 - trackRect.top)}px`;
-        lineRef.current.style.height = `${Math.round(span)}px`;
+      if (cachedSpan > 0 && lineRef.current) {
+        lineRef.current.style.top = `${Math.round(y0Doc - trackTopDocY)}px`;
+        lineRef.current.style.height = `${Math.round(cachedSpan)}px`;
       }
+      return cachedSpan > 0;
+    };
+
+    const updateProgress = () => {
+      rafId = null;
+      if (cachedSpan <= 0 && !measureGeometry()) return;
+
+      const scrollY = window.scrollY;
+      const triggerDocY = scrollY + window.innerHeight * 0.56;
+      const y0Doc = cachedCentersDocY[0];
+      const yLastDoc = cachedCentersDocY[STEP_COUNT - 1];
+
+      const progress = Math.min(1, Math.max(0, (triggerDocY - y0Doc) / cachedSpan));
+
       if (lineFillRef.current) {
         lineFillRef.current.style.transform = `scaleY(${progress})`;
       }
       if (travelerRef.current) {
         travelerRef.current.style.transform = `translate3d(-50%, ${
-          progress * span - TRAVELER_SIZE / 2
+          progress * cachedSpan - TRAVELER_SIZE / 2
         }px, 0)`;
       }
       if (headerFillRef.current) {
@@ -68,12 +81,12 @@ function ProcessSection() {
       let current = 1;
       const completed = [];
       for (let i = 0; i < STEP_COUNT; i++) {
-        if (trigger >= centers[i]) {
+        if (triggerDocY >= cachedCentersDocY[i]) {
           current = i + 1;
           if (i < STEP_COUNT - 1) completed.push(i + 1);
         }
       }
-      if (trigger >= yLast + 40) completed.push(STEP_COUNT);
+      if (triggerDocY >= yLastDoc + 40) completed.push(STEP_COUNT);
 
       if (current !== lastStep) {
         lastStep = current;
@@ -86,74 +99,73 @@ function ProcessSection() {
       }
     };
 
-    const frame = () => {
-      if (!running) return;
-      const y = window.scrollY;
-      const vh = window.innerHeight;
-      if (dirtyRef.current || y !== lastScrollY || vh !== lastViewportH) {
-        dirtyRef.current = false;
-        lastScrollY = y;
-        lastViewportH = vh;
-        update();
+    const requestUpdate = () => {
+      if (!isVisible || rafId !== null) return;
+      rafId = requestAnimationFrame(updateProgress);
+    };
+
+    const handleResize = () => {
+      measureGeometry();
+      if (rafId === null) {
+        rafId = requestAnimationFrame(updateProgress);
       }
-      rafId = requestAnimationFrame(frame);
-    };
-
-    const start = () => {
-      if (running) return;
-      running = true;
-      dirtyRef.current = true;
-      rafId = requestAnimationFrame(frame);
-    };
-
-    const stop = () => {
-      running = false;
-      if (rafId !== null) cancelAnimationFrame(rafId);
-      rafId = null;
     };
 
     let io;
     if (typeof IntersectionObserver !== "undefined" && sectionRef.current) {
       io = new IntersectionObserver(
         (entries) => {
-          if (entries.some((e) => e.isIntersecting)) start();
-          else stop();
+          const intersecting = entries.some((e) => e.isIntersecting);
+          if (intersecting && !isVisible) {
+            isVisible = true;
+            measureGeometry();
+            requestUpdate();
+            window.addEventListener("scroll", requestUpdate, { passive: true });
+          } else if (!intersecting && isVisible) {
+            isVisible = false;
+            window.removeEventListener("scroll", requestUpdate);
+            if (rafId !== null) {
+              cancelAnimationFrame(rafId);
+              rafId = null;
+            }
+          }
         },
         { rootMargin: "200px 0px" }
       );
       io.observe(sectionRef.current);
     } else {
-      start();
+      isVisible = true;
+      measureGeometry();
+      requestUpdate();
+      window.addEventListener("scroll", requestUpdate, { passive: true });
     }
 
-    const markDirty = () => {
-      dirtyRef.current = true;
-    };
-    window.addEventListener("resize", markDirty, { passive: true });
-    window.addEventListener("orientationchange", markDirty, { passive: true });
+    window.addEventListener("resize", handleResize, { passive: true });
+    window.addEventListener("orientationchange", handleResize, { passive: true });
 
     let ro;
     if (typeof ResizeObserver !== "undefined" && trackRef.current) {
-      ro = new ResizeObserver(markDirty);
+      ro = new ResizeObserver(handleResize);
       ro.observe(trackRef.current);
     }
 
     if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(markDirty);
+      document.fonts.ready.then(handleResize);
     }
 
     return () => {
-      stop();
+      window.removeEventListener("scroll", requestUpdate);
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("orientationchange", handleResize);
+      if (rafId !== null) cancelAnimationFrame(rafId);
       if (io) io.disconnect();
       if (ro) ro.disconnect();
-      window.removeEventListener("resize", markDirty);
-      window.removeEventListener("orientationchange", markDirty);
     };
   }, []);
 
   const fillTransition = prefersReducedMotion
     ? "none"
-    : "transform 140ms linear";
+    : "transform 90ms linear";
 
   return (
     <section
@@ -176,7 +188,7 @@ function ProcessSection() {
             initial={prefersReducedMotion ? false : { opacity: 0, y: 14 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-40px" }}
-            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.45, ease: [0.23, 1, 0.32, 1] }}
             className="max-w-xl"
           >
             <h2 className="text-2xl sm:text-4xl font-black text-[#111111] tracking-tight leading-tight">
@@ -191,7 +203,7 @@ function ProcessSection() {
             initial={prefersReducedMotion ? false : { opacity: 0, y: 14 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-40px" }}
-            transition={{ duration: 0.45, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.45, delay: 0.08, ease: [0.23, 1, 0.32, 1] }}
             className="bg-white border border-black/[0.06] rounded-xl p-3 sm:px-5 sm:py-3.5 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col gap-2 min-w-[220px] sm:min-w-[300px]"
           >
             <div className="flex items-center justify-between text-[10px] sm:text-[11px] font-bold tracking-wider uppercase">
@@ -219,7 +231,7 @@ function ProcessSection() {
                     className="relative z-10 flex items-center gap-1"
                   >
                     <div
-                      className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full text-[10px] sm:text-[11px] font-black flex items-center justify-center transition-all duration-300 ${
+                      className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full text-[10px] sm:text-[11px] font-black flex items-center justify-center transition-[background-color,color,transform] duration-250 ${
                         reached
                           ? isLast
                             ? "bg-[#9333EA] text-white scale-105"
@@ -250,8 +262,7 @@ function ProcessSection() {
               style={{
                 transform: "scaleY(0)",
                 transition: fillTransition,
-                background:
-                  "#111111",
+                background: "#111111",
               }}
             />
 
@@ -288,7 +299,7 @@ function ProcessSection() {
                   transition={{
                     duration: 0.4,
                     delay: index * 0.05,
-                    ease: [0.16, 1, 0.3, 1],
+                    ease: [0.23, 1, 0.32, 1],
                   }}
                   className="relative grid grid-cols-1 lg:grid-cols-12 items-center gap-3 lg:gap-0"
                 >
@@ -319,25 +330,25 @@ function ProcessSection() {
                     >
                       <div className="w-full h-full bg-gray-300/65" />
                       <div
-                        className={`absolute top-0 h-full transition-all duration-300 ease-out ${
+                        className={`absolute top-0 inset-x-0 h-full transition-transform duration-300 ease-out ${
                           isFinalStep ? "bg-[#9333EA]" : "bg-[#111111]"
-                        } ${!isEven ? "right-0 origin-right" : "left-0 origin-left"}`}
-                        style={{ width: isActivated ? "100%" : "0%" }}
+                        } ${!isEven ? "origin-right" : "origin-left"}`}
+                        style={{ transform: `scaleX(${isActivated ? 1 : 0})` }}
                       />
                     </div>
 
                     <div className="lg:hidden absolute left-4 sm:left-7 top-1/2 -translate-y-1/2 w-8 sm:w-10 h-[2px] z-10 pointer-events-none">
                       <div className="w-full h-full bg-gray-300/65" />
                       <div
-                        className={`absolute top-0 left-0 h-full transition-all duration-300 ease-out ${
+                        className={`absolute top-0 inset-x-0 h-full origin-left transition-transform duration-300 ease-out ${
                           isFinalStep ? "bg-[#9333EA]" : "bg-[#111111]"
                         }`}
-                        style={{ width: isActivated ? "100%" : "0%" }}
+                        style={{ transform: `scaleX(${isActivated ? 1 : 0})` }}
                       />
                     </div>
 
                     <div
-                      className={`absolute left-4 sm:left-7 top-1/2 -translate-y-1/2 -translate-x-1/2 lg:translate-y-0 lg:translate-x-0 lg:static w-9 h-9 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all duration-300 z-20 ${
+                      className={`absolute left-4 sm:left-7 top-1/2 -translate-y-1/2 -translate-x-1/2 lg:translate-y-0 lg:translate-x-0 lg:static w-9 h-9 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-[background-color,color,transform,box-shadow] duration-300 z-20 ${
                         isActivated
                           ? isFinalStep
                             ? "bg-[#111111] text-white ring-4 ring-[#9333EA]/15 shadow-sm scale-105"
@@ -404,7 +415,7 @@ export default memo(ProcessSection);
 function EditorialStageMeta({ step, isActivated, isFinalStep, align }) {
   return (
     <div
-      className={`flex flex-col transition-all duration-300 select-none ${
+      className={`flex flex-col transition-[opacity,transform] duration-300 select-none ${
         align === "right" ? "items-end text-right" : "items-start text-left"
       } ${isActivated ? "opacity-100 translate-y-0" : "opacity-35 translate-y-1.5"}`}
     >
@@ -448,7 +459,7 @@ function StageCard({
 
   return (
     <div
-      className={`w-full rounded-2xl p-4 sm:p-6 transition-all duration-300 relative overflow-hidden ${
+      className={`w-full rounded-2xl p-4 sm:p-6 transition-[background-color,border-color,box-shadow,opacity,transform] duration-300 relative overflow-hidden ${
         useDarkSurface
           ? "bg-[#111111] text-white shadow-lg border border-white/10 translate-y-0 opacity-100"
           : isActivated
@@ -524,11 +535,11 @@ function StageCard({
         }`}
       >
         <div
-          className={`h-full transition-all duration-300 ease-out origin-left ${
+          className={`w-full h-full transition-transform duration-300 ease-out origin-left ${
             isFinalStep ? "bg-[#9333EA]" : "bg-[#111111]"
           }`}
           style={{
-            width: isCompleted ? "100%" : isCurrent ? "65%" : "0%",
+            transform: `scaleX(${isCompleted ? 1 : isCurrent ? 0.65 : 0})`,
           }}
         />
       </div>

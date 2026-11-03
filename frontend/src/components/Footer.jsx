@@ -7,7 +7,7 @@ export default function Footer({ onOpenLegalDoc, onOpenCookieSettings }) {
   const prefersReducedMotion = useReducedMotion();
 
   return (
-    <footer className="bg-[#0b0c0e] text-white pt-4 pb-24 md:pb-10 relative">
+    <footer className="bg-[#0b0c0e] text-white pt-4 pb-28 md:pb-10 relative">
       <div className="h-px w-full max-w-5xl mx-auto bg-gradient-to-r from-transparent via-white/10 to-transparent mb-7" />
 
       <motion.div

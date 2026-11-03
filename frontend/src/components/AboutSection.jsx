@@ -2,7 +2,7 @@ import React from "react";
 import { NEXO_CONFIG } from "../data/nexoData";
 import { Shield, Handshake, Clock, TrendingUp, ArrowRight } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
-import creativeDirectionImg from "../assets/nexo-creative-direction.jpg";
+import creativeDirectionImg from "../assets/nexo-creative-direction.webp";
 
 export default function AboutSection() {
   const prefersReducedMotion = useReducedMotion();
@@ -37,7 +37,7 @@ export default function AboutSection() {
               initial={prefersReducedMotion ? false : { opacity: 0, y: 14 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-40px" }}
-              transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.45, ease: [0.23, 1, 0.32, 1] }}
               className="space-y-2.5"
             >
               <h2 className="text-2xl sm:text-4xl lg:text-[2.65rem] font-black text-[#111111] leading-tight tracking-tight">
@@ -61,7 +61,7 @@ export default function AboutSection() {
                   transition={{
                     duration: 0.4,
                     delay: index * 0.06,
-                    ease: [0.16, 1, 0.3, 1],
+                    ease: [0.23, 1, 0.32, 1],
                   }}
                   className="bg-white rounded-2xl p-3.5 sm:p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-sm border border-black/[0.05] transition-shadow"
                 >
@@ -95,7 +95,7 @@ export default function AboutSection() {
               initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-40px" }}
-              transition={{ duration: 0.45, delay: 0.16, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.45, delay: 0.16, ease: [0.23, 1, 0.32, 1] }}
               whileHover={prefersReducedMotion ? {} : { y: -2 }}
               whileTap={prefersReducedMotion ? {} : { scale: 0.99 }}
               href="#servicios"
@@ -112,7 +112,7 @@ export default function AboutSection() {
                 </div>
 
                 <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/10 group-hover:bg-[#16A34A] flex items-center justify-center flex-shrink-0 transition-colors">
-                  <ArrowRight className="w-4 h-4 text-white group-hover:text-white group-hover:translate-x-0.5 transition-all" />
+                  <ArrowRight className="w-4 h-4 text-white group-hover:text-white group-hover:translate-x-0.5 transition-transform" />
                 </div>
               </div>
             </motion.a>
@@ -122,11 +122,13 @@ export default function AboutSection() {
             initial={prefersReducedMotion ? false : { opacity: 0, y: 14 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-40px" }}
-            transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.5, delay: 0.1, ease: [0.23, 1, 0.32, 1] }}
             className="lg:col-span-4 w-full"
           >
             <img
               src={creativeDirectionImg}
+              width={576}
+              height={1024}
               alt="Dirección creativa y producción visual NEXO Creative"
               className="w-full aspect-[4/3] sm:aspect-[16/10] lg:aspect-[3/4] rounded-2xl object-cover object-[center_64%] lg:object-[center_60%] block"
               loading="lazy"

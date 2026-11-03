@@ -11,8 +11,8 @@ function PlanCard({ plan, onOpenConsultationModal, prefersReducedMotion }) {
       initial={prefersReducedMotion ? false : { opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
-      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-      className={`rounded-3xl p-5 sm:p-6 flex flex-col justify-between relative overflow-hidden transition-all duration-300 h-full ${
+      transition={{ duration: 0.28, ease: [0.23, 1, 0.32, 1] }}
+      className={`rounded-3xl p-5 sm:p-6 flex flex-col justify-between relative overflow-hidden h-full ${
         isFeatured
           ? "bg-[#111111] text-white shadow-xl border border-white/12"
           : "bg-white text-[#111111] border border-black/[0.07] shadow-[0_8px_24px_rgba(0,0,0,0.04)]"
@@ -179,7 +179,7 @@ export default function PlansSection({ onOpenConsultationModal, onOpenPlanFinder
                   role="tab"
                   aria-selected={isSelected}
                   onClick={() => setSelectedMobileIdx(idx)}
-                  className={`py-2 px-2 rounded-lg text-[11px] font-extrabold transition-all cursor-pointer truncate ${
+                  className={`py-2 px-2 rounded-lg text-[11px] font-extrabold transition-colors duration-150 cursor-pointer truncate ${
                     isSelected
                       ? "bg-[#16A34A] text-white shadow-xs"
                       : "text-gray-300 hover:text-white"

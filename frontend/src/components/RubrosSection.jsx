@@ -2,9 +2,9 @@ import React from "react";
 import { NEXO_CONFIG } from "../data/nexoData";
 import { motion, useReducedMotion } from "framer-motion";
 import RubroCard from "./RubroCard";
-import nexoComerciosImg from "../assets/nexo-comercios.jpg";
-import nexoOficiosImg from "../assets/nexo-oficios.jpg";
-import nexoProfesionalesImg from "../assets/nexo-profesionales.jpg";
+import nexoComerciosImg from "../assets/nexo-comercios.webp";
+import nexoOficiosImg from "../assets/nexo-oficios.webp";
+import nexoProfesionalesImg from "../assets/nexo-profesionales.webp";
 
 export default function RubrosSection({ onOpenConsultationModal }) {
   const prefersReducedMotion = useReducedMotion();
@@ -34,7 +34,7 @@ export default function RubrosSection({ onOpenConsultationModal }) {
           initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-40px" }}
-          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.45, ease: [0.23, 1, 0.32, 1] }}
           className="flex flex-col lg:flex-row lg:items-end justify-between gap-3 sm:gap-4 border-b border-black/[0.07] pb-4 sm:pb-5 mb-7 sm:mb-9"
         >
           <div>
