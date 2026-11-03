@@ -1,184 +1,186 @@
+import { db } from "../utils/firebase";
+import {
+  collection,
+  doc,
+  getDocs,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  orderBy,
+  serverTimestamp,
+} from "firebase/firestore";
+
+// Clave de acceso administrativa
+const CRM_PASS = "nexo2026admin";
+
 export async function crmLogin(password) {
-  try {
-    const res = await fetch("/api/crm/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (res.ok && data.ok && data.token) {
-      sessionStorage.setItem("nexo_crm_token", data.token);
-      return data;
-    }
-    return {
-      ok: false,
-      error:
-        data.error ||
-        (res.status === 404
-          ? "Ruta de API no encontrada (404). Verificá el despliegue."
-          : res.status === 401
-          ? "Contraseña incorrecta de acceso al CRM."
-          : `Error en la autenticación (${res.status}).`),
-    };
-  } catch {
-    return { ok: false, error: "Error de conexión con el servidor." };
+  if (password.trim() === CRM_PASS) {
+    sessionStorage.setItem("nexo_crm_auth", "true");
+    return { ok: true, user: { role: "admin", name: "Administrador" } };
   }
+  return { ok: false, error: "Contraseña incorrecta de acceso al CRM." };
 }
 
 export async function crmLogout() {
-  sessionStorage.removeItem("nexo_crm_token");
-  const res = await fetch("/api/crm/auth/logout", {
-    method: "POST",
-  });
-  return res.json().catch(() => ({ ok: true }));
-}
-
-function getAuthHeaders() {
-  const token = sessionStorage.getItem("nexo_crm_token");
-  const headers = { "Content-Type": "application/json" };
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-  return headers;
+  sessionStorage.removeItem("nexo_crm_auth");
+  return { ok: true };
 }
 
 export async function crmCheckAuth() {
-  try {
-    const res = await fetch("/api/crm/auth/me", {
-      headers: getAuthHeaders(),
-    });
-    if (!res.ok) return { ok: false, authenticated: false };
-    return res.json().catch(() => ({ ok: false, authenticated: false }));
-  } catch {
-    return { ok: false, authenticated: false };
-  }
+  const isAuth = sessionStorage.getItem("nexo_crm_auth") === "true";
+  return { ok: true, authenticated: isAuth };
 }
 
 // ----------------------------------------------------------------------------
-// LEADS & OPORTUNIDADES (CRM Comercial)
+// LEADS & OPORTUNIDADES (CRM Comercial en Firestore)
 // ----------------------------------------------------------------------------
 export async function crmGetLeads() {
   try {
-    const res = await fetch("/api/crm/leads", {
-      headers: getAuthHeaders(),
-    });
-    if (!res.ok) return { ok: false, leads: [] };
-    return res.json().catch(() => ({ ok: false, leads: [] }));
-  } catch {
-    return { ok: false, leads: [] };
-  }
-}
-
-export async function crmUpdateLead(id, statusOrUpdates, maybeNotes) {
-  try {
-    let payload = { id };
-    if (typeof statusOrUpdates === "object" && statusOrUpdates !== null) {
-      payload = { ...payload, ...statusOrUpdates };
-    } else {
-      if (statusOrUpdates !== undefined) payload.status = statusOrUpdates;
-      if (maybeNotes !== undefined) payload.notes = maybeNotes;
+    const q = query(collection(db, "leads"), orderBy("createdAt", "desc"));
+    const snap = await getDocs(q);
+    const leads = snap.docs.map((d) => ({
+      id: d.id,
+      ...d.data(),
+      createdAt: d.data().createdAt?.toDate ? d.data().createdAt.toDate().toISOString() : d.data().createdAt || new Date().toISOString(),
+    }));
+    return { ok: true, leads };
+  } catch (err) {
+    console.warn("Firestore crmGetLeads fallback:", err);
+    // Fallback a colección sin order si aún no indexó
+    try {
+      const snap = await getDocs(collection(db, "leads"));
+      const leads = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      return { ok: true, leads };
+    } catch {
+      return { ok: false, leads: [] };
     }
-    const res = await fetch("/api/crm/leads", {
-      method: "PATCH",
-      headers: getAuthHeaders(),
-      body: JSON.stringify(payload),
-    });
-    return res.json().catch(() => ({ ok: false }));
-  } catch {
-    return { ok: false };
   }
 }
 
 export async function crmCreateLead(leadData) {
   try {
-    const res = await fetch("/api/crm/leads", {
-      method: "POST",
-      headers: getAuthHeaders(),
-      body: JSON.stringify(leadData),
-    });
-    return res.json().catch(() => ({ ok: false }));
-  } catch {
+    const id = leadData.id || "lead_" + Date.now().toString(36) + "_" + Math.random().toString(36).substring(2, 6);
+    const refId = leadData.refId || "NEXO-" + Date.now().toString(36).toUpperCase().slice(-5);
+    const payload = {
+      ...leadData,
+      id,
+      refId,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    };
+    await setDoc(doc(db, "leads", id), payload);
+    return { ok: true, lead: { ...payload, createdAt: new Date().toISOString() } };
+  } catch (err) {
+    console.error("Error creating lead in Firestore:", err);
+    return { ok: false, error: err.message };
+  }
+}
+
+export async function crmUpdateLead(id, statusOrUpdates, maybeNotes) {
+  try {
+    let payload = {};
+    if (typeof statusOrUpdates === "object" && statusOrUpdates !== null) {
+      payload = { ...statusOrUpdates };
+    } else {
+      if (statusOrUpdates !== undefined) payload.status = statusOrUpdates;
+      if (maybeNotes !== undefined) payload.notes = maybeNotes;
+    }
+    payload.updatedAt = serverTimestamp();
+    await updateDoc(doc(db, "leads", id), payload);
+    return { ok: true };
+  } catch (err) {
+    console.error("Error updating lead in Firestore:", err);
     return { ok: false };
   }
 }
 
 export async function crmDeleteLead(id) {
   try {
-    const res = await fetch("/api/crm/leads", {
-      method: "DELETE",
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ id }),
-    });
-    return res.json().catch(() => ({ ok: false }));
-  } catch {
+    await deleteDoc(doc(db, "leads", id));
+    return { ok: true };
+  } catch (err) {
+    console.error("Error deleting lead in Firestore:", err);
     return { ok: false };
   }
 }
 
 // ----------------------------------------------------------------------------
-// CLIENTES ACTIVOS (Hoja Clientes Activos del Excel)
+// CLIENTES ACTIVOS (Firestore)
 // ----------------------------------------------------------------------------
 export async function crmGetClients() {
   try {
-    const res = await fetch("/api/crm/clients", {
-      headers: getAuthHeaders(),
-    });
-    if (!res.ok) return { ok: false, clients: [] };
-    return res.json().catch(() => ({ ok: false, clients: [] }));
+    const q = query(collection(db, "clients"), orderBy("createdAt", "desc"));
+    const snap = await getDocs(q);
+    const clients = snap.docs.map((d) => ({
+      id: d.id,
+      ...d.data(),
+    }));
+    return { ok: true, clients };
   } catch {
-    return { ok: false, clients: [] };
+    try {
+      const snap = await getDocs(collection(db, "clients"));
+      const clients = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      return { ok: true, clients };
+    } catch {
+      return { ok: false, clients: [] };
+    }
   }
 }
 
 export async function crmCreateClient(clientData) {
   try {
-    const res = await fetch("/api/crm/clients", {
-      method: "POST",
-      headers: getAuthHeaders(),
-      body: JSON.stringify(clientData),
-    });
-    return res.json().catch(() => ({ ok: false }));
-  } catch {
+    const id = clientData.id || "cli_" + Date.now().toString(36);
+    const refId = clientData.refId || "CLI-" + Date.now().toString(36).toUpperCase().slice(-5);
+    const payload = {
+      ...clientData,
+      id,
+      refId,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    };
+    await setDoc(doc(db, "clients", id), payload);
+    return { ok: true, client: { ...payload, createdAt: new Date().toISOString() } };
+  } catch (err) {
+    console.error("Error creating client in Firestore:", err);
     return { ok: false };
   }
 }
 
 export async function crmUpdateClient(id, updates) {
   try {
-    const res = await fetch("/api/crm/clients", {
-      method: "PATCH",
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ id, ...updates }),
+    await updateDoc(doc(db, "clients", id), {
+      ...updates,
+      updatedAt: serverTimestamp(),
     });
-    return res.json().catch(() => ({ ok: false }));
-  } catch {
+    return { ok: true };
+  } catch (err) {
+    console.error("Error updating client in Firestore:", err);
     return { ok: false };
   }
 }
 
 export async function crmDeleteClient(id) {
   try {
-    const res = await fetch("/api/crm/clients", {
-      method: "DELETE",
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ id }),
-    });
-    return res.json().catch(() => ({ ok: false }));
-  } catch {
+    await deleteDoc(doc(db, "clients", id));
+    return { ok: true };
+  } catch (err) {
+    console.error("Error deleting client in Firestore:", err);
     return { ok: false };
   }
 }
 
 // ----------------------------------------------------------------------------
-// GASTOS DEL MES (Control Financiero)
+// GASTOS DEL MES (Firestore)
 // ----------------------------------------------------------------------------
 export async function crmGetExpenses() {
   try {
-    const res = await fetch("/api/crm/expenses", {
-      headers: getAuthHeaders(),
-    });
-    if (!res.ok) return { ok: false, expenses: [] };
-    return res.json().catch(() => ({ ok: false, expenses: [] }));
+    const snap = await getDocs(collection(db, "expenses"));
+    const expenses = snap.docs.map((d) => ({
+      id: d.id,
+      ...d.data(),
+    }));
+    return { ok: true, expenses };
   } catch {
     return { ok: false, expenses: [] };
   }
@@ -186,41 +188,26 @@ export async function crmGetExpenses() {
 
 export async function crmCreateExpense(expenseData) {
   try {
-    const res = await fetch("/api/crm/expenses", {
-      method: "POST",
-      headers: getAuthHeaders(),
-      body: JSON.stringify(expenseData),
-    });
-    return res.json().catch(() => ({ ok: false }));
-  } catch {
+    const id = expenseData.id || "exp_" + Date.now().toString(36);
+    const payload = {
+      ...expenseData,
+      id,
+      createdAt: serverTimestamp(),
+    };
+    await setDoc(doc(db, "expenses", id), payload);
+    return { ok: true, expense: payload };
+  } catch (err) {
+    console.error("Error creating expense in Firestore:", err);
     return { ok: false };
   }
 }
 
 export async function crmDeleteExpense(id) {
   try {
-    const res = await fetch("/api/crm/expenses", {
-      method: "DELETE",
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ id }),
-    });
-    return res.json().catch(() => ({ ok: false }));
-  } catch {
+    await deleteDoc(doc(db, "expenses", id));
+    return { ok: true };
+  } catch (err) {
+    console.error("Error deleting expense in Firestore:", err);
     return { ok: false };
-  }
-}
-
-// ----------------------------------------------------------------------------
-// DASHBOARD METRICS (Excel exacto)
-// ----------------------------------------------------------------------------
-export async function crmGetStats() {
-  try {
-    const res = await fetch("/api/crm/stats", {
-      headers: getAuthHeaders(),
-    });
-    if (!res.ok) return { ok: false, stats: {} };
-    return res.json().catch(() => ({ ok: false, stats: {} }));
-  } catch {
-    return { ok: false, stats: {} };
   }
 }
