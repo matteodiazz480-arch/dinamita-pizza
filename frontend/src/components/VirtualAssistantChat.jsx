@@ -295,14 +295,14 @@ export default function VirtualAssistantChat({
           whileHover={prefersReducedMotion ? {} : { scale: 1.05 }}
           whileTap={prefersReducedMotion ? {} : { scale: 0.95 }}
           onClick={toggleChat}
-          className="relative w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-[#17181c] hover:bg-[#1f2127] text-white border border-white/15 flex items-center justify-center shadow-lg cursor-pointer transition-colors"
+          className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-[#17181c] hover:bg-[#1f2127] text-white border border-white/15 flex items-center justify-center shadow-lg cursor-pointer transition-colors"
           aria-label={isOpen ? "Cerrar asistente virtual" : "Abrir asistente virtual"}
         >
           <span className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full bg-[#22C55E] border-2 border-[#111111]" />
           {isOpen ? (
-            <X className="w-6 h-6 text-white" />
+            <X className="w-5 h-5 text-white" />
           ) : (
-            <MessageSquare className="w-6 h-6 text-white" />
+            <MessageSquare className="w-5 h-5 text-white" />
           )}
         </motion.button>
       </div>

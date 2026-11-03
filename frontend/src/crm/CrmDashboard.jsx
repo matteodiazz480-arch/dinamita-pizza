@@ -98,60 +98,62 @@ export default function CrmDashboard({
         onNavigateLanding={onNavigateLanding}
       />
 
-      {/* Contenido Principal con Espaciado para Celular */}
-      <main className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-5 sm:py-8 flex-1 w-full pb-24 md:pb-12">
-        {activeTab === "dashboard" && (
-          <CrmDashboardView
-            leads={leads}
-            clients={clients}
-            expenses={expenses}
-            onNavigateTab={setActiveTab}
-          />
-        )}
+      {/* Contenido Principal con Offset de Barra Lateral en Desktop y Espaciado en Celular */}
+      <div className="md:pl-64 flex flex-col flex-1 min-h-screen pt-14 md:pt-0">
+        <main className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-5 sm:py-8 flex-1 w-full pb-28 md:pb-12">
+          {activeTab === "dashboard" && (
+            <CrmDashboardView
+              leads={leads}
+              clients={clients}
+              expenses={expenses}
+              onNavigateTab={setActiveTab}
+            />
+          )}
 
-        {activeTab === "commercial" && (
-          <CrmCommercialView
-            leads={leads}
-            onUpdateLead={onUpdateLead}
-            onDeleteLead={onDeleteLead}
-            onConvertToClient={onConvertToClient}
-            onOpenNewLead={() => setIsNewLeadOpen(true)}
-          />
-        )}
+          {activeTab === "commercial" && (
+            <CrmCommercialView
+              leads={leads}
+              onUpdateLead={onUpdateLead}
+              onDeleteLead={onDeleteLead}
+              onConvertToClient={onConvertToClient}
+              onOpenNewLead={() => setIsNewLeadOpen(true)}
+            />
+          )}
 
-        {activeTab === "clients" && (
-          <CrmClientsView
-            clients={clients}
-            onUpdateClient={onUpdateClient}
-            onDeleteClient={onDeleteClient}
-            onOpenNewClient={() => setIsNewClientOpen(true)}
-          />
-        )}
+          {activeTab === "clients" && (
+            <CrmClientsView
+              clients={clients}
+              onUpdateClient={onUpdateClient}
+              onDeleteClient={onDeleteClient}
+              onOpenNewClient={() => setIsNewClientOpen(true)}
+            />
+          )}
 
-        {activeTab === "meetings" && (
-          <CrmMeetingsView
-            leads={leads}
-            onUpdateLead={onUpdateLead}
-          />
-        )}
+          {activeTab === "meetings" && (
+            <CrmMeetingsView
+              leads={leads}
+              onUpdateLead={onUpdateLead}
+            />
+          )}
 
-        {activeTab === "responses" && (
-          <CrmResponsesView
-            leads={leads}
-            onUpdateLead={onUpdateLead}
-            onDeleteLead={onDeleteLead}
-            onNavigateCommercial={() => setActiveTab("commercial")}
-          />
-        )}
+          {activeTab === "responses" && (
+            <CrmResponsesView
+              leads={leads}
+              onUpdateLead={onUpdateLead}
+              onDeleteLead={onDeleteLead}
+              onNavigateCommercial={() => setActiveTab("commercial")}
+            />
+          )}
 
-        {activeTab === "expenses" && (
-          <CrmExpensesView
-            expenses={expenses}
-            onDeleteExpense={onDeleteExpense}
-            onOpenNewExpense={() => setIsNewExpenseOpen(true)}
-          />
-        )}
-      </main>
+          {activeTab === "expenses" && (
+            <CrmExpensesView
+              expenses={expenses}
+              onDeleteExpense={onDeleteExpense}
+              onOpenNewExpense={() => setIsNewExpenseOpen(true)}
+            />
+          )}
+        </main>
+      </div>
 
       {/* Modales de Creación */}
       <CrmNewLeadModal

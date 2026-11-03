@@ -286,15 +286,12 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
                 transition={{ duration: 0.25 }}
                 className="space-y-4"
               >
-                <div className="flex items-center justify-between pb-2.5 border-b border-white/5 text-xs">
+                <div className="flex items-center pb-2.5 border-b border-white/5 text-xs">
                   <span className="font-extrabold text-white flex items-center gap-1.5">
                     <span className="w-5 h-5 rounded-full bg-[#16A34A] text-white font-black flex items-center justify-center text-[10px]">
                       1
                     </span>
                     <span>Elegí tu día y horario</span>
-                  </span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#16A34A]/15 text-[#22C55E] border border-[#16A34A]/30">
-                    Duración: 20 min
                   </span>
                 </div>
 

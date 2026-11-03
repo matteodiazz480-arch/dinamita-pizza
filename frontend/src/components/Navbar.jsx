@@ -44,8 +44,8 @@ export default function Navbar({
     <header
       className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
         isScrolled
-          ? "bg-[#0d0f12]/95 backdrop-blur-xl border-b border-white/12 py-2 sm:py-3.5 shadow-lg"
-          : "bg-[#0d0f12]/90 backdrop-blur-sm py-2 sm:py-4 border-b border-white/5"
+          ? "bg-[#0d0f12]/95 backdrop-blur-xl border-b border-white/12 py-2.5 sm:py-2 md:py-2 shadow-lg"
+          : "bg-[#0d0f12]/90 backdrop-blur-sm py-3 sm:py-2.5 md:py-2.5 border-b border-white/5"
       }`}
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -92,10 +92,9 @@ export default function Navbar({
               onClick={() =>
                 onOpenConsultationModal?.("Asesoramiento Gratuito General")
               }
-              className="text-[11px] sm:text-sm font-black tracking-wide text-white bg-[#16A34A] hover:bg-[#15803D] px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full sm:rounded-xl transition-all cursor-pointer hover:scale-102 active:scale-95 whitespace-nowrap shadow-sm"
+              className="text-xs sm:text-xs md:text-sm font-extrabold tracking-wide text-white bg-[#16A34A] hover:bg-[#15803D] px-3.5 py-2 sm:px-4 sm:py-2 md:px-5 md:py-2.5 rounded-xl transition-all cursor-pointer hover:scale-102 active:scale-95 whitespace-nowrap shadow-sm"
             >
-              <span className="sm:hidden">Diagnóstico</span>
-              <span className="hidden sm:inline">Diagnóstico gratis</span>
+              <span>Diagnóstico gratis</span>
             </button>
           </div>
         </div>
