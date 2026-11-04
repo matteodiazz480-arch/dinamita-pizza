@@ -583,7 +583,14 @@ export default function CrmNavbar({
                       </span>
                     </div>
                   </div>
-                  <ChevronRight className="w-4 h-4 opacity-50" />
+                  <div className="flex items-center gap-2">
+                    {leadsCount > 0 && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#16A34A]/25 text-[#22C55E]">
+                        {leadsCount}
+                      </span>
+                    )}
+                    <ChevronRight className="w-4 h-4 opacity-50" />
+                  </div>
                 </button>
 
                 <button

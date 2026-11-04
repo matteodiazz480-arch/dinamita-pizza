@@ -9,7 +9,10 @@ import {
   Calendar,
   ArrowRight,
   Clock,
+  FileText,
+  Phone,
 } from "lucide-react";
+import { WhatsAppIcon } from "../components/Icons";
 
 function getCurrentYearMonth() {
   return new Date().toISOString().slice(0, 7);
@@ -24,6 +27,13 @@ const STAGE_CONFIGS = [
   { key: "ganado", label: "Ganado", color: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30" },
   { key: "perdido", label: "Perdido", color: "bg-gray-500/15 text-gray-400 border-gray-500/30" },
 ];
+
+const ORIGIN_BADGES = {
+  "Solicitar Asesoramiento": "bg-blue-500/15 text-blue-300 border-blue-500/30",
+  "Solicitar Presupuesto": "bg-purple-500/15 text-purple-300 border-purple-500/30",
+  "Encontrá tu plan": "bg-[#16A34A]/15 text-[#22C55E] border-[#16A34A]/30",
+  "Agenda Reunión 20 min": "bg-amber-500/15 text-amber-300 border-amber-500/30",
+};
 
 export default function CrmDashboardView({
   leads = [],
@@ -67,6 +77,15 @@ export default function CrmDashboardView({
   const upcomingMeetings = leads
     .filter((l) => (l.service === "Reunión Gratuita 20 min" || l.meetingDate) && l.status === "reunion_agendada")
     .slice(0, 4);
+
+  // Últimas consultas y respuestas web (de cualquier formulario)
+  const recentLeads = leads.slice(0, 5);
+
+  const getWhatsAppQuickUrl = (lead) => {
+    const cleanNumber = (lead.phone || "").replace(/[^0-9]/g, "");
+    const msg = `Hola ${lead.fullName || ""}, te contacto de NEXO Creative con respecto a tu consulta por ${lead.service || "tu proyecto"}. ¿En qué momento tenés unos minutos para conversar?`;
+    return `https://wa.me/${cleanNumber}?text=${encodeURIComponent(msg)}`;
+  };
 
   return (
     <div className="space-y-6">
@@ -329,6 +348,95 @@ export default function CrmDashboardView({
             </button>
           </div>
         </div>
+      </div>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* ÚLTIMAS CONSULTAS Y FORMULARIOS WEB RECIBIDOS (CENTRALIZADO)       */}
+      {/* ------------------------------------------------------------------ */}
+      <div className="bg-[#141519] border border-white/10 rounded-2xl p-4 sm:p-5 shadow-lg">
+        <div className="flex items-center justify-between pb-3 mb-4 border-b border-white/8">
+          <div className="flex items-center gap-2">
+            <FileText className="w-4 h-4 text-[#22C55E]" />
+            <div>
+              <h4 className="text-xs sm:text-sm font-black uppercase tracking-wider text-white">
+                Últimas Consultas y Formularios Web Recibidos
+              </h4>
+              <p className="text-[11px] text-gray-400 mt-0.5">
+                Panel centralizado en tiempo real con todas las entradas de la landing
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => onNavigateTab("responses")}
+            className="text-xs font-bold text-[#22C55E] hover:underline flex items-center gap-1 cursor-pointer"
+          >
+            <span>Ver todos ({leads.length})</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {recentLeads.length === 0 ? (
+          <div className="py-8 text-center text-xs text-gray-500">
+            No hay consultas ni formularios registrados todavía.
+          </div>
+        ) : (
+          <div className="space-y-2.5">
+            {recentLeads.map((lead) => {
+              const id = lead.id || lead.refId;
+              const originStyle = ORIGIN_BADGES[lead.origin] || "bg-white/10 text-gray-300 border-white/15";
+              return (
+                <div
+                  key={id}
+                  className="p-3 rounded-xl bg-[#181a20] border border-white/6 hover:border-white/15 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                >
+                  <div className="flex items-start sm:items-center gap-3">
+                    <span className="font-mono text-[10px] text-gray-500 hidden sm:inline">
+                      {lead.refId || id}
+                    </span>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-extrabold text-white text-sm">
+                          {lead.fullName}
+                        </span>
+                        <span className={`px-2 py-0.5 rounded text-[9px] font-bold border ${originStyle}`}>
+                          {lead.origin || "Formulario Web"}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-gray-400 mt-0.5 flex items-center gap-2 flex-wrap">
+                        <span>{lead.businessName || "Negocio"}</span>
+                        <span>·</span>
+                        <span className="text-gray-300">{lead.service}</span>
+                        {lead.phone && (
+                          <>
+                            <span>·</span>
+                            <span className="text-gray-400 font-mono">{lead.phone}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-white/5">
+                    <span className="text-[10px] text-gray-400 font-mono">
+                      {lead.createdAt ? lead.createdAt.slice(0, 10) : "Hoy"}
+                    </span>
+                    <a
+                      href={getWhatsAppQuickUrl(lead)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-2.5 py-1.5 rounded-lg bg-[#25D366] hover:bg-[#20ba59] text-white text-[11px] font-bold flex items-center gap-1.5 transition-colors shadow-sm"
+                      title="Contactar por WhatsApp"
+                    >
+                      <WhatsAppIcon className="w-3 h-3 fill-current" />
+                      <span>WhatsApp</span>
+                    </a>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

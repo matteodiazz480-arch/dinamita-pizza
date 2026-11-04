@@ -15,32 +15,61 @@ import {
 // Clave de acceso administrativa inmutable
 const CRM_PASS = "nexo2026admin";
 
-export async function crmLogin(password) {
-  if (password && password.trim() === CRM_PASS) {
-    sessionStorage.setItem("nexo_crm_auth", "true");
-    return { ok: true, user: { role: "admin", name: "Administrador" } };
+export async function crmLogin(usernameOrPassword, maybePassword) {
+  let user = "admin";
+  let pass = "";
+
+  if (maybePassword !== undefined) {
+    user = (usernameOrPassword || "").trim();
+    pass = (maybePassword || "").trim();
+  } else {
+    pass = (usernameOrPassword || "").trim();
   }
-  return { ok: false, error: "Contraseña incorrecta de acceso al CRM." };
+
+  if (!pass) {
+    return { ok: false, error: "Por favor ingresá tu contraseña de acceso." };
+  }
+
+  if (pass === CRM_PASS) {
+    sessionStorage.setItem("nexo_crm_auth", "true");
+    sessionStorage.setItem("nexo_crm_user", user || "admin");
+    return {
+      ok: true,
+      user: {
+        role: "admin",
+        name: user ? user.charAt(0).toUpperCase() + user.slice(1) : "Administrador",
+      },
+    };
+  }
+  return { ok: false, error: "Contraseña incorrecta. Verificá las credenciales de acceso." };
 }
 
 export async function crmLogout() {
   sessionStorage.removeItem("nexo_crm_auth");
+  sessionStorage.removeItem("nexo_crm_user");
   return { ok: true };
 }
 
 export async function crmCheckAuth() {
   const isAuth = sessionStorage.getItem("nexo_crm_auth") === "true";
-  return { ok: true, authenticated: isAuth };
+  const user = sessionStorage.getItem("nexo_crm_user") || "Administrador";
+  return { ok: true, authenticated: isAuth, user: { role: "admin", name: user } };
 }
 
 function parseLeadDoc(d) {
-  const data = d.data();
+  const data = d.data() || {};
   let createdStr = new Date().toISOString();
-  if (data.createdAt?.toDate) {
-    createdStr = data.createdAt.toDate().toISOString();
-  } else if (typeof data.createdAt === "string") {
+  if (data.createdAt?.toDate && typeof data.createdAt.toDate === "function") {
+    try {
+      createdStr = data.createdAt.toDate().toISOString();
+    } catch {}
+  } else if (typeof data.createdAt === "string" && data.createdAt) {
     createdStr = data.createdAt;
-  } else if (data.createdAtIso) {
+  } else if (typeof data.createdAt === "number") {
+    try {
+      createdStr = new Date(data.createdAt).toISOString();
+    } catch {}
+  } else if (typeof data.createdAtIso === "string" && data.createdAtIso) {
     createdStr = data.createdAtIso;
   }
   return {
@@ -53,51 +82,43 @@ function parseLeadDoc(d) {
 // ----------------------------------------------------------------------------
 // LEADS & OPORTUNIDADES (Firestore)
 // ----------------------------------------------------------------------------
+/**
+ * Recupera TODOS los leads de la colección Firestore sin filtros restrictivos
+ * ni dependencia de índices compuestos del servidor, ordenándolos en memoria
+ * de forma descendente por fecha para garantizar que ningún cliente quede excluido.
+ */
 export async function crmGetLeads() {
   try {
-    const q = query(collection(db, "leads"), orderBy("createdAt", "desc"));
-    const snap = await getDocs(q);
+    const snap = await getDocs(collection(db, "leads"));
     const leads = snap.docs.map(parseLeadDoc);
+    leads.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     return { ok: true, leads };
-  } catch {
-    try {
-      const snap = await getDocs(collection(db, "leads"));
-      const leads = snap.docs.map(parseLeadDoc);
-      return { ok: true, leads };
-    } catch {
-      return { ok: false, leads: [] };
-    }
+  } catch (err) {
+    console.error("Error al obtener leads desde Firestore:", err);
+    return { ok: false, leads: [], error: err.message };
   }
 }
 
 /**
- * Escucha en tiempo real la colección de leads para que cualquier formulario
- * completado en la landing aparezca automáticamente en el CRM sin recargar la página.
+ * Escucha en tiempo real la colección completa de leads para que cualquier
+ * formulario enviado por un cliente aparezca inmediatamente en el CRM.
  */
 export function crmSubscribeLeads(callback, onError) {
   try {
-    const q = query(collection(db, "leads"), orderBy("createdAt", "desc"));
     return onSnapshot(
-      q,
+      collection(db, "leads"),
       (snap) => {
         const leads = snap.docs.map(parseLeadDoc);
+        leads.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         callback(leads);
       },
       (err) => {
-        console.warn("Snapshot con orderBy falló, probando sin orden:", err);
-        return onSnapshot(
-          collection(db, "leads"),
-          (snap) => {
-            const leads = snap.docs.map(parseLeadDoc);
-            // Orden manual por fecha descendente
-            leads.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-            callback(leads);
-          },
-          onError
-        );
+        console.error("Error en listener en tiempo real de Firestore leads:", err);
+        if (onError) onError(err);
       }
     );
   } catch (err) {
+    console.error("Fallo al inicializar suscripción Firestore:", err);
     if (onError) onError(err);
     return () => {};
   }
@@ -156,21 +177,16 @@ export async function crmDeleteLead(id) {
 // ----------------------------------------------------------------------------
 export async function crmGetClients() {
   try {
-    const q = query(collection(db, "clients"), orderBy("createdAt", "desc"));
-    const snap = await getDocs(q);
+    const snap = await getDocs(collection(db, "clients"));
     const clients = snap.docs.map((d) => ({
       id: d.id,
       ...d.data(),
     }));
+    clients.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
     return { ok: true, clients };
-  } catch {
-    try {
-      const snap = await getDocs(collection(db, "clients"));
-      const clients = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      return { ok: true, clients };
-    } catch {
-      return { ok: false, clients: [] };
-    }
+  } catch (err) {
+    console.error("Error al obtener clientes desde Firestore:", err);
+    return { ok: false, clients: [] };
   }
 }
 
