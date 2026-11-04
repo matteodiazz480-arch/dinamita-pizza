@@ -142,7 +142,7 @@ export default function InteractiveContactModal({
       setReferenceId(refId);
 
       // 2. Preparar mensaje específico para WhatsApp
-      const cleanPhone = (NEXO_CONFIG.whatsappNumber || "5491136450011").replace(/[^0-9]/g, "");
+      const cleanPhone = (NEXO_CONFIG.whatsappNumber || "5491164444159").replace(/[^0-9]/g, "");
       const fullText = `*SOLICITUD DE ASESORAMIENTO — NEXO CREATIVE*
 Ref: ${refId}
 ----------------------------------------

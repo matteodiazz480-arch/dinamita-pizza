@@ -163,7 +163,7 @@ export default function QuoteModal({
       const refId = result.refId || "NEXO-PRES-OK";
       setReferenceId(refId);
 
-      const cleanPhone = (NEXO_CONFIG.whatsappNumber || "5491136450011").replace(/[^0-9]/g, "");
+      const cleanPhone = (NEXO_CONFIG.whatsappNumber || "5491164444159").replace(/[^0-9]/g, "");
       const fullText = `*SOLICITUD DE PRESUPUESTO — NEXO CREATIVE*
 Ref: ${refId}
 ----------------------------------------

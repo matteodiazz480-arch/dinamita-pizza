@@ -113,7 +113,7 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
     const text = encodeURIComponent(
       `Hola NEXO Creative! Acabo de agendar una reunión gratuita de 20 min (Código: ${confirmedBooking.refId}) para el día ${confirmedBooking.dateString} a las ${confirmedBooking.timeString} hs. Mi nombre es ${confirmedBooking.fullName}.`
     );
-    const cleanNumber = (NEXO_CONFIG.whatsappNumber || "5491136450011").replace(/[^0-9]/g, "");
+    const cleanNumber = (NEXO_CONFIG.whatsappNumber || "5491164444159").replace(/[^0-9]/g, "");
     return `https://wa.me/${cleanNumber}?text=${text}`;
   }, [confirmedBooking]);
 
@@ -121,7 +121,7 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
     const text = encodeURIComponent(
       "Hola NEXO Creative! Me gustaría coordinar una reunión de 20 minutos para analizar el crecimiento de mi negocio."
     );
-    const cleanNumber = (NEXO_CONFIG.whatsappNumber || "5491136450011").replace(/[^0-9]/g, "");
+    const cleanNumber = (NEXO_CONFIG.whatsappNumber || "5491164444159").replace(/[^0-9]/g, "");
     return `https://wa.me/${cleanNumber}?text=${text}`;
   }, []);
 

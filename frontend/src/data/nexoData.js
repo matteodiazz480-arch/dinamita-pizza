@@ -3,7 +3,7 @@ export const NEXO_CONFIG = {
   brandSubtitle: "CREATIVE",
   editionYear: "2026",
   domain: "nexocreative.com",
-  whatsappNumber: "+5491123456789",
+  whatsappNumber: "+5491164444159",
   whatsappDefaultMessage:
     "Hola NEXO Creative, quiero consultar por asesoramiento para mi negocio.",
 

@@ -156,7 +156,7 @@ export default function PlanFinderModal({
       setReferenceId(refId);
 
       // 2. Preparar mensaje para WhatsApp
-      const cleanPhone = (NEXO_CONFIG.whatsappNumber || "5491136450011").replace(/[^0-9]/g, "");
+      const cleanPhone = (NEXO_CONFIG.whatsappNumber || "5491164444159").replace(/[^0-9]/g, "");
       const fullText = `*TEST 'ENCONTRÁ TU PLAN' — NEXO CREATIVE*
 Ref: ${refId}
 ----------------------------------------
