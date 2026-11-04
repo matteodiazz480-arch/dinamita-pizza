@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { WhatsAppIcon } from "./Icons";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import { playSound } from "../utils/sound";
 
 export default function FormSuccessCountdown({
@@ -11,7 +11,6 @@ export default function FormSuccessCountdown({
   onClose,
   autoRedirectSeconds = 3,
 }) {
-  const prefersReducedMotion = useReducedMotion();
   const [countdown, setCountdown] = useState(autoRedirectSeconds);
   const [redirected, setRedirected] = useState(false);
   const [popupBlocked, setPopupBlocked] = useState(false);
