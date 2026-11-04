@@ -8,14 +8,15 @@ import {
   deleteDoc,
   query,
   orderBy,
+  onSnapshot,
   serverTimestamp,
 } from "firebase/firestore";
 
-// Clave de acceso administrativa
+// Clave de acceso administrativa inmutable
 const CRM_PASS = "nexo2026admin";
 
 export async function crmLogin(password) {
-  if (password.trim() === CRM_PASS) {
+  if (password && password.trim() === CRM_PASS) {
     sessionStorage.setItem("nexo_crm_auth", "true");
     return { ok: true, user: { role: "admin", name: "Administrador" } };
   }
@@ -32,29 +33,73 @@ export async function crmCheckAuth() {
   return { ok: true, authenticated: isAuth };
 }
 
+function parseLeadDoc(d) {
+  const data = d.data();
+  let createdStr = new Date().toISOString();
+  if (data.createdAt?.toDate) {
+    createdStr = data.createdAt.toDate().toISOString();
+  } else if (typeof data.createdAt === "string") {
+    createdStr = data.createdAt;
+  } else if (data.createdAtIso) {
+    createdStr = data.createdAtIso;
+  }
+  return {
+    id: d.id,
+    ...data,
+    createdAt: createdStr,
+  };
+}
+
 // ----------------------------------------------------------------------------
-// LEADS & OPORTUNIDADES (CRM Comercial en Firestore)
+// LEADS & OPORTUNIDADES (Firestore)
 // ----------------------------------------------------------------------------
 export async function crmGetLeads() {
   try {
     const q = query(collection(db, "leads"), orderBy("createdAt", "desc"));
     const snap = await getDocs(q);
-    const leads = snap.docs.map((d) => ({
-      id: d.id,
-      ...d.data(),
-      createdAt: d.data().createdAt?.toDate ? d.data().createdAt.toDate().toISOString() : d.data().createdAt || new Date().toISOString(),
-    }));
+    const leads = snap.docs.map(parseLeadDoc);
     return { ok: true, leads };
-  } catch (err) {
-    console.warn("Firestore crmGetLeads fallback:", err);
-    // Fallback a colección sin order si aún no indexó
+  } catch {
     try {
       const snap = await getDocs(collection(db, "leads"));
-      const leads = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      const leads = snap.docs.map(parseLeadDoc);
       return { ok: true, leads };
     } catch {
       return { ok: false, leads: [] };
     }
+  }
+}
+
+/**
+ * Escucha en tiempo real la colección de leads para que cualquier formulario
+ * completado en la landing aparezca automáticamente en el CRM sin recargar la página.
+ */
+export function crmSubscribeLeads(callback, onError) {
+  try {
+    const q = query(collection(db, "leads"), orderBy("createdAt", "desc"));
+    return onSnapshot(
+      q,
+      (snap) => {
+        const leads = snap.docs.map(parseLeadDoc);
+        callback(leads);
+      },
+      (err) => {
+        console.warn("Snapshot con orderBy falló, probando sin orden:", err);
+        return onSnapshot(
+          collection(db, "leads"),
+          (snap) => {
+            const leads = snap.docs.map(parseLeadDoc);
+            // Orden manual por fecha descendente
+            leads.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            callback(leads);
+          },
+          onError
+        );
+      }
+    );
+  } catch (err) {
+    if (onError) onError(err);
+    return () => {};
   }
 }
 
@@ -67,6 +112,7 @@ export async function crmCreateLead(leadData) {
       id,
       refId,
       createdAt: serverTimestamp(),
+      createdAtIso: new Date().toISOString(),
       updatedAt: serverTimestamp(),
     };
     await setDoc(doc(db, "leads", id), payload);

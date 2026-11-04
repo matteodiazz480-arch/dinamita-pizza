@@ -188,6 +188,7 @@ function getLocalAssistantReply(rawQuery) {
 
 export default function VirtualAssistantChat({
   onOpenConsultationModal,
+  onOpenQuoteModal,
   onOpenLegalDoc,
 }) {
   const prefersReducedMotion = useReducedMotion();
@@ -284,6 +285,9 @@ export default function VirtualAssistantChat({
     if (action?.type === "consultation") {
       setIsOpen(false);
       onOpenConsultationModal?.(action.service || "Asesoramiento Gratuito General");
+    } else if (action?.type === "quote") {
+      setIsOpen(false);
+      onOpenQuoteModal?.(action.service || "Plan Crecimiento Integral");
     }
   };
 

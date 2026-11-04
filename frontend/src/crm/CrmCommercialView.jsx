@@ -37,6 +37,13 @@ const PRIORITIES = {
   baja: "text-gray-400 bg-gray-500/10 border-gray-500/25",
 };
 
+const ORIGIN_STYLES = {
+  "Solicitar Asesoramiento": "bg-blue-500/15 text-blue-300 border-blue-500/30",
+  "Solicitar Presupuesto": "bg-purple-500/15 text-purple-300 border-purple-500/30",
+  "Encontrá tu plan": "bg-[#16A34A]/15 text-[#22C55E] border-[#16A34A]/30",
+  "Agenda Reunión 20 min": "bg-amber-500/15 text-amber-300 border-amber-500/30",
+};
+
 export default function CrmCommercialView({
   leads = [],
   onUpdateLead,
@@ -171,7 +178,14 @@ export default function CrmCommercialView({
                 {/* Cabecera de la Tarjeta */}
                 <div className="flex items-start justify-between gap-2 border-b border-white/5 pb-2.5">
                   <div>
-                    <span className="font-mono text-[9px] text-gray-400 block">{lead.refId || id}</span>
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <span className="font-mono text-[9px] text-gray-400">{lead.refId || id}</span>
+                      {lead.origin && (
+                        <span className={`text-[8px] font-bold px-1.5 py-0.2 rounded border ${ORIGIN_STYLES[lead.origin] || "bg-white/5 text-gray-400 border-white/10"}`}>
+                          {lead.origin}
+                        </span>
+                      )}
+                    </div>
                     <h3 className="font-extrabold text-sm text-white leading-tight">
                       {lead.businessName || lead.fullName}
                     </h3>
@@ -388,7 +402,7 @@ export default function CrmCommercialView({
                           {lead.fullName}
                         </div>
                         {lead.origin && (
-                          <span className="text-[9px] text-gray-500 bg-white/5 px-1.5 py-0.2 rounded mt-0.5 inline-block">
+                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border mt-1 inline-block ${ORIGIN_STYLES[lead.origin] || "bg-white/5 text-gray-400 border-white/10"}`}>
                             {lead.origin}
                           </span>
                         )}

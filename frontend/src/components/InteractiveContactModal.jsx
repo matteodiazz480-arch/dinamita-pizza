@@ -1,15 +1,23 @@
 import React, { useState, useEffect, useRef } from "react";
 import { NEXO_CONFIG } from "../data/nexoData";
-import { X, AlertCircle, ArrowRight, ShieldCheck } from "lucide-react";
-import { WhatsAppIcon } from "./Icons";
+import { X, AlertCircle, ArrowRight, Sparkles } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { playSound } from "../utils/sound";
-import { securePost, sanitizeClientText } from "../utils/securityClient";
+import { submitLeadRecord, sanitizeClientText } from "../utils/securityClient";
+import FormSuccessCountdown from "./FormSuccessCountdown";
+
+const RUBRO_OPTIONS = [
+  "Comercios y Locales",
+  "Oficios y Servicios Técnicos",
+  "Profesionales y Consultorios",
+  "Gastronomía y Eventos",
+  "Empresas y Corporativo",
+  "Otro Rubro",
+];
 
 export default function InteractiveContactModal({
   isOpen,
   onClose,
-  initialService = "",
   onOpenLegalDoc,
 }) {
   const prefersReducedMotion = useReducedMotion();
@@ -20,15 +28,15 @@ export default function InteractiveContactModal({
     businessName: "",
     email: "",
     phone: "",
-    service: initialService || "Publicidad Digital (Meta Ads)",
+    rubro: "Comercios y Locales",
     message: "",
     privacyConsent: false,
-    website_url: "",
+    website_url: "", // honeypot
   });
 
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState("");
-  const [status, setStatus] = useState("idle");
+  const [status, setStatus] = useState("idle"); // "idle" | "loading" | "success"
   const [referenceId, setReferenceId] = useState("");
   const [whatsAppFollowUpUrl, setWhatsAppFollowUpUrl] = useState("");
 
@@ -36,6 +44,9 @@ export default function InteractiveContactModal({
     if (isOpen) {
       document.body.style.overflow = "hidden";
       formLoadedAtRef.current = Date.now();
+      setStatus("idle");
+      setErrors({});
+      setServerError("");
     } else {
       document.body.style.overflow = "";
     }
@@ -66,11 +77,10 @@ export default function InteractiveContactModal({
       errs.phone = "Ingresá un teléfono válido con código de área.";
     }
     if (cleanMsg.length < 10) {
-      errs.message = "Describí brevemente tu proyecto o consulta (mínimo 10 caracteres).";
+      errs.message = "Describí brevemente tu consulta o qué objetivo querés alcanzar (mínimo 10 caracteres).";
     }
     if (!formData.privacyConsent) {
-      errs.privacyConsent =
-        "Debés prestar tu consentimiento informado para el tratamiento de tus datos.";
+      errs.privacyConsent = "Debés prestar tu consentimiento informado para procesar tu consulta.";
     }
 
     setErrors(errs);
@@ -85,17 +95,20 @@ export default function InteractiveContactModal({
         : sanitizeClientText(value, name === "message" ? 800 : 120);
 
     setFormData((prev) => ({ ...prev, [name]: nextVal }));
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
-    }
-    if (serverError) {
-      setServerError("");
-    }
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
+    if (serverError) setServerError("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setServerError("");
+
+    // Honeypot check
+    if (formData.website_url && formData.website_url.trim() !== "") {
+      setStatus("success");
+      setReferenceId("NEXO-ASES-" + Date.now().toString(36).toUpperCase().slice(-5));
+      return;
+    }
 
     if (!validate()) {
       playSound("close", false);
@@ -107,53 +120,51 @@ export default function InteractiveContactModal({
 
     const payload = {
       fullName: formData.fullName.trim(),
-      businessName: formData.businessName.trim(),
+      businessName: formData.businessName.trim() || "No especificado",
       email: formData.email.trim(),
       phone: formData.phone.trim(),
-      service: formData.service,
+      rubro: formData.rubro,
+      service: `Asesoramiento Gratuito (${formData.rubro})`,
+      origin: "Solicitar Asesoramiento",
+      formType: "asesoramiento",
+      status: "nuevo",
+      priority: "media",
+      responsible: "Mateo Díaz",
       message: formData.message.trim(),
       privacyConsent: Boolean(formData.privacyConsent),
-      website_url: formData.website_url,
-      formLoadedAt: formLoadedAtRef.current,
     };
 
-    const result = await securePost("/api/contact", payload);
+    try {
+      // 1. Guardar primero en la base de datos Firestore
+      const result = await submitLeadRecord(payload);
 
-    if (!result.ok) {
+      const refId = result.refId || "NEXO-ASES-OK";
+      setReferenceId(refId);
+
+      // 2. Preparar mensaje específico para WhatsApp
+      const cleanPhone = (NEXO_CONFIG.whatsappNumber || "5491136450011").replace(/[^0-9]/g, "");
+      const fullText = `*SOLICITUD DE ASESORAMIENTO — NEXO CREATIVE*
+Ref: ${refId}
+----------------------------------------
+*Cliente:* ${payload.fullName}
+*Negocio / Marca:* ${payload.businessName}
+*Rubro:* ${payload.rubro}
+*WhatsApp:* ${payload.phone}
+*Email:* ${payload.email}
+
+*Consulta / Objetivo:*
+${payload.message}
+----------------------------------------
+Hola Mateo, acabo de enviar mi solicitud de asesoramiento gratuito desde la web. ¿Cuándo podríamos coordinar el diagnóstico?`;
+
+      setWhatsAppFollowUpUrl(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(fullText)}`);
+      setStatus("success");
+    } catch (err) {
+      console.error("Error al procesar solicitud de asesoramiento:", err);
       setStatus("idle");
       playSound("close", false);
-      if (result.data?.fieldErrors) {
-        setErrors((prev) => ({ ...prev, ...result.data.fieldErrors }));
-      }
-      setServerError(
-        result.data?.error ||
-          "No se pudo completar el envío en este momento. Revisá los datos e intentá nuevamente."
-      );
-      return;
+      setServerError("Ocurrió un error al registrar tu consulta. Podés escribirnos directamente por WhatsApp.");
     }
-
-    const refId = result.data.refId || "NEXO-OK";
-    const sData = result.data.sanitizedData || payload;
-    setReferenceId(refId);
-
-    const cleanPhone = NEXO_CONFIG.whatsappNumber.replace(/[^0-9]/g, "");
-    const fullText = `*SOLICITUD DE ASESORAMIENTO (${refId}) — NEXO CREATIVE*
-----------------------------------------
-*Cliente:* ${sData.fullName}
-*Negocio:* ${sData.businessName || "No especificado"}
-*Email:* ${sData.email}
-*WhatsApp:* ${sData.phone}
-*Servicio:* ${sData.service}
-*Consulta:*
-${sData.message}
-----------------------------------------`;
-
-    setWhatsAppFollowUpUrl(
-      `https://wa.me/${cleanPhone}?text=${encodeURIComponent(fullText)}`
-    );
-
-    setStatus("success");
-    playSound("success", false);
   };
 
   const handleClose = () => {
@@ -183,7 +194,7 @@ ${sData.message}
             transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
             role="dialog"
             aria-modal="true"
-            aria-labelledby="contact-modal-title"
+            aria-labelledby="consultation-modal-title"
             className="relative w-full max-w-xl bg-[#141519] border border-white/10 rounded-2xl p-5 sm:p-8 text-white shadow-2xl z-10 my-auto overflow-hidden"
           >
             <div className="absolute top-0 left-0 right-0 h-px bg-white/10" />
@@ -198,86 +209,48 @@ ${sData.message}
             </button>
 
             {status === "success" ? (
-              <div className="py-8 sm:py-10 text-center space-y-5">
-                <div className="w-16 h-16 mx-auto rounded-full bg-[#16A34A]/15 border border-[#16A34A]/35 flex items-center justify-center">
-                  <svg
-                    className="w-8 h-8 text-[#22C55E]"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <motion.path
-                      initial={{ pathLength: 0 }}
-                      animate={{ pathLength: 1 }}
-                      transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
-                      d="M20 6L9 17L4 12"
-                    />
-                  </svg>
-                </div>
-
-                <div className="space-y-1.5">
-                  <span className="inline-block px-2.5 py-0.5 rounded-md bg-[#16A34A]/15 border border-[#16A34A]/30 text-[11px] font-bold text-[#22C55E]">
-                    Solicitud registrada: {referenceId}
-                  </span>
-                  <h3 className="text-xl sm:text-2xl font-black text-white pt-1">
-                    ¡Formulario enviado correctamente!
-                  </h3>
-                  <p className="text-xs sm:text-sm text-gray-300 max-w-md mx-auto leading-relaxed">
-                    Tus datos fueron validados y registrados de forma segura. El equipo de{" "}
-                    <strong className="text-white">NEXO Creative</strong> se pondrá en contacto a la brevedad.
-                  </p>
-                </div>
-
-                <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
-                  {whatsAppFollowUpUrl && (
-                    <a
-                      href={whatsAppFollowUpUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#16A34A] hover:bg-[#15803D] text-white font-extrabold rounded-xl text-xs sm:text-sm transition-colors cursor-pointer"
-                    >
-                      <WhatsAppIcon className="w-4 h-4 fill-white" />
-                      <span>Continuar por WhatsApp</span>
-                    </a>
-                  )}
-                  <button
-                    type="button"
-                    onClick={handleClose}
-                    className="w-full sm:w-auto px-6 py-3 bg-white/[0.06] hover:bg-white/[0.12] text-white border border-white/10 font-bold rounded-xl text-xs sm:text-sm transition-colors cursor-pointer"
-                  >
-                    Cerrar ventana
-                  </button>
-                </div>
-              </div>
+              <FormSuccessCountdown
+                referenceId={referenceId}
+                title="¡Solicitud de asesoramiento enviada!"
+                subtitle="Tus datos ya están registrados en nuestro sistema. El equipo de NEXO Creative analizará tu caso a la brevedad."
+                whatsAppUrl={whatsAppFollowUpUrl}
+                onClose={handleClose}
+                autoRedirectSeconds={3}
+              />
             ) : (
               <div className="space-y-4">
-                <div className="pr-8">
+                <div className="pr-8 space-y-1">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-[#16A34A]/15 border border-[#16A34A]/30 text-[11px] font-bold text-[#22C55E]">
+                    <Sparkles className="w-3 h-3" />
+                    <span>ASESORAMIENTO ESTRATÉGICO GRATUITO</span>
+                  </div>
                   <h3
-                    id="contact-modal-title"
+                    id="consultation-modal-title"
                     className="text-xl sm:text-2xl font-black text-white tracking-tight"
                   >
-                    Solicitar asesoramiento gratuito
+                    Diagnóstico inicial para tu negocio
                   </h3>
-                  <p className="text-xs sm:text-sm text-gray-400 mt-1">
-                    Completá tus datos para analizar tu negocio y enviarte una propuesta a medida.
+                  <p className="text-xs sm:text-sm text-gray-400 leading-relaxed">
+                    Completá este formulario y analizaremos tu situación actual sin costo ni compromiso comercial.
                   </p>
                 </div>
 
                 {serverError && (
-                  <div className="rounded-xl bg-rose-500/10 border border-rose-500/30 p-3 flex items-start gap-2.5 text-xs text-rose-300">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-rose-400" />
+                  <div
+                    role="alert"
+                    className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs flex items-start gap-2"
+                  >
+                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                     <span>{serverError}</span>
                   </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-3.5" noValidate>
+                <form onSubmit={handleSubmit} noValidate className="space-y-3.5">
+                  {/* Honeypot anti-spam */}
                   <div className="hidden" aria-hidden="true">
-                    <label htmlFor="website_url">No completar este campo</label>
+                    <label htmlFor="modal_website_url">Sitio Web</label>
                     <input
-                      id="website_url"
+                      id="modal_website_url"
                       type="text"
                       name="website_url"
                       tabIndex={-1}
@@ -287,237 +260,154 @@ ${sData.message}
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label
-                        htmlFor="field-fullName"
-                        className="block text-[11px] font-bold uppercase tracking-wider text-gray-300 mb-1"
-                      >
-                        Nombre y apellido <span className="text-[#22C55E]">*</span>
+                      <label className="block text-xs font-semibold text-gray-300 mb-1">
+                        Nombre y Apellido <span className="text-[#22C55E]">*</span>
                       </label>
                       <input
-                        id="field-fullName"
                         type="text"
                         name="fullName"
-                        maxLength={80}
-                        autoComplete="name"
                         value={formData.fullName}
                         onChange={handleChange}
-                        placeholder="Tu nombre completo"
-                        className={`w-full bg-[#0d0f12] border rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none transition-colors ${
-                          errors.fullName
-                            ? "border-rose-500 ring-1 ring-rose-500"
-                            : "border-white/10 focus:border-[#16A34A]"
+                        placeholder="Ej. Lucas Benítez"
+                        className={`w-full bg-[#181a20] border rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none transition-colors ${
+                          errors.fullName ? "border-red-500 focus:border-red-400" : "border-white/10 focus:border-[#16A34A]"
                         }`}
                       />
-                      {errors.fullName && (
-                        <p className="flex items-center gap-1 text-[11px] text-rose-400 mt-1">
-                          <AlertCircle className="w-3 h-3 flex-shrink-0" />
-                          <span>{errors.fullName}</span>
-                        </p>
-                      )}
+                      {errors.fullName && <p className="text-[11px] text-red-400 mt-1">{errors.fullName}</p>}
                     </div>
 
                     <div>
-                      <label
-                        htmlFor="field-businessName"
-                        className="block text-[11px] font-bold uppercase tracking-wider text-gray-300 mb-1"
-                      >
-                        Negocio o empresa
+                      <label className="block text-xs font-semibold text-gray-300 mb-1">
+                        Nombre de tu Negocio / Marca
                       </label>
                       <input
-                        id="field-businessName"
                         type="text"
                         name="businessName"
-                        maxLength={80}
-                        autoComplete="organization"
                         value={formData.businessName}
                         onChange={handleChange}
-                        placeholder="Nombre o rubro (opcional)"
-                        className="w-full bg-[#0d0f12] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#16A34A] transition-colors"
+                        placeholder="Ej. Barbería Rossi"
+                        className="w-full bg-[#181a20] border border-white/10 focus:border-[#16A34A] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none transition-colors"
                       />
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label
-                        htmlFor="field-email"
-                        className="block text-[11px] font-bold uppercase tracking-wider text-gray-300 mb-1"
-                      >
-                        Correo electrónico <span className="text-[#22C55E]">*</span>
+                      <label className="block text-xs font-semibold text-gray-300 mb-1">
+                        WhatsApp de Contacto <span className="text-[#22C55E]">*</span>
                       </label>
                       <input
-                        id="field-email"
-                        type="email"
-                        name="email"
-                        maxLength={120}
-                        autoComplete="email"
-                        value={formData.email}
+                        type="tel"
+                        name="phone"
+                        value={formData.phone}
                         onChange={handleChange}
-                        placeholder="correo@ejemplo.com"
-                        className={`w-full bg-[#0d0f12] border rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none transition-colors ${
-                          errors.email
-                            ? "border-rose-500 ring-1 ring-rose-500"
-                            : "border-white/10 focus:border-[#16A34A]"
+                        placeholder="Ej. +54 9 11 4455-6677"
+                        className={`w-full bg-[#181a20] border rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none transition-colors ${
+                          errors.phone ? "border-red-500 focus:border-red-400" : "border-white/10 focus:border-[#16A34A]"
                         }`}
                       />
-                      {errors.email && (
-                        <p className="flex items-center gap-1 text-[11px] text-rose-400 mt-1">
-                          <AlertCircle className="w-3 h-3 flex-shrink-0" />
-                          <span>{errors.email}</span>
-                        </p>
-                      )}
+                      {errors.phone && <p className="text-[11px] text-red-400 mt-1">{errors.phone}</p>}
                     </div>
 
                     <div>
-                      <label
-                        htmlFor="field-phone"
-                        className="block text-[11px] font-bold uppercase tracking-wider text-gray-300 mb-1"
-                      >
-                        WhatsApp <span className="text-[#22C55E]">*</span>
+                      <label className="block text-xs font-semibold text-gray-300 mb-1">
+                        Correo Electrónico <span className="text-[#22C55E]">*</span>
                       </label>
                       <input
-                        id="field-phone"
-                        type="tel"
-                        name="phone"
-                        maxLength={25}
-                        autoComplete="tel"
-                        value={formData.phone}
+                        type="email"
+                        name="email"
+                        value={formData.email}
                         onChange={handleChange}
-                        placeholder="+54 9 11 ..."
-                        className={`w-full bg-[#0d0f12] border rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none transition-colors ${
-                          errors.phone
-                            ? "border-rose-500 ring-1 ring-rose-500"
-                            : "border-white/10 focus:border-[#16A34A]"
+                        placeholder="contacto@tunegocio.com"
+                        className={`w-full bg-[#181a20] border rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none transition-colors ${
+                          errors.email ? "border-red-500 focus:border-red-400" : "border-white/10 focus:border-[#16A34A]"
                         }`}
                       />
-                      {errors.phone && (
-                        <p className="flex items-center gap-1 text-[11px] text-rose-400 mt-1">
-                          <AlertCircle className="w-3 h-3 flex-shrink-0" />
-                          <span>{errors.phone}</span>
-                        </p>
-                      )}
+                      {errors.email && <p className="text-[11px] text-red-400 mt-1">{errors.email}</p>}
                     </div>
                   </div>
 
                   <div>
-                    <label
-                      htmlFor="field-service"
-                      className="block text-[11px] font-bold uppercase tracking-wider text-gray-300 mb-1"
-                    >
-                      Servicio que necesitás
+                    <label className="block text-xs font-semibold text-gray-300 mb-1">
+                      Rubro o Actividad Principal
                     </label>
                     <select
-                      id="field-service"
-                      name="service"
-                      value={formData.service || initialService || "Publicidad Digital (Meta Ads)"}
+                      name="rubro"
+                      value={formData.rubro}
                       onChange={handleChange}
-                      className="w-full bg-[#0d0f12] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-[#16A34A] transition-colors"
+                      className="w-full bg-[#181a20] border border-white/10 focus:border-[#16A34A] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none transition-colors"
                     >
-                      <option value="Publicidad Digital (Meta Ads)">Publicidad Digital (Meta Ads)</option>
-                      <option value="Planes Comercios y Negocios">Planes Comercios y Negocios</option>
-                      <option value="Planes NEXO Oficios">Planes NEXO Oficios</option>
-                      <option value="Planes NEXO Profesionales">Planes NEXO Profesionales</option>
-                      <option value="Gestión de Redes Sociales">Gestión de Redes Sociales</option>
-                      <option value="Diseño de Contenido">Diseño de Contenido</option>
-                      <option value="Estrategia Digital">Estrategia Digital</option>
-                      <option value="Plan Presencia & Contenido">Plan Presencia &amp; Contenido</option>
-                      <option value="Plan Captación Meta Ads">Plan Captación Meta Ads</option>
-                      <option value="Plan Crecimiento Integral">Plan Crecimiento Integral</option>
-                      <option value="Asesoramiento Gratuito General">Asesoramiento Gratuito General</option>
+                      {RUBRO_OPTIONS.map((opt) => (
+                        <option key={opt} value={opt} className="bg-[#181a20] text-white">
+                          {opt}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
                   <div>
-                    <label
-                      htmlFor="field-message"
-                      className="block text-[11px] font-bold uppercase tracking-wider text-gray-300 mb-1"
-                    >
-                      Proyecto o consulta <span className="text-[#22C55E]">*</span>
+                    <label className="block text-xs font-semibold text-gray-300 mb-1">
+                      ¿Cuál es tu principal desafío o qué te gustaría mejorar? <span className="text-[#22C55E]">*</span>
                     </label>
                     <textarea
-                      id="field-message"
-                      rows={3}
                       name="message"
-                      maxLength={800}
+                      rows={3}
                       value={formData.message}
                       onChange={handleChange}
-                      placeholder="Contanos qué vendés y qué objetivo buscás alcanzar."
-                      className={`w-full bg-[#0d0f12] border rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none transition-colors resize-none ${
-                        errors.message
-                           ? "border-rose-500 ring-1 ring-rose-500"
-                          : "border-white/10 focus:border-[#16A34A]"
+                      placeholder="Contanos brevemente qué vendés, cómo conseguís clientes hoy y qué querés lograr..."
+                      className={`w-full bg-[#181a20] border rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none transition-colors resize-none ${
+                        errors.message ? "border-red-500 focus:border-red-400" : "border-white/10 focus:border-[#16A34A]"
                       }`}
                     />
-                    {errors.message && (
-                      <p className="flex items-center gap-1 text-[11px] text-rose-400 mt-1">
-                        <AlertCircle className="w-3 h-3 flex-shrink-0" />
-                        <span>{errors.message}</span>
-                      </p>
-                    )}
+                    {errors.message && <p className="text-[11px] text-red-400 mt-1">{errors.message}</p>}
                   </div>
 
-                  <div className="pt-0.5">
-                    <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                  {/* Consentimiento */}
+                  <div className="pt-1">
+                    <label className="flex items-start gap-2.5 cursor-pointer text-left group">
                       <input
                         type="checkbox"
                         name="privacyConsent"
                         checked={formData.privacyConsent}
                         onChange={handleChange}
-                        className="mt-0.5 w-4 h-4 rounded border-white/20 bg-[#0d0f12] accent-[#16A34A] cursor-pointer flex-shrink-0"
+                        className="mt-0.5 w-4 h-4 rounded bg-[#181a20] border-white/20 text-[#16A34A] focus:ring-0 focus:ring-offset-0 cursor-pointer"
                       />
-                      <span className="text-[11px] text-gray-300 leading-relaxed">
-                        He leído y acepto la{" "}
+                      <span className="text-[11px] text-gray-400 group-hover:text-gray-300 leading-snug">
+                        Autorizo a NEXO Creative a procesar mis datos para coordinar el diagnóstico comercial conforme a la{" "}
                         <button
                           type="button"
                           onClick={() => onOpenLegalDoc?.("privacidad")}
-                          className="text-white underline underline-offset-2 hover:text-white transition-colors cursor-pointer"
+                          className="text-[#22C55E] underline hover:text-white"
                         >
-                          Política de Privacidad
-                        </button>{" "}
-                        y los{" "}
-                        <button
-                          type="button"
-                          onClick={() => onOpenLegalDoc?.("terminos")}
-                          className="text-white underline underline-offset-2 hover:text-white transition-colors cursor-pointer"
-                        >
-                          Términos y Condiciones
-                        </button>
-                        , prestando mi consentimiento para el tratamiento de mis datos con el fin de responder esta consulta (Ley N° 25.326).
+                          Política de Privacidad (Ley 25.326)
+                        </button>.
                       </span>
                     </label>
                     {errors.privacyConsent && (
-                      <p className="flex items-center gap-1 text-[11px] text-rose-400 mt-1">
-                        <AlertCircle className="w-3 h-3 flex-shrink-0" />
-                        <span>{errors.privacyConsent}</span>
-                      </p>
+                      <p className="text-[11px] text-red-400 mt-1">{errors.privacyConsent}</p>
                     )}
                   </div>
 
-                  <div className="pt-1">
+                  <div className="pt-2">
                     <button
                       type="submit"
                       disabled={status === "loading"}
-                      className="w-full bg-[#16A34A] hover:bg-[#15803D] disabled:opacity-75 text-white font-extrabold py-3.5 px-6 rounded-xl text-xs sm:text-sm transition-[background-color,transform,opacity] duration-150 active:scale-98 flex items-center justify-center gap-2 group cursor-pointer shadow-sm"
+                      className="w-full bg-[#16A34A] hover:bg-[#15803D] active:scale-[0.98] disabled:opacity-50 text-white font-extrabold py-3.5 px-6 rounded-xl text-xs sm:text-sm inline-flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md"
                     >
                       {status === "loading" ? (
                         <>
                           <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          <span>Validando y enviando solicitud...</span>
+                          <span>Registrando consulta...</span>
                         </>
                       ) : (
                         <>
-                          <span>Enviar solicitud</span>
-                          <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                          <span>Enviar solicitud de asesoramiento</span>
+                          <ArrowRight className="w-4 h-4" />
                         </>
                       )}
                     </button>
-
-                    <div className="flex items-center justify-center gap-1.5 text-[11px] text-gray-400 mt-2.5">
-                      <ShieldCheck className="w-3.5 h-3.5 text-[#22C55E]" />
-                      <span>Protegido contra envíos automatizados · Derechos ARCO garantizados</span>
-                    </div>
                   </div>
                 </form>
               </div>

@@ -287,194 +287,22 @@ function deleteProtectedRecord(filename, id) {
 }
 
 // ----------------------------------------------------------------------------
-// Cloudflare D1 Storage Adapter (con fallback automático a JSONL local)
+// Almacenamiento Seguro Local (JSONL) para Backend Autónomo
 // ----------------------------------------------------------------------------
-function isCloudflareD1Configured() {
-  return Boolean(
-    process.env.CLOUDFLARE_ACCOUNT_ID &&
-    process.env.CLOUDFLARE_D1_DATABASE_ID &&
-    process.env.CLOUDFLARE_API_TOKEN
-  );
-}
-
-let d1TableInitialized = false;
-
-async function queryCloudflareD1(sql, params = []) {
-  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
-  const dbId = process.env.CLOUDFLARE_D1_DATABASE_ID;
-  const token = process.env.CLOUDFLARE_API_TOKEN;
-
-  const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/d1/database/${dbId}/query`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ sql, params }),
-  });
-
-  if (!res.ok) {
-    const errText = await res.text().catch(() => "");
-    throw new Error(`D1_HTTP_${res.status}: ${errText}`);
-  }
-
-  const data = await res.json();
-  if (!data.success || !data.result || !data.result[0]) {
-    throw new Error("D1_QUERY_FAILED");
-  }
-  return data.result[0].results || [];
-}
-
-async function ensureCloudflareD1Table() {
-  if (d1TableInitialized || !isCloudflareD1Configured()) return;
-  try {
-    await queryCloudflareD1(`
-      CREATE TABLE IF NOT EXISTS leads (
-        id TEXT PRIMARY KEY,
-        ref_id TEXT,
-        created_at TEXT,
-        ip_hash TEXT,
-        full_name TEXT,
-        business_name TEXT,
-        email TEXT,
-        phone TEXT,
-        service TEXT,
-        message TEXT,
-        meeting_date TEXT,
-        meeting_time TEXT,
-        status TEXT,
-        notes TEXT,
-        consent_version TEXT,
-        updated_at TEXT
-      )
-    `);
-    d1TableInitialized = true;
-  } catch {
-    // Si falla la inicialización de la tabla, se continúa con fallback a disco
-  }
-}
-
 async function saveLeadRecord(record) {
-  // Siempre asegurar persistencia en JSONL local
-  appendProtectedRecord("leads.jsonl", record);
-
-  if (isCloudflareD1Configured()) {
-    try {
-      await ensureCloudflareD1Table();
-      await queryCloudflareD1(
-        `INSERT OR REPLACE INTO leads (
-          id, ref_id, created_at, ip_hash, full_name, business_name,
-          email, phone, service, message, meeting_date, meeting_time,
-          status, notes, consent_version, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          record.id || record.refId,
-          record.refId || record.id,
-          record.createdAt || new Date().toISOString(),
-          record.ipHash || "",
-          record.fullName || "",
-          record.businessName || "",
-          record.email || "",
-          record.phone || "",
-          record.service || "",
-          record.message || "",
-          record.meetingDate || null,
-          record.meetingTime || null,
-          record.status || "nuevo",
-          record.notes || "",
-          record.consentVersion || "Ley25326-v1.0",
-          record.updatedAt || null,
-        ]
-      );
-    } catch {
-      // Fallback ya respaldado en disco local
-    }
-  }
+  return appendProtectedRecord("leads.jsonl", record);
 }
 
 async function getLeadRecords() {
-  if (isCloudflareD1Configured()) {
-    try {
-      await ensureCloudflareD1Table();
-      const rows = await queryCloudflareD1(
-        `SELECT * FROM leads ORDER BY created_at DESC`
-      );
-      if (Array.isArray(rows) && rows.length > 0) {
-        return rows.map((r) => ({
-          id: r.id,
-          refId: r.ref_id || r.id,
-          createdAt: r.created_at,
-          ipHash: r.ip_hash,
-          fullName: r.full_name,
-          businessName: r.business_name,
-          email: r.email,
-          phone: r.phone,
-          service: r.service,
-          message: r.message,
-          meetingDate: r.meeting_date,
-          meetingTime: r.meeting_time,
-          status: r.status,
-          notes: r.notes,
-          consentVersion: r.consent_version,
-          updatedAt: r.updated_at,
-        }));
-      }
-    } catch {
-      // Fallback a JSONL local si Cloudflare D1 está temporalmente inaccesible
-    }
-  }
   return readProtectedRecords("leads.jsonl");
 }
 
 async function updateLeadRecord(id, updates) {
-  const localUpdated = updateProtectedRecord("leads.jsonl", id, updates);
-
-  if (isCloudflareD1Configured()) {
-    try {
-      await ensureCloudflareD1Table();
-      const fields = [];
-      const params = [];
-      if (updates.status !== undefined) {
-        fields.push("status = ?");
-        params.push(updates.status);
-      }
-      if (updates.notes !== undefined) {
-        fields.push("notes = ?");
-        params.push(updates.notes);
-      }
-      fields.push("updated_at = ?");
-      params.push(new Date().toISOString());
-      params.push(id);
-      params.push(id);
-
-      await queryCloudflareD1(
-        `UPDATE leads SET ${fields.join(", ")} WHERE id = ? OR ref_id = ?`,
-        params
-      );
-    } catch {
-      // Fallback ya actualizado en local
-    }
-  }
-
-  return localUpdated;
+  return updateProtectedRecord("leads.jsonl", id, updates);
 }
 
 async function deleteLeadRecord(id) {
-  deleteProtectedRecord("leads.jsonl", id);
-
-  if (isCloudflareD1Configured()) {
-    try {
-      await ensureCloudflareD1Table();
-      await queryCloudflareD1(
-        `DELETE FROM leads WHERE id = ? OR ref_id = ?`,
-        [id, id]
-      );
-    } catch {
-      // Fallback ya eliminado en local
-    }
-  }
-  return true;
+  return deleteProtectedRecord("leads.jsonl", id);
 }
 
 function generateCrmSessionToken() {

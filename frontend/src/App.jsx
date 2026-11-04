@@ -15,6 +15,7 @@ import { getConsentPreferences, saveConsentPreferences } from "./utils/cookieCon
 import { getCsrfToken } from "./utils/securityClient";
 
 const InteractiveContactModal = lazy(() => import("./components/InteractiveContactModal"));
+const QuoteModal = lazy(() => import("./components/QuoteModal"));
 const PlanFinderModal = lazy(() => import("./components/PlanFinderModal"));
 const VirtualAssistantChat = lazy(() => import("./components/VirtualAssistantChat"));
 const LegalPagesModal = lazy(() => import("./components/LegalPagesModal"));
@@ -49,14 +50,18 @@ export default function App() {
   });
 
   const [activeSectionId, setActiveSectionId] = useState("inicio");
-  const [modalOpen, setModalOpen] = useState(false);
+  
+  // Modales independientes y específicos
+  const [consultationOpen, setConsultationOpen] = useState(false);
+  const [quoteOpen, setQuoteOpen] = useState(false);
+  const [selectedQuoteService, setSelectedQuoteService] = useState("");
   const [planFinderOpen, setPlanFinderOpen] = useState(false);
-  const [selectedService, setSelectedService] = useState("");
+
   const [activeLegalDoc, setActiveLegalDoc] = useState(null);
   const [cookieSettingsOpen, setCookieSettingsOpen] = useState(false);
   const [consent, setConsent] = useState(() => getConsentPreferences());
   const [idleReady, setIdleReady] = useState(false);
-  const overlaysReady = idleReady || modalOpen || planFinderOpen || activeLegalDoc !== null;
+  const overlaysReady = idleReady || consultationOpen || quoteOpen || planFinderOpen || activeLegalDoc !== null;
 
   const scrollLockUntilRef = useRef(0);
 
@@ -87,15 +92,26 @@ export default function App() {
     }
   }, []);
 
-  const handleOpenModal = useCallback((serviceName) => {
-    setSelectedService(serviceName || "Asesoramiento Gratuito General");
-    setModalOpen(true);
+  // Handlers para "Solicitar Asesoramiento"
+  const handleOpenConsultationModal = useCallback(() => {
+    setConsultationOpen(true);
   }, []);
 
-  const handleCloseModal = useCallback(() => {
-    setModalOpen(false);
+  const handleCloseConsultationModal = useCallback(() => {
+    setConsultationOpen(false);
   }, []);
 
+  // Handlers para "Solicitar Presupuesto"
+  const handleOpenQuoteModal = useCallback((serviceName) => {
+    setSelectedQuoteService(serviceName || "Plan Crecimiento Integral");
+    setQuoteOpen(true);
+  }, []);
+
+  const handleCloseQuoteModal = useCallback(() => {
+    setQuoteOpen(false);
+  }, []);
+
+  // Handlers para "Encontrá tu plan"
   const handleOpenPlanFinder = useCallback(() => {
     setPlanFinderOpen(true);
   }, []);
@@ -243,22 +259,22 @@ export default function App() {
       <Navbar
         activeSectionId={activeSectionId}
         onNavigateSection={handleNavigateSection}
-        onOpenConsultationModal={handleOpenModal}
+        onOpenConsultationModal={handleOpenConsultationModal}
       />
 
       <main className="flex-grow">
         <Hero
-          onOpenConsultationModal={handleOpenModal}
+          onOpenConsultationModal={handleOpenConsultationModal}
           onOpenPlanFinder={handleOpenPlanFinder}
         />
         <AboutSection />
-        <RubrosSection onOpenConsultationModal={handleOpenModal} />
+        <RubrosSection onOpenConsultationModal={handleOpenQuoteModal} />
         <PlansSection
-          onOpenConsultationModal={handleOpenModal}
+          onOpenConsultationModal={handleOpenQuoteModal}
           onOpenPlanFinder={handleOpenPlanFinder}
         />
         <ProcessSection />
-        <FreeConsultationSection onOpenModal={handleOpenModal} />
+        <FreeConsultationSection onOpenModal={handleOpenConsultationModal} />
         <FaqSection />
         <CtaContactSection onOpenLegalDoc={handleOpenLegalDoc} />
       </main>
@@ -276,24 +292,33 @@ export default function App() {
       {overlaysReady && (
         <Suspense fallback={null}>
           <VirtualAssistantChat
-            onOpenConsultationModal={handleOpenModal}
+            onOpenConsultationModal={handleOpenConsultationModal}
+            onOpenQuoteModal={handleOpenQuoteModal}
             onOpenLegalDoc={handleOpenLegalDoc}
           />
 
+          {/* Formulario 1: Solicitar Asesoramiento */}
           <InteractiveContactModal
-            key={selectedService}
-            isOpen={modalOpen}
-            onClose={handleCloseModal}
-            initialService={selectedService}
+            isOpen={consultationOpen}
+            onClose={handleCloseConsultationModal}
             onOpenLegalDoc={handleOpenLegalDoc}
           />
 
+          {/* Formulario 2: Solicitar Presupuesto */}
+          <QuoteModal
+            isOpen={quoteOpen}
+            onClose={handleCloseQuoteModal}
+            initialService={selectedQuoteService}
+            onOpenLegalDoc={handleOpenLegalDoc}
+          />
+
+          {/* Formulario 3: Encontrá tu plan */}
           <PlanFinderModal
             isOpen={planFinderOpen}
             onClose={handleClosePlanFinder}
-            onSelectPlanForConsultation={handleOpenModal}
           />
 
+          {/* Modal de Políticas y Legales */}
           <LegalPagesModal
             activeDocId={activeLegalDoc}
             onSelectDoc={handleOpenLegalDoc}

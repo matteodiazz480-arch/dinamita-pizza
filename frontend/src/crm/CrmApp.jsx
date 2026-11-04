@@ -4,6 +4,7 @@ import CrmDashboard from "./CrmDashboard";
 import {
   crmCheckAuth,
   crmGetLeads,
+  crmSubscribeLeads,
   crmUpdateLead,
   crmCreateLead,
   crmDeleteLead,
@@ -64,6 +65,19 @@ export default function CrmApp({ onNavigateLanding }) {
         setLoadingAuth(false);
       });
   }, [loadAllData]);
+
+  // Suscripción en tiempo real a leads de Firestore cuando el usuario está autenticado
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const unsub = crmSubscribeLeads((realtimeLeads) => {
+      if (Array.isArray(realtimeLeads)) {
+        setLeads(realtimeLeads);
+      }
+    });
+    return () => {
+      if (typeof unsub === "function") unsub();
+    };
+  }, [isAuthenticated]);
 
   const handleLoginSuccess = async () => {
     setIsAuthenticated(true);

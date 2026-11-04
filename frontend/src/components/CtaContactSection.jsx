@@ -11,7 +11,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { securePost, sanitizeClientText } from "../utils/securityClient";
+import { submitLeadRecord, sanitizeClientText } from "../utils/securityClient";
 import { WhatsAppIcon } from "./Icons";
 import { NEXO_CONFIG } from "../data/nexoData";
 
@@ -106,6 +106,45 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
   const [status, setStatus] = useState("idle");
   const [serverError, setServerError] = useState("");
   const [confirmedBooking, setConfirmedBooking] = useState(null);
+  const [bookingCountdown, setBookingCountdown] = useState(3);
+
+  const getWhatsAppBookingUrl = useCallback(() => {
+    if (!confirmedBooking) return "#";
+    const text = encodeURIComponent(
+      `Hola NEXO Creative! Acabo de agendar una reunión gratuita de 20 min (Código: ${confirmedBooking.refId}) para el día ${confirmedBooking.dateString} a las ${confirmedBooking.timeString} hs. Mi nombre es ${confirmedBooking.fullName}.`
+    );
+    const cleanNumber = (NEXO_CONFIG.whatsappNumber || "5491136450011").replace(/[^0-9]/g, "");
+    return `https://wa.me/${cleanNumber}?text=${text}`;
+  }, [confirmedBooking]);
+
+  const getWhatsAppUrl = useCallback(() => {
+    const text = encodeURIComponent(
+      "Hola NEXO Creative! Me gustaría coordinar una reunión de 20 minutos para analizar el crecimiento de mi negocio."
+    );
+    const cleanNumber = (NEXO_CONFIG.whatsappNumber || "5491136450011").replace(/[^0-9]/g, "");
+    return `https://wa.me/${cleanNumber}?text=${text}`;
+  }, []);
+
+  useEffect(() => {
+    if (step !== 3 || !confirmedBooking) return;
+    setBookingCountdown(3);
+    const timer = setInterval(() => {
+      setBookingCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          try {
+            const url = getWhatsAppBookingUrl();
+            if (url && url !== "#") {
+              window.open(url, "_blank", "noopener,noreferrer");
+            }
+          } catch {}
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [step, confirmedBooking, getWhatsAppBookingUrl]);
 
   const scrollDays = (direction) => {
     if (!daysScrollRef.current) return;
@@ -200,21 +239,23 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
       phone: sanitizeClientText(formData.phone, 30),
       email: sanitizeClientText(formData.email, 120),
       businessName: sanitizeClientText(formData.businessName, 80) || "No especificado",
-      formLoadedAt: formLoadedAtRef.current,
       service: "Reunión Gratuita 20 min",
+      origin: "Agenda Reunión 20 min",
+      formType: "agenda_reunion",
+      status: "reunion_agendada",
+      priority: "alta",
       meetingDate: selectedDay ? selectedDay.isoString : "",
       meetingTime: selectedTime,
       message: `Reunión agendada para el día ${selectedDay?.fullDayName} ${selectedDay?.dayNumber}/${selectedDay?.monthName}/${selectedDay?.year} a las ${selectedTime} hs (20 min).`,
       privacyConsent: Boolean(formData.privacyConsent),
-      website_url: formData.website_url,
     };
 
     try {
-      const res = await securePost("/api/contact", payload);
+      const res = await submitLeadRecord(payload);
       if (res.ok) {
         setStatus("success");
         setConfirmedBooking({
-          refId: res.refId || "NEXO-CAL-" + Date.now().toString(36).toUpperCase(),
+          refId: res.refId || "NEXO-CAL-" + Date.now().toString(36).toUpperCase().slice(-5),
           fullName: payload.fullName,
           email: payload.email,
           businessName: payload.businessName,
@@ -224,29 +265,12 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
         setStep(3);
       } else {
         setStatus("error");
-        setServerError(res.error || "Ocurrió un error al agendar tu reunión. Por favor intentá nuevamente.");
+        setServerError("Ocurrió un error al agendar tu reunión. Por favor intentá nuevamente.");
       }
     } catch {
       setStatus("error");
       setServerError("Error de conexión. Podés escribirnos directamente por WhatsApp.");
     }
-  };
-
-  const getWhatsAppBookingUrl = () => {
-    if (!confirmedBooking) return "#";
-    const text = encodeURIComponent(
-      `Hola NEXO Creative! Acabo de agendar una reunión gratuita de 20 min (Código: ${confirmedBooking.refId}) para el día ${confirmedBooking.dateString} a las ${confirmedBooking.timeString} hs. Mi nombre es ${confirmedBooking.fullName}.`
-    );
-    const cleanNumber = (NEXO_CONFIG.whatsappNumber || "").replace(/[^0-9]/g, "");
-    return `https://wa.me/${cleanNumber}?text=${text}`;
-  };
-
-  const getWhatsAppUrl = () => {
-    const text = encodeURIComponent(
-      "Hola NEXO Creative! Me gustaría coordinar una reunión de 20 minutos para analizar el crecimiento de mi negocio."
-    );
-    const cleanNumber = (NEXO_CONFIG.whatsappNumber || "").replace(/[^0-9]/g, "");
-    return `https://wa.me/${cleanNumber}?text=${text}`;
   };
 
   return (
@@ -649,6 +673,28 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
                   )}
                 </div>
 
+                {/* Cuenta regresiva automática a WhatsApp */}
+                <div className="bg-[#181a20] border border-white/10 rounded-xl p-3 text-xs space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-300 font-medium">
+                      {bookingCountdown > 0
+                        ? `Enviando a WhatsApp en ${bookingCountdown}...`
+                        : "Abriendo WhatsApp..."}
+                    </span>
+                    <span className="font-mono font-bold text-[#22C55E]">
+                      {bookingCountdown > 0 ? `${bookingCountdown}s` : "✓"}
+                    </span>
+                  </div>
+                  <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: "100%" }}
+                      animate={{ width: "0%" }}
+                      transition={{ duration: 3, ease: "linear" }}
+                      className="h-full bg-[#22C55E]"
+                    />
+                  </div>
+                </div>
+
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-1">
                   <a
                     href={getWhatsAppBookingUrl()}
@@ -657,7 +703,7 @@ export default function CtaContactSection({ onOpenLegalDoc }) {
                     className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 bg-[#25D366] hover:bg-[#20ba59] text-white font-black text-xs px-5 py-2.5 rounded-xl transition-all shadow-md active:scale-98"
                   >
                     <WhatsAppIcon className="w-4 h-4 fill-current" />
-                    <span>Confirmar por WhatsApp directo</span>
+                    <span>Abrir WhatsApp ahora</span>
                   </a>
 
                   <button
