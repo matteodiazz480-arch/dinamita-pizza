@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { NEXO_CONFIG } from "../data/nexoData";
-import { X, ArrowRight, RotateCcw, Check, Compass, AlertCircle } from "lucide-react";
+import { X, ArrowRight, Check, Compass, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { playSound } from "../utils/sound";
 import { submitLeadRecord, sanitizeClientText } from "../utils/securityClient";
@@ -223,19 +223,9 @@ Hola Mateo, completé el test en la web y el plan sugerido fue *${recommendedPla
               />
             ) : recommendedPlan ? (
               <div className="space-y-4">
-                <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#22C55E]">
-                    <Compass className="w-4 h-4" />
-                    <span>Plan recomendado para tu negocio</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleReset}
-                    className="text-xs text-gray-400 hover:text-white inline-flex items-center gap-1 cursor-pointer"
-                  >
-                    <RotateCcw className="w-3 h-3" />
-                    <span>Reiniciar test</span>
-                  </button>
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#22C55E] border-b border-white/10 pb-3">
+                  <Compass className="w-4 h-4" />
+                  <span>Plan recomendado para tu negocio</span>
                 </div>
 
                 <div>
