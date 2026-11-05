@@ -38,6 +38,7 @@ const ORIGIN_BADGES = {
 export default function CrmDashboardView({
   leads = [],
   clients = [],
+  customerProfiles = [],
   expenses = [],
   onNavigateTab,
 }) {
@@ -178,17 +179,14 @@ export default function CrmDashboardView({
       </div>
 
       {/* ------------------------------------------------------------------ */}
-      {/* ETAPAS COMERCIALES (Exacto al Excel 'Dashboard')                   */}
+      {/* ETAPAS COMERCIALES DEL PIPELINE                                    */}
       {/* ------------------------------------------------------------------ */}
       <div className="bg-[#141519] border border-white/10 rounded-2xl p-4 sm:p-6 shadow-lg">
         <div className="flex items-center justify-between pb-3.5 mb-4 border-b border-white/8">
           <div>
             <h3 className="text-sm sm:text-base font-black text-white tracking-tight">
-              Etapas Comerciales del Pipeline
+              Etapas del Pipeline Comercial
             </h3>
-            <p className="text-xs text-gray-400 mt-0.5">
-              Estado de las oportunidades según la hoja Dashboard del Excel
-            </p>
           </div>
           <button
             type="button"
@@ -222,6 +220,42 @@ export default function CrmDashboardView({
             );
           })}
         </div>
+      </div>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* ATENCIÓN AL PÚBLICO: RESUMEN OPERATIVO                             */}
+      {/* ------------------------------------------------------------------ */}
+      <div className="bg-[#141519] border border-white/10 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg">
+        <div className="flex items-center gap-3.5">
+          <div className="p-2.5 rounded-xl bg-[#16A34A]/15 text-[#22C55E]">
+            <Users className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-sm font-black text-white">
+              Atención al Público
+            </h3>
+            <div className="flex items-center gap-3 text-xs text-gray-400 mt-0.5">
+              <span>{customerProfiles.length} fichas registradas</span>
+              <span>•</span>
+              <span className="text-emerald-400 font-semibold">
+                {customerProfiles.filter((p) => p.status === "activo").length} activos
+              </span>
+              <span>•</span>
+              <span className="text-amber-300 font-semibold">
+                {customerProfiles.filter((p) => p.status === "en_evaluacion").length} en evaluación
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => onNavigateTab("customer_service")}
+          className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold transition-colors cursor-pointer"
+        >
+          <span>Abrir Módulo</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </button>
       </div>
 
       {/* ------------------------------------------------------------------ */}

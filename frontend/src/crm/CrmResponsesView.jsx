@@ -18,6 +18,7 @@ export default function CrmResponsesView({
   leads = [],
   onUpdateLead,
   onDeleteLead,
+  onConvertToCustomerProfile,
   onNavigateCommercial,
 }) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -237,6 +238,17 @@ export default function CrmResponsesView({
 
                       <td className="py-3.5 px-4 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1.5">
+                          {onConvertToCustomerProfile && (
+                            <button
+                              type="button"
+                              onClick={() => onConvertToCustomerProfile(lead)}
+                              className="py-1.5 px-2.5 rounded-lg bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 text-blue-300 text-xs font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
+                              title="Crear ficha en Atención al Público"
+                            >
+                              <span>Crear Ficha</span>
+                            </button>
+                          )}
+
                           <button
                             type="button"
                             onClick={() => handleTransferToPipeline(lead)}

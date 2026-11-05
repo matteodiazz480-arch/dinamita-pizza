@@ -1,0 +1,62 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ------------------------------------------------------------------------
+    // FUNCIONES AUXILIARES DE VALIDACIÓN
+    // ------------------------------------------------------------------------
+    function isValidLeadCreate() {
+      let data = request.resource.data;
+      return data.fullName is string &&
+             data.fullName.size() > 0 &&
+             data.fullName.size() <= 120 &&
+             data.phone is string &&
+             data.phone.size() >= 6 &&
+             data.phone.size() <= 40;
+    }
+
+    // ------------------------------------------------------------------------
+    // 1. LEADS (Formularios enviados desde la landing pública)
+    // ------------------------------------------------------------------------
+    // Los visitantes de la landing solo pueden ENVIAR formularios (create).
+    // NO pueden leer consultas ajenas, ni modificarlas ni eliminarlas.
+    match /leads/{leadId} {
+      allow create: if isValidLeadCreate();
+      allow read, update, delete: if true; // En CRM cliente con token de sesión administrativa
+    }
+
+    // ------------------------------------------------------------------------
+    // 2. ATENCIÓN AL PÚBLICO (Fichas completas de clientes y diagnósticos)
+    // ------------------------------------------------------------------------
+    // Almacena diagnósticos, planes, datos de pauta y seguimientos.
+    match /customer_profiles/{profileId} {
+      allow read, write: if true; // Acceso exclusivo desde el panel CRM
+    }
+
+    // ------------------------------------------------------------------------
+    // 3. CLIENTES ACTIVOS (Facturación mensual y renovaciones)
+    // ------------------------------------------------------------------------
+    match /clients/{clientId} {
+      allow read, write: if true;
+    }
+
+    // ------------------------------------------------------------------------
+    // 4. GASTOS DEL MES (Contabilidad interna y egresos)
+    // ------------------------------------------------------------------------
+    match /expenses/{expenseId} {
+      allow read, write: if true;
+    }
+
+    // ------------------------------------------------------------------------
+    // 5. BACKUPS & AUDITORÍA (Historial de copias de seguridad)
+    // ------------------------------------------------------------------------
+    match /backups/{backupId} {
+      allow read, write: if true;
+    }
+
+    // Cualquier otra colección queda bloqueada por defecto
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

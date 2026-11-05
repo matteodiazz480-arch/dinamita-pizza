@@ -12,6 +12,13 @@ import {
   crmCreateClient,
   crmUpdateClient,
   crmDeleteClient,
+  crmGetCustomerProfiles,
+  crmSubscribeCustomerProfiles,
+  crmCreateCustomerProfile,
+  crmUpdateCustomerProfile,
+  crmDeleteCustomerProfile,
+  crmAddCustomerFollowup,
+  crmCheckAndTriggerAutoBackup,
   crmGetExpenses,
   crmCreateExpense,
   crmDeleteExpense,
@@ -23,15 +30,17 @@ export default function CrmApp({ onNavigateLanding }) {
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [leads, setLeads] = useState([]);
   const [clients, setClients] = useState([]);
+  const [customerProfiles, setCustomerProfiles] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
 
   const loadAllData = useCallback(async () => {
     try {
       setRefreshing(true);
-      const [leadsRes, clientsRes, expensesRes] = await Promise.all([
+      const [leadsRes, clientsRes, customerRes, expensesRes] = await Promise.all([
         crmGetLeads(),
         crmGetClients(),
+        crmGetCustomerProfiles(),
         crmGetExpenses(),
       ]);
 
@@ -40,6 +49,9 @@ export default function CrmApp({ onNavigateLanding }) {
       }
       if (clientsRes.ok && Array.isArray(clientsRes.clients)) {
         setClients(clientsRes.clients);
+      }
+      if (customerRes.ok && Array.isArray(customerRes.profiles)) {
+        setCustomerProfiles(customerRes.profiles);
       }
       if (expensesRes.ok && Array.isArray(expensesRes.expenses)) {
         setExpenses(expensesRes.expenses);
@@ -57,6 +69,8 @@ export default function CrmApp({ onNavigateLanding }) {
         if (res.ok && res.authenticated) {
           setIsAuthenticated(true);
           loadAllData();
+          // Comprobar y disparar copia de seguridad automática si pasaron 24h
+          crmCheckAndTriggerAutoBackup();
         } else {
           setIsAuthenticated(false);
         }
@@ -66,22 +80,31 @@ export default function CrmApp({ onNavigateLanding }) {
       });
   }, [loadAllData]);
 
-  // Suscripción en tiempo real a leads de Firestore cuando el usuario está autenticado
+  // Suscripción en tiempo real a leads y fichas de clientes de Firestore
   useEffect(() => {
     if (!isAuthenticated) return;
-    const unsub = crmSubscribeLeads((realtimeLeads) => {
+    const unsubLeads = crmSubscribeLeads((realtimeLeads) => {
       if (Array.isArray(realtimeLeads)) {
         setLeads(realtimeLeads);
       }
     });
+
+    const unsubProfiles = crmSubscribeCustomerProfiles((realtimeProfiles) => {
+      if (Array.isArray(realtimeProfiles)) {
+        setCustomerProfiles(realtimeProfiles);
+      }
+    });
+
     return () => {
-      if (typeof unsub === "function") unsub();
+      if (typeof unsubLeads === "function") unsubLeads();
+      if (typeof unsubProfiles === "function") unsubProfiles();
     };
   }, [isAuthenticated]);
 
   const handleLoginSuccess = async () => {
     setIsAuthenticated(true);
     await loadAllData();
+    crmCheckAndTriggerAutoBackup();
   };
 
   const handleLogout = async () => {
@@ -144,6 +167,38 @@ export default function CrmApp({ onNavigateLanding }) {
       setClients((prev) => [res.client, ...prev]);
     }
     await handleUpdateLead(lead.id || lead.refId, { status: "ganado" });
+    loadAllData();
+  };
+
+  // --------------------------------------------------------------------------
+  // HANDLERS: ATENCIÓN AL PÚBLICO (FICHAS COMPLETAS DE CLIENTES)
+  // --------------------------------------------------------------------------
+  const handleCreateCustomerProfile = async (profileData) => {
+    const res = await crmCreateCustomerProfile(profileData);
+    if (res.ok && res.profile) {
+      setCustomerProfiles((prev) => [res.profile, ...prev]);
+    }
+    loadAllData();
+    return res.ok;
+  };
+
+  const handleUpdateCustomerProfile = async (id, updates, changeDescription) => {
+    setCustomerProfiles((prev) =>
+      prev.map((p) => (p.id === id || p.refId === id ? { ...p, ...updates } : p))
+    );
+    const res = await crmUpdateCustomerProfile(id, updates, changeDescription);
+    loadAllData();
+    return res.ok;
+  };
+
+  const handleDeleteCustomerProfile = async (id) => {
+    setCustomerProfiles((prev) => prev.filter((p) => p.id !== id && p.refId !== id));
+    await crmDeleteCustomerProfile(id);
+    loadAllData();
+  };
+
+  const handleAddCustomerFollowup = async (id, followupData) => {
+    await crmAddCustomerFollowup(id, followupData);
     loadAllData();
   };
 
@@ -213,6 +268,7 @@ export default function CrmApp({ onNavigateLanding }) {
     <CrmDashboard
       leads={leads}
       clients={clients}
+      customerProfiles={customerProfiles}
       expenses={expenses}
       onRefresh={loadAllData}
       refreshing={refreshing}
@@ -222,6 +278,10 @@ export default function CrmApp({ onNavigateLanding }) {
       onUpdateClient={handleUpdateClient}
       onCreateClient={handleCreateClient}
       onDeleteClient={handleDeleteClient}
+      onUpdateCustomerProfile={handleUpdateCustomerProfile}
+      onCreateCustomerProfile={handleCreateCustomerProfile}
+      onDeleteCustomerProfile={handleDeleteCustomerProfile}
+      onAddCustomerFollowup={handleAddCustomerFollowup}
       onCreateExpense={handleCreateExpense}
       onDeleteExpense={handleDeleteExpense}
       onConvertToClient={handleConvertToClient}

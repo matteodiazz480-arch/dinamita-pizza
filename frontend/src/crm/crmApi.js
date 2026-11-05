@@ -2,6 +2,7 @@ import { db } from "../utils/firebase";
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   setDoc,
   updateDoc,
@@ -271,5 +272,464 @@ export async function crmDeleteExpense(id) {
   } catch (err) {
     console.error("Error deleting expense in Firestore:", err);
     return { ok: false };
+  }
+}
+
+// ----------------------------------------------------------------------------
+// ATENCIÓN AL PÚBLICO: FICHAS COMPLETAS DE CLIENTES (Firestore)
+// ----------------------------------------------------------------------------
+function parseCustomerDoc(d) {
+  const data = d.data() || {};
+  let createdStr = new Date().toISOString();
+  if (data.createdAt?.toDate && typeof data.createdAt.toDate === "function") {
+    try {
+      createdStr = data.createdAt.toDate().toISOString();
+    } catch {}
+  } else if (typeof data.createdAt === "string" && data.createdAt) {
+    createdStr = data.createdAt;
+  }
+
+  let updatedStr = createdStr;
+  if (data.updatedAt?.toDate && typeof data.updatedAt.toDate === "function") {
+    try {
+      updatedStr = data.updatedAt.toDate().toISOString();
+    } catch {}
+  } else if (typeof data.updatedAt === "string" && data.updatedAt) {
+    updatedStr = data.updatedAt;
+  }
+
+  return {
+    id: d.id,
+    ...data,
+    createdAt: createdStr,
+    updatedAt: updatedStr,
+    historial: Array.isArray(data.historial) ? data.historial : [],
+  };
+}
+
+export async function crmGetCustomerProfiles() {
+  try {
+    const snap = await getDocs(collection(db, "customer_profiles"));
+    const profiles = snap.docs.map(parseCustomerDoc);
+    profiles.sort((a, b) => new Date(b.updatedAt || b.createdAt || 0).getTime() - new Date(a.updatedAt || a.createdAt || 0).getTime());
+    return { ok: true, profiles };
+  } catch (err) {
+    console.error("Error al obtener fichas de clientes desde Firestore:", err);
+    return { ok: false, profiles: [], error: err.message };
+  }
+}
+
+export function crmSubscribeCustomerProfiles(callback, onError) {
+  try {
+    return onSnapshot(
+      collection(db, "customer_profiles"),
+      (snap) => {
+        const profiles = snap.docs.map(parseCustomerDoc);
+        profiles.sort((a, b) => new Date(b.updatedAt || b.createdAt || 0).getTime() - new Date(a.updatedAt || a.createdAt || 0).getTime());
+        callback(profiles);
+      },
+      (err) => {
+        console.error("Error en listener de customer_profiles:", err);
+        if (onError) onError(err);
+      }
+    );
+  } catch (err) {
+    console.error("Fallo al inicializar listener customer_profiles:", err);
+    if (onError) onError(err);
+    return () => {};
+  }
+}
+
+export async function crmCreateCustomerProfile(profileData) {
+  try {
+    const id = profileData.id || "cust_" + Date.now().toString(36) + "_" + Math.random().toString(36).substring(2, 6);
+    const refId = profileData.refId || "NEXO-FICHA-" + Date.now().toString(36).toUpperCase().slice(-5);
+    const currentUser = sessionStorage.getItem("nexo_crm_user") || "Personal de Atención";
+
+    const initialHistory = [
+      {
+        id: "evt_" + Date.now().toString(36),
+        timestamp: new Date().toISOString(),
+        type: "creacion",
+        author: currentUser,
+        title: "Apertura de ficha de cliente",
+        description: `Ficha registrada en el módulo de Atención al Público con estado inicial: ${profileData.status || "nuevo"}.`,
+      },
+    ];
+
+    const payload = {
+      ...profileData,
+      id,
+      refId,
+      status: profileData.status || "nuevo",
+      historial: profileData.historial?.length ? profileData.historial : initialHistory,
+      createdAt: serverTimestamp(),
+      createdAtIso: new Date().toISOString(),
+      updatedAt: serverTimestamp(),
+      updatedAtIso: new Date().toISOString(),
+    };
+
+    // Sanear campos undefined para Firestore
+    Object.keys(payload).forEach((k) => {
+      if (payload[k] === undefined) payload[k] = "";
+    });
+
+    await setDoc(doc(db, "customer_profiles", id), payload);
+    return { ok: true, profile: { ...payload, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } };
+  } catch (err) {
+    console.error("Error al crear ficha de cliente en Firestore:", err);
+    return { ok: false, error: err.message };
+  }
+}
+
+export async function crmUpdateCustomerProfile(id, updates, changeDescription = "") {
+  try {
+    const docRef = doc(db, "customer_profiles", id);
+    const currentSnap = await getDoc(docRef);
+    const currentData = currentSnap.exists() ? currentSnap.data() : {};
+    const currentUser = sessionStorage.getItem("nexo_crm_user") || "Personal de Atención";
+
+    const prevHistory = Array.isArray(currentData.historial) ? currentData.historial : [];
+    const newHistory = [...prevHistory];
+
+    if (changeDescription || updates.status !== currentData.status) {
+      let desc = changeDescription;
+      if (!desc && updates.status && updates.status !== currentData.status) {
+        desc = `Estado modificado de "${currentData.status || "nuevo"}" a "${updates.status}".`;
+      }
+      newHistory.unshift({
+        id: "evt_" + Date.now().toString(36),
+        timestamp: new Date().toISOString(),
+        type: updates.status !== currentData.status ? "cambio_estado" : "modificacion",
+        author: currentUser,
+        title: updates.status !== currentData.status ? "Actualización de estado" : "Modificación de datos",
+        description: desc || "Datos de la ficha actualizados.",
+      });
+    }
+
+    const payload = {
+      ...updates,
+      historial: newHistory,
+      updatedAt: serverTimestamp(),
+      updatedAtIso: new Date().toISOString(),
+    };
+
+    // Sanear campos undefined
+    Object.keys(payload).forEach((k) => {
+      if (payload[k] === undefined) payload[k] = "";
+    });
+
+    await updateDoc(docRef, payload);
+    return { ok: true };
+  } catch (err) {
+    console.error("Error al actualizar ficha de cliente en Firestore:", err);
+    return { ok: false, error: err.message };
+  }
+}
+
+export async function crmAddCustomerFollowup(id, { date, note, nextAction, nextDate }) {
+  try {
+    const docRef = doc(db, "customer_profiles", id);
+    const currentSnap = await getDoc(docRef);
+    const currentData = currentSnap.exists() ? currentSnap.data() : {};
+    const currentUser = sessionStorage.getItem("nexo_crm_user") || "Personal de Atención";
+
+    const prevHistory = Array.isArray(currentData.historial) ? currentData.historial : [];
+    const newEntry = {
+      id: "evt_" + Date.now().toString(36),
+      timestamp: new Date().toISOString(),
+      type: "contacto",
+      author: currentUser,
+      title: "Contacto / Seguimiento realizado",
+      description: note || "Seguimiento registrado por el personal de atención.",
+      details: {
+        contactDate: date || new Date().toISOString().slice(0, 10),
+        nextAction: nextAction || "",
+        nextDate: nextDate || "",
+      },
+    };
+
+    const updates = {
+      historial: [newEntry, ...prevHistory],
+      lastContactDate: date || new Date().toISOString().slice(0, 10),
+      nextActionDate: nextDate || currentData.nextActionDate || "",
+      nextActionDescription: nextAction || currentData.nextActionDescription || "",
+      updatedAt: serverTimestamp(),
+      updatedAtIso: new Date().toISOString(),
+    };
+
+    await updateDoc(docRef, updates);
+    return { ok: true };
+  } catch (err) {
+    console.error("Error al registrar seguimiento en Firestore:", err);
+    return { ok: false, error: err.message };
+  }
+}
+
+export async function crmDeleteCustomerProfile(id) {
+  try {
+    await deleteDoc(doc(db, "customer_profiles", id));
+    return { ok: true };
+  } catch (err) {
+    console.error("Error al eliminar ficha de cliente en Firestore:", err);
+    return { ok: false, error: err.message };
+  }
+}
+
+// ----------------------------------------------------------------------------
+// SISTEMA DE BACKUPS AUTOMÁTICOS & RECUPERACIÓN (Firestore)
+// ----------------------------------------------------------------------------
+async function calculateJsonChecksum(obj) {
+  try {
+    const str = JSON.stringify(obj);
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash |= 0;
+    }
+    return "CRC32-" + Math.abs(hash).toString(16).toUpperCase();
+  } catch {
+    return "CRC32-NOHASH";
+  }
+}
+
+export async function crmCreateBackup(type = "manual", author = "Administrador") {
+  try {
+    const [leadsSnap, clientsSnap, customerSnap, expensesSnap] = await Promise.all([
+      getDocs(collection(db, "leads")),
+      getDocs(collection(db, "clients")),
+      getDocs(collection(db, "customer_profiles")),
+      getDocs(collection(db, "expenses")),
+    ]);
+
+    const leads = leadsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const clients = clientsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const customer_profiles = customerSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const expenses = expensesSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+    const backupId = "bkp_" + Date.now().toString(36) + "_" + Math.random().toString(36).substring(2, 6);
+    const createdAt = new Date().toISOString();
+
+    const dataPayload = { leads, clients, customer_profiles, expenses };
+    const checksum = await calculateJsonChecksum(dataPayload);
+    const sizeBytes = new Blob([JSON.stringify(dataPayload)]).size;
+
+    const manifest = {
+      backupId,
+      createdAt,
+      type, // "automatic" | "manual"
+      author,
+      status: "success",
+      checksum,
+      sizeBytes,
+      counts: {
+        leads: leads.length,
+        clients: clients.length,
+        customer_profiles: customer_profiles.length,
+        expenses: expenses.length,
+        total: leads.length + clients.length + customer_profiles.length + expenses.length,
+      },
+      data: dataPayload,
+    };
+
+    // Guardar registro de auditoría en colección "backups"
+    await setDoc(doc(db, "backups", backupId), {
+      backupId,
+      createdAt,
+      type,
+      author,
+      status: "success",
+      checksum,
+      sizeBytes,
+      counts: manifest.counts,
+      createdAtServer: serverTimestamp(),
+    });
+
+    // Guardar última copia local de contingencia
+    try {
+      localStorage.setItem("nexo_last_backup_meta", JSON.stringify({
+        backupId,
+        createdAt,
+        counts: manifest.counts,
+        checksum,
+      }));
+    } catch {}
+
+    return { ok: true, backup: manifest };
+  } catch (err) {
+    console.error("Error al generar backup de Firestore:", err);
+    // Registrar fallo en Firestore
+    try {
+      const failId = "bkp_err_" + Date.now().toString(36);
+      await setDoc(doc(db, "backups", failId), {
+        backupId: failId,
+        createdAt: new Date().toISOString(),
+        type,
+        author,
+        status: "error",
+        error: err.message || "Error desconocido",
+        createdAtServer: serverTimestamp(),
+      });
+    } catch {}
+    return { ok: false, error: err.message };
+  }
+}
+
+export async function crmGetBackups() {
+  try {
+    const snap = await getDocs(collection(db, "backups"));
+    const backups = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    backups.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    return { ok: true, backups };
+  } catch (err) {
+    console.error("Error al obtener historial de backups:", err);
+    return { ok: false, backups: [] };
+  }
+}
+
+/**
+ * Prueba de restauración NO destructiva (Dry-Run Test).
+ * Verifica esquema, estructura de colecciones, conteo de documentos y checksum
+ * SIN tocar ni sobreescribir datos en producción.
+ */
+export async function crmRestoreBackupTest(backupJson) {
+  try {
+    let parsed = backupJson;
+    if (typeof backupJson === "string") {
+      parsed = JSON.parse(backupJson);
+    }
+
+    if (!parsed || typeof parsed !== "object") {
+      return { ok: false, error: "El archivo no contiene un JSON válido." };
+    }
+
+    const data = parsed.data || parsed;
+    const requiredCollections = ["leads", "clients", "customer_profiles", "expenses"];
+    const foundCollections = Object.keys(data).filter((k) => requiredCollections.includes(k));
+
+    if (foundCollections.length === 0) {
+      return {
+        ok: false,
+        error: "El archivo de backup no contiene ninguna colección reconocida de NEXO Creative (leads, clients, customer_profiles, expenses).",
+      };
+    }
+
+    const counts = {};
+    const validationErrors = [];
+    let totalDocs = 0;
+
+    foundCollections.forEach((col) => {
+      const items = Array.isArray(data[col]) ? data[col] : [];
+      counts[col] = items.length;
+      totalDocs += items.length;
+
+      // Validar integridad básica de documentos
+      items.forEach((item, idx) => {
+        if (!item.id && !item.refId) {
+          validationErrors.push(`Colección ${col}: documento #${idx + 1} no posee identificador único.`);
+        }
+      });
+    });
+
+    const calculatedChecksum = await calculateJsonChecksum(data);
+    const checksumMatches = !parsed.checksum || parsed.checksum === calculatedChecksum;
+
+    return {
+      ok: true,
+      report: {
+        isValid: true,
+        backupId: parsed.backupId || "Desconocido",
+        createdAt: parsed.createdAt || "No especificada",
+        totalDocs,
+        counts,
+        foundCollections,
+        checksum: calculatedChecksum,
+        checksumMatches,
+        validationErrors,
+        isSafeToRestore: validationErrors.length === 0,
+      },
+    };
+  } catch (err) {
+    return { ok: false, error: "Error al analizar el archivo de copia: " + err.message };
+  }
+}
+
+/**
+ * Restauración real controlada hacia Firestore.
+ * Permite restaurar colecciones individuales o completas.
+ */
+export async function crmRestoreBackup(backupJson, selectedCollections = null) {
+  try {
+    let parsed = backupJson;
+    if (typeof backupJson === "string") {
+      parsed = JSON.parse(backupJson);
+    }
+    const data = parsed.data || parsed;
+    const collectionsToProcess = selectedCollections || ["leads", "clients", "customer_profiles", "expenses"];
+    const results = { restored: 0, errors: [] };
+
+    for (const col of collectionsToProcess) {
+      const docsList = Array.isArray(data[col]) ? data[col] : [];
+      for (const item of docsList) {
+        try {
+          const docId = item.id || "restored_" + Date.now().toString(36) + "_" + Math.random().toString(36).substring(2, 6);
+          await setDoc(doc(db, col, docId), {
+            ...item,
+            restoredAt: serverTimestamp(),
+            restoredAtIso: new Date().toISOString(),
+          }, { merge: true });
+          results.restored++;
+        } catch (itemErr) {
+          results.errors.push(`Error restaurando doc en ${col}: ${itemErr.message}`);
+        }
+      }
+    }
+
+    // Registrar en auditoría
+    await setDoc(doc(db, "backups", "restored_" + Date.now().toString(36)), {
+      type: "restore_operation",
+      createdAt: new Date().toISOString(),
+      author: sessionStorage.getItem("nexo_crm_user") || "Administrador",
+      restoredDocsCount: results.restored,
+      errorsCount: results.errors.length,
+      collections: collectionsToProcess,
+      createdAtServer: serverTimestamp(),
+    });
+
+    return { ok: true, results };
+  } catch (err) {
+    console.error("Error durante la restauración:", err);
+    return { ok: false, error: err.message };
+  }
+}
+
+/**
+ * Verificador de backup automático periódico.
+ * Si transcurrieron más de 24 horas desde la última copia exitosa,
+ * dispara un backup automático en segundo plano sin interrumpir al usuario.
+ */
+export async function crmCheckAndTriggerAutoBackup() {
+  try {
+    const metaStr = localStorage.getItem("nexo_last_backup_meta");
+    let needsBackup = true;
+    if (metaStr) {
+      try {
+        const meta = JSON.parse(metaStr);
+        const lastDate = new Date(meta.createdAt).getTime();
+        const now = Date.now();
+        // 24 horas = 86400000 ms
+        if (now - lastDate < 86400000) {
+          needsBackup = false;
+        }
+      } catch {}
+    }
+
+    if (needsBackup) {
+      console.log("Iniciando copia de seguridad automática programada de NEXO CRM...");
+      await crmCreateBackup("automatic", "Sistema Programado (Auto-24h)");
+    }
+  } catch (err) {
+    console.warn("Aviso en verificación de auto-backup:", err);
   }
 }

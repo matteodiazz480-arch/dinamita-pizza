@@ -2,17 +2,21 @@ import React, { useState } from "react";
 import CrmNavbar from "./CrmNavbar";
 import CrmDashboardView from "./CrmDashboardView";
 import CrmCommercialView from "./CrmCommercialView";
+import CrmCustomerServiceView from "./CrmCustomerServiceView";
 import CrmClientsView from "./CrmClientsView";
 import CrmExpensesView from "./CrmExpensesView";
 import CrmResponsesView from "./CrmResponsesView";
 import CrmMeetingsView from "./CrmMeetingsView";
 import CrmNewLeadModal from "./CrmNewLeadModal";
 import CrmNewClientModal from "./CrmNewClientModal";
+import CrmNewCustomerModal from "./CrmNewCustomerModal";
 import CrmNewExpenseModal from "./CrmNewExpenseModal";
+import CrmBackupModal from "./CrmBackupModal";
 
 export default function CrmDashboard({
   leads = [],
   clients = [],
+  customerProfiles = [],
   expenses = [],
   onRefresh,
   refreshing = false,
@@ -22,27 +26,47 @@ export default function CrmDashboard({
   onUpdateClient,
   onCreateClient,
   onDeleteClient,
+  onUpdateCustomerProfile,
+  onCreateCustomerProfile,
+  onDeleteCustomerProfile,
+  onAddCustomerFollowup,
   onCreateExpense,
   onDeleteExpense,
   onConvertToClient,
   onLogout,
   onNavigateLanding,
 }) {
-  const [activeTab, setActiveTab] = useState("dashboard"); // "dashboard" | "commercial" | "clients" | "meetings" | "responses" | "expenses"
+  const [activeTab, setActiveTab] = useState("dashboard"); // "dashboard" | "commercial" | "customer_service" | "clients" | "meetings" | "responses" | "expenses"
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [isNewClientOpen, setIsNewClientOpen] = useState(false);
+  const [isNewCustomerOpen, setIsNewCustomerOpen] = useState(false);
+  const [newCustomerInitialLead, setNewCustomerInitialLead] = useState(null);
   const [isNewExpenseOpen, setIsNewExpenseOpen] = useState(false);
+  const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
 
   // Active meetings count
   const meetingsCount = leads.filter(
     (l) => (l.service === "Reunión Gratuita 20 min" || l.meetingDate) && l.status === "reunion_agendada"
   ).length;
 
+  const handleOpenNewCustomerFromLead = (lead) => {
+    setNewCustomerInitialLead(lead);
+    setIsNewCustomerOpen(true);
+  };
+
   const exportAllCsv = () => {
     // Generate comprehensive CSV matching the Excel sheets
     let csv = "\uFEFF"; // UTF-8 BOM for Excel compatibility
 
-    // 1. CLIENTES ACTIVOS
+    // 1. ATENCIÓN AL PÚBLICO (FICHAS)
+    csv += "--- HOJA: ATENCIÓN AL PÚBLICO (FICHAS) ---\n";
+    csv += "ID,Nombre,Negocio,Teléfono,Email,Ciudad,Estado,Plan,Honorarios ARS,Publicidad,Pauta ARS,Último Contacto,Próxima Acción,Fecha Próxima\n";
+    customerProfiles.forEach((p) => {
+      csv += `"${p.refId || p.id || ""}","${(p.fullName || "").replace(/"/g, '""')}","${(p.businessName || "").replace(/"/g, '""')}","${(p.phone || "").replace(/"/g, '""')}","${(p.email || "").replace(/"/g, '""')}","${(p.city || "").replace(/"/g, '""')}","${p.status || "nuevo"}","${(p.planName || "").replace(/"/g, '""')}","${p.planPrice || 0}","${(p.adStrategy || "").replace(/"/g, '""')}","${p.adBudget || 0}","${p.lastContactDate || ""}","${(p.nextActionDescription || "").replace(/"/g, '""')}","${p.nextActionDate || ""}"\n`;
+    });
+    csv += "\n\n";
+
+    // 2. CLIENTES ACTIVOS
     csv += "--- HOJA: CLIENTES ACTIVOS ---\n";
     csv += "ID,Cliente / Negocio,Servicio Contratado,Responsable,Inicio,Próxima Renovación,Honorarios Mensuales ARS,Inversión Anuncios ARS,Estado,Contacto,Notas\n";
     clients.forEach((c) => {
@@ -50,7 +74,7 @@ export default function CrmDashboard({
     });
     csv += "\n\n";
 
-    // 2. CRM COMERCIAL
+    // 3. CRM COMERCIAL
     csv += "--- HOJA: CRM COMERCIAL ---\n";
     csv += "ID,Fecha Ingreso,Nombre,Negocio,Rubro,WhatsApp,Redes,Origen,Servicio,Estado,Prioridad,Responsable,Próximo Contacto,Honorarios ARS,Probabilidad %,Ingreso Estimado ARS,Observaciones\n";
     leads.forEach((l) => {
@@ -61,7 +85,7 @@ export default function CrmDashboard({
     });
     csv += "\n\n";
 
-    // 3. GASTOS DEL MES
+    // 4. GASTOS DEL MES
     csv += "--- HOJA: GASTOS DEL MES ---\n";
     csv += "ID,Fecha,Categoría,Detalle,Monto ARS\n";
     expenses.forEach((e) => {
@@ -87,10 +111,16 @@ export default function CrmDashboard({
         onSelectTab={setActiveTab}
         leadsCount={leads.length}
         clientsCount={clients.length}
+        customerProfilesCount={customerProfiles.length}
         meetingsCount={meetingsCount}
         onOpenNewLead={() => setIsNewLeadOpen(true)}
         onOpenNewClient={() => setIsNewClientOpen(true)}
+        onOpenNewCustomerProfile={() => {
+          setNewCustomerInitialLead(null);
+          setIsNewCustomerOpen(true);
+        }}
         onOpenNewExpense={() => setIsNewExpenseOpen(true)}
+        onOpenBackups={() => setIsBackupModalOpen(true)}
         onExportCsv={exportAllCsv}
         onRefresh={onRefresh}
         refreshing={refreshing}
@@ -105,6 +135,7 @@ export default function CrmDashboard({
             <CrmDashboardView
               leads={leads}
               clients={clients}
+              customerProfiles={customerProfiles}
               expenses={expenses}
               onNavigateTab={setActiveTab}
             />
@@ -116,7 +147,21 @@ export default function CrmDashboard({
               onUpdateLead={onUpdateLead}
               onDeleteLead={onDeleteLead}
               onConvertToClient={onConvertToClient}
+              onConvertToCustomerProfile={handleOpenNewCustomerFromLead}
               onOpenNewLead={() => setIsNewLeadOpen(true)}
+            />
+          )}
+
+          {activeTab === "customer_service" && (
+            <CrmCustomerServiceView
+              customerProfiles={customerProfiles}
+              onUpdateProfile={onUpdateCustomerProfile}
+              onDeleteProfile={onDeleteCustomerProfile}
+              onAddFollowup={onAddCustomerFollowup}
+              onOpenNewProfile={() => {
+                setNewCustomerInitialLead(null);
+                setIsNewCustomerOpen(true);
+              }}
             />
           )}
 
@@ -141,6 +186,7 @@ export default function CrmDashboard({
               leads={leads}
               onUpdateLead={onUpdateLead}
               onDeleteLead={onDeleteLead}
+              onConvertToCustomerProfile={handleOpenNewCustomerFromLead}
               onNavigateCommercial={() => setActiveTab("commercial")}
             />
           )}
@@ -155,11 +201,22 @@ export default function CrmDashboard({
         </main>
       </div>
 
-      {/* Modales de Creación */}
+      {/* Modales de Creación y Backups */}
       <CrmNewLeadModal
         isOpen={isNewLeadOpen}
         onClose={() => setIsNewLeadOpen(false)}
         onCreateLead={onCreateLead}
+      />
+
+      <CrmNewCustomerModal
+        isOpen={isNewCustomerOpen}
+        onClose={() => {
+          setIsNewCustomerOpen(false);
+          setNewCustomerInitialLead(null);
+        }}
+        onCreateCustomer={onCreateCustomerProfile}
+        existingProfiles={customerProfiles}
+        initialLeadData={newCustomerInitialLead}
       />
 
       <CrmNewClientModal
@@ -172,6 +229,12 @@ export default function CrmDashboard({
         isOpen={isNewExpenseOpen}
         onClose={() => setIsNewExpenseOpen(false)}
         onCreateExpense={onCreateExpense}
+      />
+
+      <CrmBackupModal
+        isOpen={isBackupModalOpen}
+        onClose={() => setIsBackupModalOpen(false)}
+        onRefreshData={onRefresh}
       />
     </div>
   );

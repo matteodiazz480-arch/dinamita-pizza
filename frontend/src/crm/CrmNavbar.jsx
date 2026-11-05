@@ -15,6 +15,9 @@ import {
   MoreHorizontal,
   X,
   ChevronRight,
+  Headset,
+  Database,
+  UserCheck,
 } from "lucide-react";
 import { BrandLogo } from "../components/Icons";
 
@@ -23,10 +26,13 @@ export default function CrmNavbar({
   onSelectTab,
   leadsCount = 0,
   clientsCount = 0,
+  customerProfilesCount = 0,
   meetingsCount = 0,
   onOpenNewLead,
   onOpenNewClient,
+  onOpenNewCustomerProfile,
   onOpenNewExpense,
+  onOpenBackups,
   onExportCsv,
   onRefresh,
   refreshing,
@@ -96,6 +102,17 @@ export default function CrmNavbar({
 
             {isPlusMenuOpen && (
               <div className="absolute left-0 right-0 top-full mt-2 bg-[#181a20] border border-white/12 rounded-xl shadow-2xl p-1.5 z-50 text-xs">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsPlusMenuOpen(false);
+                    onOpenNewCustomerProfile?.();
+                  }}
+                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-gray-200 hover:text-white flex items-center gap-2 cursor-pointer font-semibold"
+                >
+                  <Headset className="w-4 h-4 text-[#22C55E]" />
+                  <span>Ficha de Atención</span>
+                </button>
                 <button
                   type="button"
                   onClick={() => {
@@ -179,6 +196,32 @@ export default function CrmNavbar({
                     }`}
                   >
                     {leadsCount}
+                  </span>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleSelectTab("customer_service")}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-[background-color,color,transform] duration-150 active:scale-98 cursor-pointer ${
+                  activeTab === "customer_service"
+                    ? "bg-[#16A34A] text-white shadow-sm"
+                    : "text-gray-300 hover:bg-white/5 hover:text-white"
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Headset className="w-4 h-4" />
+                  <span>Atención al Público</span>
+                </div>
+                {customerProfilesCount > 0 && (
+                  <span
+                    className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${
+                      activeTab === "customer_service"
+                        ? "bg-white/25 text-white"
+                        : "bg-[#16A34A]/20 text-[#22C55E]"
+                    }`}
+                  >
+                    {customerProfilesCount}
                   </span>
                 )}
               </button>
@@ -278,6 +321,15 @@ export default function CrmNavbar({
 
         {/* Pie de la Barra Lateral con Exportación, Web y Cerrar Sesión */}
         <div className="p-3 border-t border-white/10 space-y-1 bg-[#101115]">
+          <button
+            type="button"
+            onClick={onOpenBackups}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-gray-300 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+          >
+            <Database className="w-4 h-4 text-[#22C55E]" />
+            <span>Copias de Seguridad</span>
+          </button>
+
           <button
             type="button"
             onClick={onExportCsv}
@@ -440,7 +492,34 @@ export default function CrmNavbar({
             )}
           </button>
 
-          {/* 3. Clientes Activos */}
+          {/* 3. Atención al Público */}
+          <button
+            type="button"
+            onClick={() => handleSelectTab("customer_service")}
+            className={`flex flex-col items-center justify-center py-1 rounded-xl transition-[color,transform] duration-150 active:scale-95 cursor-pointer relative ${
+              activeTab === "customer_service"
+                ? "text-[#22C55E]"
+                : "text-gray-400 hover:text-white"
+            }`}
+          >
+            <div
+              className={`p-1 rounded-lg ${
+                activeTab === "customer_service" ? "bg-[#16A34A]/20" : ""
+              }`}
+            >
+              <Headset className="w-4 h-4" />
+            </div>
+            <span className="text-[10px] font-bold tracking-tight mt-0.5">
+              Atención
+            </span>
+            {customerProfilesCount > 0 && (
+              <span className="absolute top-1 right-3 w-4 h-4 rounded-full bg-[#16A34A] text-white text-[9px] font-black flex items-center justify-center">
+                {customerProfilesCount > 9 ? "9+" : customerProfilesCount}
+              </span>
+            )}
+          </button>
+
+          {/* 4. Clientes Activos */}
           <button
             type="button"
             onClick={() => handleSelectTab("clients")}
@@ -467,46 +546,19 @@ export default function CrmNavbar({
             )}
           </button>
 
-          {/* 4. Agenda Reuniones */}
-          <button
-            type="button"
-            onClick={() => handleSelectTab("meetings")}
-            className={`flex flex-col items-center justify-center py-1 rounded-xl transition-[color,transform] duration-150 active:scale-95 cursor-pointer relative ${
-              activeTab === "meetings"
-                ? "text-[#22C55E]"
-                : "text-gray-400 hover:text-white"
-            }`}
-          >
-            <div
-              className={`p-1 rounded-lg ${
-                activeTab === "meetings" ? "bg-[#16A34A]/20" : ""
-              }`}
-            >
-              <Calendar className="w-4 h-4" />
-            </div>
-            <span className="text-[10px] font-bold tracking-tight mt-0.5">
-              Agenda
-            </span>
-            {meetingsCount > 0 && (
-              <span className="absolute top-1 right-3 w-4 h-4 rounded-full bg-[#16A34A] text-white text-[9px] font-black flex items-center justify-center">
-                {meetingsCount}
-              </span>
-            )}
-          </button>
-
           {/* 5. «Más» con menú desplegable */}
           <button
             type="button"
             onClick={() => setIsMoreMenuOpen(true)}
             className={`flex flex-col items-center justify-center py-1 rounded-xl transition-[color,transform] duration-150 active:scale-95 cursor-pointer ${
-              activeTab === "responses" || activeTab === "expenses"
+              activeTab === "meetings" || activeTab === "responses" || activeTab === "expenses"
                 ? "text-[#22C55E]"
                 : "text-gray-400 hover:text-white"
             }`}
           >
             <div
               className={`p-1 rounded-lg ${
-                activeTab === "responses" || activeTab === "expenses"
+                activeTab === "meetings" || activeTab === "responses" || activeTab === "expenses"
                   ? "bg-[#16A34A]/20"
                   : ""
               }`}
@@ -549,7 +601,7 @@ export default function CrmNavbar({
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-[#16A34A]" />
                   <h3 className="text-sm font-black text-white">
-                    Más Opciones de Gestión
+                    Gestión &amp; Administración
                   </h3>
                 </div>
                 <button
@@ -565,6 +617,31 @@ export default function CrmNavbar({
               <div className="space-y-1">
                 <button
                   type="button"
+                  onClick={() => handleSelectTab("meetings")}
+                  className={`w-full flex items-center justify-between p-3 rounded-xl text-left transition-colors cursor-pointer ${
+                    activeTab === "meetings"
+                      ? "bg-[#16A34A] text-white"
+                      : "bg-white/5 text-gray-200 hover:bg-white/10"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Calendar className="w-4 h-4 text-[#22C55E]" />
+                    <span className="text-xs font-bold block">
+                      Agenda de Reuniones
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {meetingsCount > 0 && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#16A34A]/25 text-[#22C55E]">
+                        {meetingsCount}
+                      </span>
+                    )}
+                    <ChevronRight className="w-4 h-4 opacity-50" />
+                  </div>
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => handleSelectTab("responses")}
                   className={`w-full flex items-center justify-between p-3 rounded-xl text-left transition-colors cursor-pointer ${
                     activeTab === "responses"
@@ -573,15 +650,10 @@ export default function CrmNavbar({
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <FileText className="w-4 h-4" />
-                    <div>
-                      <span className="text-xs font-bold block">
-                        Respuestas Formularios Web
-                      </span>
-                      <span className="text-[10px] opacity-75">
-                        Consultas recibidas desde la landing page
-                      </span>
-                    </div>
+                    <FileText className="w-4 h-4 text-[#22C55E]" />
+                    <span className="text-xs font-bold block">
+                      Formularios Web
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     {leadsCount > 0 && (
@@ -603,15 +675,27 @@ export default function CrmNavbar({
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <Receipt className="w-4 h-4" />
-                    <div>
-                      <span className="text-xs font-bold block">
-                        Control de Gastos del Mes
-                      </span>
-                      <span className="text-[10px] opacity-75">
-                        Registro de egresos operativos y balance
-                      </span>
-                    </div>
+                    <Receipt className="w-4 h-4 text-[#22C55E]" />
+                    <span className="text-xs font-bold block">
+                      Gastos del Mes
+                    </span>
+                  </div>
+                  <ChevronRight className="w-4 h-4 opacity-50" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMoreMenuOpen(false);
+                    onOpenBackups?.();
+                  }}
+                  className="w-full flex items-center justify-between p-3 rounded-xl text-left bg-white/5 text-gray-200 hover:bg-white/10 transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <Database className="w-4 h-4 text-[#22C55E]" />
+                    <span className="text-xs font-bold block">
+                      Copias de Seguridad (Backups)
+                    </span>
                   </div>
                   <ChevronRight className="w-4 h-4 opacity-50" />
                 </button>
@@ -622,7 +706,21 @@ export default function CrmNavbar({
                 <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider block mb-2">
                   Acciones Rápidas
                 </span>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMoreMenuOpen(false);
+                      onOpenNewCustomerProfile?.();
+                    }}
+                    className="p-2.5 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 flex flex-col items-center justify-center text-center gap-1 cursor-pointer active:scale-96 transition-transform"
+                  >
+                    <Headset className="w-4 h-4 text-[#22C55E]" />
+                    <span className="text-[10px] font-bold text-white leading-tight">
+                      Nueva Ficha
+                    </span>
+                  </button>
+
                   <button
                     type="button"
                     onClick={() => {
@@ -678,7 +776,7 @@ export default function CrmNavbar({
                   className="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-gray-200 cursor-pointer"
                 >
                   <Download className="w-4 h-4 text-[#22C55E]" />
-                  <span>Exportar Excel Completo (CSV)</span>
+                  <span>Exportar Excel (CSV)</span>
                 </button>
 
                 <button
@@ -690,7 +788,7 @@ export default function CrmNavbar({
                   className="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-gray-200 cursor-pointer"
                 >
                   <ExternalLink className="w-4 h-4" />
-                  <span>Ver Landing Page Pública</span>
+                  <span>Ver Sitio Web</span>
                 </button>
 
                 <button

@@ -49,6 +49,7 @@ export default function CrmCommercialView({
   onUpdateLead,
   onDeleteLead,
   onConvertToClient,
+  onConvertToCustomerProfile,
   onOpenNewLead,
 }) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -256,17 +257,29 @@ export default function CrmCommercialView({
                   </select>
                 </div>
 
-                {/* Botón Convertir a Cliente Activo si está ganado */}
-                {isWon && onConvertToClient && (
-                  <button
-                    type="button"
-                    onClick={() => onConvertToClient(lead)}
-                    className="w-full py-2 px-3 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                  >
-                    <UserCheck className="w-4 h-4" />
-                    <span>Convertir a Cliente Activo</span>
-                  </button>
-                )}
+                {/* Botón Convertir a Ficha de Atención o Cliente Activo */}
+                <div className="flex flex-col gap-1.5">
+                  {onConvertToCustomerProfile && (
+                    <button
+                      type="button"
+                      onClick={() => onConvertToCustomerProfile(lead)}
+                      className="w-full py-1.5 px-3 rounded-xl bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 text-blue-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <span>Abrir Ficha de Atención</span>
+                    </button>
+                  )}
+
+                  {isWon && onConvertToClient && (
+                    <button
+                      type="button"
+                      onClick={() => onConvertToClient(lead)}
+                      className="w-full py-2 px-3 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <UserCheck className="w-4 h-4" />
+                      <span>Convertir a Cliente Activo</span>
+                    </button>
+                  )}
+                </div>
 
                 {/* Notas / Observaciones */}
                 <div className="border-t border-white/5 pt-2">

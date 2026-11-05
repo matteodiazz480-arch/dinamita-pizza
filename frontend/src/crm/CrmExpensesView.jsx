@@ -52,13 +52,10 @@ export default function CrmExpensesView({
         <div className="bg-[#141519] border border-amber-500/30 rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-md">
           <div>
             <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400 block">
-              Gastos del Mes Actual ({currentYearMonth})
+              Gastos del Mes ({currentYearMonth})
             </span>
             <span className="text-2xl sm:text-3xl font-black text-amber-400 font-mono mt-1 block">
               ${totalCurrentMonth.toLocaleString("es-AR")}
-            </span>
-            <span className="text-[11px] text-gray-400 mt-0.5 block">
-              Afecta directamente el Balance Mensual del negocio
             </span>
           </div>
           <div className="p-3 rounded-xl bg-amber-500/15 text-amber-400">
