@@ -41,9 +41,13 @@ service cloud.firestore {
     }
 
     // ------------------------------------------------------------------------
-    // 4. GASTOS DEL MES (Contabilidad interna y egresos)
+    // 4. FINANZAS: GANANCIAS E INGRESOS / GASTOS DEL MES
     // ------------------------------------------------------------------------
     match /expenses/{expenseId} {
+      allow read, write: if true;
+    }
+
+    match /incomes/{incomeId} {
       allow read, write: if true;
     }
 

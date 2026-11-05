@@ -14,6 +14,7 @@ import CrmNewCustomerModal from "./CrmNewCustomerModal";
 import CrmNewCampaignModal from "./CrmNewCampaignModal";
 import CrmNewCompanyCampaignModal from "./CrmNewCompanyCampaignModal";
 import CrmNewExpenseModal from "./CrmNewExpenseModal";
+import CrmNewIncomeModal from "./CrmNewIncomeModal";
 import CrmBackupModal from "./CrmBackupModal";
 import CrmUsersModal from "./CrmUsersModal";
 import CrmToast from "./CrmToast";
@@ -32,6 +33,7 @@ export default function CrmDashboard({
   clientCampaigns = [],
   companyCampaigns = [],
   expenses = [],
+  incomes = [],
   onRefresh,
   refreshing = false,
   onUpdateLead,
@@ -52,6 +54,8 @@ export default function CrmDashboard({
   onDeleteCompanyCampaign,
   onCreateExpense,
   onDeleteExpense,
+  onCreateIncome,
+  onDeleteIncome,
   onConvertToClient,
   onLogout,
   onNavigateLanding,
@@ -75,6 +79,7 @@ export default function CrmDashboard({
   const [isNewClientCampaignOpen, setIsNewClientCampaignOpen] = useState(false);
   const [isNewCompanyCampaignOpen, setIsNewCompanyCampaignOpen] = useState(false);
   const [isNewExpenseOpen, setIsNewExpenseOpen] = useState(false);
+  const [isNewIncomeOpen, setIsNewIncomeOpen] = useState(false);
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
   const [isUsersModalOpen, setIsUsersModalOpen] = useState(false);
 
@@ -177,6 +182,7 @@ export default function CrmDashboard({
         onOpenNewClientCampaign={() => setIsNewClientCampaignOpen(true)}
         onOpenNewCompanyCampaign={() => setIsNewCompanyCampaignOpen(true)}
         onOpenNewExpense={() => setIsNewExpenseOpen(true)}
+        onOpenNewIncome={() => setIsNewIncomeOpen(true)}
         onOpenUsers={() => setIsUsersModalOpen(true)}
         onOpenBackups={() => setIsBackupModalOpen(true)}
         onExportCsv={exportAllCsv}
@@ -200,6 +206,7 @@ export default function CrmDashboard({
               clientCampaigns={clientCampaigns}
               companyCampaigns={companyCampaigns}
               expenses={expenses}
+              incomes={incomes}
               onNavigateTab={setActiveTab}
               onOpenNewLead={() => setIsNewLeadOpen(true)}
               onOpenNewCustomer={() => {
@@ -208,6 +215,7 @@ export default function CrmDashboard({
               }}
               onOpenNewClientCampaign={() => setIsNewClientCampaignOpen(true)}
               onOpenNewExpense={() => setIsNewExpenseOpen(true)}
+              onOpenNewIncome={() => setIsNewIncomeOpen(true)}
             />
           )}
 
@@ -257,12 +265,13 @@ export default function CrmDashboard({
             />
           )}
 
-          {/* PESTAÑA: MARKETING & PUBLICIDAD (Admin y Marketing - con control financiero exclusivo para marketing) */}
+          {/* PESTAÑA: MARKETING & PUBLICIDAD (Admin y Marketing) */}
           {activeTab === "marketing" && (role === "admin" || role === "marketing") && (
             <CrmMarketingView
               clientCampaigns={clientCampaigns}
               companyCampaigns={companyCampaigns}
               expenses={expenses}
+              incomes={incomes}
               customerProfiles={customerProfiles}
               clients={clients}
               currentUser={currentUser}
@@ -289,7 +298,12 @@ export default function CrmDashboard({
                 await onDeleteExpense(id);
                 showToast("Gasto eliminado", "El gasto operativo fue eliminado.");
               }}
-              onViewCustomerDetail={(profile) => {
+              onOpenNewIncome={() => setIsNewIncomeOpen(true)}
+              onDeleteIncome={async (id) => {
+                await onDeleteIncome(id);
+                showToast("Ganancia eliminada", "El registro de ganancia fue eliminado.");
+              }}
+              onViewCustomerDetail={() => {
                 setActiveTab("customer_service");
               }}
             />
@@ -343,15 +357,21 @@ export default function CrmDashboard({
             />
           )}
 
-          {/* PESTAÑA: GASTOS DEL MES (Admin y Marketing) */}
+          {/* PESTAÑA: GANANCIAS & GASTOS (Admin y Marketing) */}
           {activeTab === "expenses" && (role === "admin" || role === "marketing") && (
             <CrmExpensesView
               expenses={expenses}
+              incomes={incomes}
               onDeleteExpense={async (id) => {
                 await onDeleteExpense(id);
                 showToast("Gasto eliminado", "Se eliminó el egreso contable.");
               }}
               onOpenNewExpense={() => setIsNewExpenseOpen(true)}
+              onDeleteIncome={async (id) => {
+                await onDeleteIncome(id);
+                showToast("Ganancia eliminada", "Se eliminó el registro de ganancia.");
+              }}
+              onOpenNewIncome={() => setIsNewIncomeOpen(true)}
             />
           )}
         </main>
@@ -413,16 +433,26 @@ export default function CrmDashboard({
         }}
       />
 
-      {/* Modal Gastos Operativos (Admin y Marketing) */}
+      {/* Modal Gastos y Ganancias (Admin y Marketing) */}
       {(role === "admin" || role === "marketing") && (
-        <CrmNewExpenseModal
-          isOpen={isNewExpenseOpen}
-          onClose={() => setIsNewExpenseOpen(false)}
-          onCreateExpense={async (data) => {
-            await onCreateExpense(data);
-            showToast("Gasto registrado", "El egreso operativo fue registrado.");
-          }}
-        />
+        <>
+          <CrmNewExpenseModal
+            isOpen={isNewExpenseOpen}
+            onClose={() => setIsNewExpenseOpen(false)}
+            onCreateExpense={async (data) => {
+              await onCreateExpense(data);
+              showToast("Gasto registrado", "El egreso operativo fue registrado.");
+            }}
+          />
+          <CrmNewIncomeModal
+            isOpen={isNewIncomeOpen}
+            onClose={() => setIsNewIncomeOpen(false)}
+            onCreateIncome={async (data) => {
+              await onCreateIncome(data);
+              showToast("Ganancia registrada", "El ingreso fue registrado correctamente.");
+            }}
+          />
+        </>
       )}
 
       {role === "admin" && (

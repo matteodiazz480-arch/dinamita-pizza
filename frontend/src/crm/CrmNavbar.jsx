@@ -24,9 +24,9 @@ import {
 import { BrandLogo } from "../components/Icons";
 
 const ROLE_LABELS = {
-  admin: { label: "Administrador", badge: "bg-red-500/15 text-red-300 border-red-500/30" },
-  atencion: { label: "Atención al Cliente", badge: "bg-blue-500/15 text-blue-300 border-blue-500/30" },
-  marketing: { label: "Marketing & Finanzas", badge: "bg-purple-500/15 text-purple-300 border-purple-500/30" },
+  admin: { label: "Admin", badge: "bg-white/8 text-gray-200 border-white/15" },
+  atencion: { label: "Atención", badge: "bg-white/8 text-gray-200 border-white/15" },
+  marketing: { label: "Marketing", badge: "bg-white/8 text-gray-200 border-white/15" },
 };
 
 export default function CrmNavbar({
@@ -45,6 +45,7 @@ export default function CrmNavbar({
   onOpenNewClientCampaign,
   onOpenNewCompanyCampaign,
   onOpenNewExpense,
+  onOpenNewIncome,
   onOpenUsers,
   onOpenBackups,
   onExportCsv,
@@ -177,7 +178,7 @@ export default function CrmNavbar({
                       }}
                       className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-gray-200 hover:text-white flex items-center gap-2 cursor-pointer font-semibold"
                     >
-                      <Megaphone className="w-4 h-4 text-purple-400" />
+                      <Megaphone className="w-4 h-4 text-[#22C55E]" />
                       <span>Campaña de Cliente</span>
                     </button>
 
@@ -189,8 +190,20 @@ export default function CrmNavbar({
                       }}
                       className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-gray-200 hover:text-white flex items-center gap-2 cursor-pointer font-semibold"
                     >
-                      <Target className="w-4 h-4 text-blue-400" />
+                      <Target className="w-4 h-4 text-gray-400" />
                       <span>Campaña Propia (NEXO)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsPlusMenuOpen(false);
+                        onOpenNewIncome?.();
+                      }}
+                      className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-gray-200 hover:text-white flex items-center gap-2 cursor-pointer font-semibold"
+                    >
+                      <Plus className="w-4 h-4 text-[#22C55E]" />
+                      <span>Registrar Ganancia</span>
                     </button>
 
                     <button
@@ -201,7 +214,7 @@ export default function CrmNavbar({
                       }}
                       className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-gray-200 hover:text-white flex items-center gap-2 cursor-pointer font-semibold"
                     >
-                      <Receipt className="w-4 h-4 text-amber-400" />
+                      <Receipt className="w-4 h-4 text-gray-400" />
                       <span>Registrar Gasto</span>
                     </button>
                   </>
@@ -370,8 +383,8 @@ export default function CrmNavbar({
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
-                      <Receipt className="w-4 h-4 text-amber-400" />
-                      <span>Gastos del Mes</span>
+                      <Receipt className="w-4 h-4" />
+                      <span>Ganancias &amp; Gastos</span>
                     </div>
                   </button>
                 </nav>
@@ -476,7 +489,7 @@ export default function CrmNavbar({
           {/* ============================================================== */}
           {role === "marketing" && (
             <div>
-              <div className="px-3 pb-2 text-[10px] font-black uppercase tracking-wider text-purple-300">
+              <div className="px-3 pb-2 text-[10px] font-black uppercase tracking-wider text-gray-400">
                 Marketing &amp; Finanzas
               </div>
               <nav className="space-y-1">
@@ -485,7 +498,7 @@ export default function CrmNavbar({
                   onClick={() => handleSelectTab("marketing")}
                   className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-[background-color,color,transform] duration-150 active:scale-98 cursor-pointer ${
                     activeTab === "marketing"
-                      ? "bg-purple-600 text-white shadow-sm"
+                      ? "bg-[#16A34A] text-white shadow-sm"
                       : "text-gray-300 hover:bg-white/5 hover:text-white"
                   }`}
                 >
@@ -494,7 +507,7 @@ export default function CrmNavbar({
                     <span>Campañas &amp; Finanzas</span>
                   </div>
                   {(clientCampaignsCount + companyCampaignsCount) > 0 && (
-                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${activeTab === "marketing" ? "bg-white/25 text-white" : "bg-purple-500/20 text-purple-300"}`}>
+                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${activeTab === "marketing" ? "bg-white/25 text-white" : "bg-white/10 text-gray-300"}`}>
                       {clientCampaignsCount + companyCampaignsCount}
                     </span>
                   )}
@@ -549,8 +562,8 @@ export default function CrmNavbar({
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <Receipt className="w-4 h-4 text-amber-400" />
-                    <span>Gastos del Mes</span>
+                    <Receipt className="w-4 h-4" />
+                    <span>Ganancias &amp; Gastos</span>
                   </div>
                 </button>
               </nav>
@@ -661,8 +674,30 @@ export default function CrmNavbar({
 
             {isPlusMenuOpen && (
               <div className="absolute right-0 top-full mt-2 w-48 bg-[#181a20] border border-white/12 rounded-xl shadow-2xl p-1.5 z-50 text-xs">
-                {role === "marketing" && (
+                {(role === "admin" || role === "marketing") && (
                   <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsPlusMenuOpen(false);
+                        onOpenNewIncome?.();
+                      }}
+                      className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-gray-200 hover:text-white flex items-center gap-2 font-semibold"
+                    >
+                      <Plus className="w-4 h-4 text-[#22C55E]" />
+                      <span>Registrar Ganancia</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsPlusMenuOpen(false);
+                        onOpenNewExpense?.();
+                      }}
+                      className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-gray-200 hover:text-white flex items-center gap-2 font-semibold"
+                    >
+                      <Receipt className="w-4 h-4 text-gray-400" />
+                      <span>Registrar Gasto</span>
+                    </button>
                     <button
                       type="button"
                       onClick={() => {
@@ -671,7 +706,7 @@ export default function CrmNavbar({
                       }}
                       className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-gray-200 hover:text-white flex items-center gap-2 font-semibold"
                     >
-                      <Megaphone className="w-4 h-4 text-purple-400" />
+                      <Megaphone className="w-4 h-4 text-[#22C55E]" />
                       <span>Campaña Cliente</span>
                     </button>
                     <button
@@ -682,7 +717,7 @@ export default function CrmNavbar({
                       }}
                       className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-gray-200 hover:text-white flex items-center gap-2 font-semibold"
                     >
-                      <Target className="w-4 h-4 text-blue-400" />
+                      <Target className="w-4 h-4 text-gray-400" />
                       <span>Campaña Propia</span>
                     </button>
                   </>
@@ -957,8 +992,8 @@ export default function CrmNavbar({
                       className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/5 text-gray-200 text-xs font-bold"
                     >
                       <div className="flex items-center gap-3">
-                        <Receipt className="w-4 h-4 text-amber-400" />
-                        <span>Gastos del Mes</span>
+                        <Receipt className="w-4 h-4 text-[#22C55E]" />
+                        <span>Ganancias &amp; Gastos</span>
                       </div>
                       <ChevronRight className="w-4 h-4 text-gray-500" />
                     </button>

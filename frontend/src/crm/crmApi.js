@@ -359,6 +359,70 @@ export async function crmDeleteExpense(id) {
 }
 
 // ----------------------------------------------------------------------------
+// GANANCIAS E INGRESOS REGISTRADOS (Firestore: 'incomes') - Admin y Marketing
+// ----------------------------------------------------------------------------
+export async function crmGetIncomes() {
+  const currentRole = sessionStorage.getItem("nexo_crm_role") || "admin";
+  if (currentRole === "atencion") {
+    return { ok: false, incomes: [], error: "No autorizado para consultar registros financieros." };
+  }
+
+  try {
+    const snap = await getDocs(collection(db, "incomes"));
+    const incomes = snap.docs.map((d) => ({
+      id: d.id,
+      ...d.data(),
+    }));
+    incomes.sort((a, b) => new Date(b.date || b.createdAtIso || 0).getTime() - new Date(a.date || a.createdAtIso || 0).getTime());
+    return { ok: true, incomes };
+  } catch {
+    return { ok: false, incomes: [] };
+  }
+}
+
+export async function crmCreateIncome(incomeData) {
+  const currentRole = sessionStorage.getItem("nexo_crm_role") || "admin";
+  if (currentRole === "atencion") {
+    return { ok: false, error: "No autorizado para registrar ganancias." };
+  }
+
+  try {
+    const id = incomeData.id || "inc_" + Date.now().toString(36) + "_" + Math.random().toString(36).substring(2, 5);
+    const payload = {
+      ...incomeData,
+      id,
+      amount: Number(incomeData.amount) || 0,
+      description: (incomeData.description || "").trim(),
+      clientName: (incomeData.clientName || "").trim(),
+      category: incomeData.category || "Honorarios Mensuales",
+      date: incomeData.date || new Date().toISOString().slice(0, 10),
+      createdAt: serverTimestamp(),
+      createdAtIso: new Date().toISOString(),
+    };
+    await setDoc(doc(db, "incomes", id), payload);
+    return { ok: true, income: payload };
+  } catch (err) {
+    console.error("Error creating income in Firestore:", err);
+    return { ok: false, error: err.message };
+  }
+}
+
+export async function crmDeleteIncome(id) {
+  const currentRole = sessionStorage.getItem("nexo_crm_role") || "admin";
+  if (currentRole === "atencion") {
+    return { ok: false, error: "No autorizado para eliminar registros de ganancias." };
+  }
+
+  try {
+    await deleteDoc(doc(db, "incomes", id));
+    return { ok: true };
+  } catch (err) {
+    console.error("Error deleting income in Firestore:", err);
+    return { ok: false, error: err.message };
+  }
+}
+
+// ----------------------------------------------------------------------------
 // ATENCIÓN AL PÚBLICO: FICHAS COMPLETAS DE CLIENTES (Firestore)
 // ----------------------------------------------------------------------------
 function parseCustomerDoc(d) {
@@ -579,11 +643,12 @@ async function calculateJsonChecksum(obj) {
 
 export async function crmCreateBackup(type = "manual", author = "Administrador") {
   try {
-    const [leadsSnap, clientsSnap, customerSnap, expensesSnap, campaignsSnap, companyCampSnap] = await Promise.all([
+    const [leadsSnap, clientsSnap, customerSnap, expensesSnap, incomesSnap, campaignsSnap, companyCampSnap] = await Promise.all([
       getDocs(collection(db, "leads")),
       getDocs(collection(db, "clients")),
       getDocs(collection(db, "customer_profiles")),
       getDocs(collection(db, "expenses")),
+      getDocs(collection(db, "incomes")),
       getDocs(collection(db, "marketing_campaigns")),
       getDocs(collection(db, "company_campaigns")),
     ]);
@@ -592,13 +657,14 @@ export async function crmCreateBackup(type = "manual", author = "Administrador")
     const clients = clientsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
     const customer_profiles = customerSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
     const expenses = expensesSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const incomes = incomesSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
     const marketing_campaigns = campaignsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
     const company_campaigns = companyCampSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
     const backupId = "bkp_" + Date.now().toString(36) + "_" + Math.random().toString(36).substring(2, 6);
     const createdAt = new Date().toISOString();
 
-    const dataPayload = { leads, clients, customer_profiles, expenses, marketing_campaigns, company_campaigns };
+    const dataPayload = { leads, clients, customer_profiles, expenses, incomes, marketing_campaigns, company_campaigns };
     const checksum = await calculateJsonChecksum(dataPayload);
     const sizeBytes = new Blob([JSON.stringify(dataPayload)]).size;
 
@@ -615,9 +681,10 @@ export async function crmCreateBackup(type = "manual", author = "Administrador")
         clients: clients.length,
         customer_profiles: customer_profiles.length,
         expenses: expenses.length,
+        incomes: incomes.length,
         marketing_campaigns: marketing_campaigns.length,
         company_campaigns: company_campaigns.length,
-        total: leads.length + clients.length + customer_profiles.length + expenses.length + marketing_campaigns.length + company_campaigns.length,
+        total: leads.length + clients.length + customer_profiles.length + expenses.length + incomes.length + marketing_campaigns.length + company_campaigns.length,
       },
       data: dataPayload,
     };

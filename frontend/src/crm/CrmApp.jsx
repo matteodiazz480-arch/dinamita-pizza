@@ -32,6 +32,9 @@ import {
   crmGetExpenses,
   crmCreateExpense,
   crmDeleteExpense,
+  crmGetIncomes,
+  crmCreateIncome,
+  crmDeleteIncome,
   crmLogout,
 } from "./crmApi";
 
@@ -45,6 +48,7 @@ export default function CrmApp({ onNavigateLanding }) {
   const [clientCampaigns, setClientCampaigns] = useState([]);
   const [companyCampaigns, setCompanyCampaigns] = useState([]);
   const [expenses, setExpenses] = useState([]);
+  const [incomes, setIncomes] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
 
   const loadAllData = useCallback(async (userRole = currentUser?.role) => {
@@ -63,10 +67,11 @@ export default function CrmApp({ onNavigateLanding }) {
 
       if (canAccessFinances) {
         promises.push(crmGetExpenses());
+        promises.push(crmGetIncomes());
       }
 
       const results = await Promise.all(promises);
-      const [leadsRes, clientsRes, customerRes, clientCampRes, companyCampRes, expensesRes] = results;
+      const [leadsRes, clientsRes, customerRes, clientCampRes, companyCampRes, expensesRes, incomesRes] = results;
 
       if (leadsRes.ok && Array.isArray(leadsRes.leads)) {
         setLeads(leadsRes.leads);
@@ -87,6 +92,11 @@ export default function CrmApp({ onNavigateLanding }) {
         setExpenses(expensesRes.expenses);
       } else {
         setExpenses([]);
+      }
+      if (canAccessFinances && incomesRes?.ok && Array.isArray(incomesRes.incomes)) {
+        setIncomes(incomesRes.incomes);
+      } else {
+        setIncomes([]);
       }
     } catch {
       // ignore
@@ -350,6 +360,25 @@ export default function CrmApp({ onNavigateLanding }) {
     loadAllData();
   };
 
+  // --------------------------------------------------------------------------
+  // HANDLERS: GANANCIAS / INGRESOS (Administrador y Marketing)
+  // --------------------------------------------------------------------------
+  const handleCreateIncome = async (incomeData) => {
+    if (currentUser?.role === "atencion") return;
+    const res = await crmCreateIncome(incomeData);
+    if (res.ok && res.income) {
+      setIncomes((prev) => [res.income, ...prev]);
+    }
+    loadAllData();
+  };
+
+  const handleDeleteIncome = async (id) => {
+    if (currentUser?.role === "atencion") return;
+    setIncomes((prev) => prev.filter((i) => i.id !== id));
+    await crmDeleteIncome(id);
+    loadAllData();
+  };
+
   if (loadingAuth) {
     return (
       <div className="min-h-screen bg-[#0d0f12] text-white flex items-center justify-center">
@@ -379,6 +408,7 @@ export default function CrmApp({ onNavigateLanding }) {
       clientCampaigns={clientCampaigns}
       companyCampaigns={companyCampaigns}
       expenses={expenses}
+      incomes={incomes}
       onRefresh={loadAllData}
       refreshing={refreshing}
       onUpdateLead={handleUpdateLead}
@@ -399,6 +429,8 @@ export default function CrmApp({ onNavigateLanding }) {
       onDeleteCompanyCampaign={handleDeleteCompanyCampaign}
       onCreateExpense={handleCreateExpense}
       onDeleteExpense={handleDeleteExpense}
+      onCreateIncome={handleCreateIncome}
+      onDeleteIncome={handleDeleteIncome}
       onConvertToClient={handleConvertToClient}
       onLogout={handleLogout}
       onNavigateLanding={onNavigateLanding}
