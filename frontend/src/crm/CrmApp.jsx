@@ -18,6 +18,11 @@ import {
   crmUpdateCustomerProfile,
   crmDeleteCustomerProfile,
   crmAddCustomerFollowup,
+  crmGetCampaigns,
+  crmSubscribeCampaigns,
+  crmCreateCampaign,
+  crmUpdateCampaign,
+  crmDeleteCampaign,
   crmCheckAndTriggerAutoBackup,
   crmGetExpenses,
   crmCreateExpense,
@@ -27,20 +32,23 @@ import {
 
 export default function CrmApp({ onNavigateLanding }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null); // { username, role, name }
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [leads, setLeads] = useState([]);
   const [clients, setClients] = useState([]);
   const [customerProfiles, setCustomerProfiles] = useState([]);
+  const [campaigns, setCampaigns] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
 
   const loadAllData = useCallback(async () => {
     try {
       setRefreshing(true);
-      const [leadsRes, clientsRes, customerRes, expensesRes] = await Promise.all([
+      const [leadsRes, clientsRes, customerRes, campaignsRes, expensesRes] = await Promise.all([
         crmGetLeads(),
         crmGetClients(),
         crmGetCustomerProfiles(),
+        crmGetCampaigns(),
         crmGetExpenses(),
       ]);
 
@@ -52,6 +60,9 @@ export default function CrmApp({ onNavigateLanding }) {
       }
       if (customerRes.ok && Array.isArray(customerRes.profiles)) {
         setCustomerProfiles(customerRes.profiles);
+      }
+      if (campaignsRes.ok && Array.isArray(campaignsRes.campaigns)) {
+        setCampaigns(campaignsRes.campaigns);
       }
       if (expensesRes.ok && Array.isArray(expensesRes.expenses)) {
         setExpenses(expensesRes.expenses);
@@ -68,11 +79,13 @@ export default function CrmApp({ onNavigateLanding }) {
       .then((res) => {
         if (res.ok && res.authenticated) {
           setIsAuthenticated(true);
+          setCurrentUser(res.user || { username: "admin", role: "admin", name: "Administrador" });
           loadAllData();
           // Comprobar y disparar copia de seguridad automática si pasaron 24h
           crmCheckAndTriggerAutoBackup();
         } else {
           setIsAuthenticated(false);
+          setCurrentUser(null);
         }
       })
       .finally(() => {
@@ -80,9 +93,10 @@ export default function CrmApp({ onNavigateLanding }) {
       });
   }, [loadAllData]);
 
-  // Suscripción en tiempo real a leads y fichas de clientes de Firestore
+  // Suscripción en tiempo real a leads, fichas y campañas de Firestore
   useEffect(() => {
     if (!isAuthenticated) return;
+
     const unsubLeads = crmSubscribeLeads((realtimeLeads) => {
       if (Array.isArray(realtimeLeads)) {
         setLeads(realtimeLeads);
@@ -95,14 +109,22 @@ export default function CrmApp({ onNavigateLanding }) {
       }
     });
 
+    const unsubCampaigns = crmSubscribeCampaigns((realtimeCampaigns) => {
+      if (Array.isArray(realtimeCampaigns)) {
+        setCampaigns(realtimeCampaigns);
+      }
+    });
+
     return () => {
       if (typeof unsubLeads === "function") unsubLeads();
       if (typeof unsubProfiles === "function") unsubProfiles();
+      if (typeof unsubCampaigns === "function") unsubCampaigns();
     };
   }, [isAuthenticated]);
 
-  const handleLoginSuccess = async () => {
+  const handleLoginSuccess = async (user) => {
     setIsAuthenticated(true);
+    setCurrentUser(user || { username: "admin", role: "admin", name: "Administrador" });
     await loadAllData();
     crmCheckAndTriggerAutoBackup();
   };
@@ -110,6 +132,7 @@ export default function CrmApp({ onNavigateLanding }) {
   const handleLogout = async () => {
     await crmLogout();
     setIsAuthenticated(false);
+    setCurrentUser(null);
   };
 
   // --------------------------------------------------------------------------
@@ -203,6 +226,33 @@ export default function CrmApp({ onNavigateLanding }) {
   };
 
   // --------------------------------------------------------------------------
+  // HANDLERS: MARKETING & PUBLICIDAD
+  // --------------------------------------------------------------------------
+  const handleCreateCampaign = async (campaignData) => {
+    const res = await crmCreateCampaign(campaignData);
+    if (res.ok && res.campaign) {
+      setCampaigns((prev) => [res.campaign, ...prev]);
+    }
+    loadAllData();
+    return res.ok;
+  };
+
+  const handleUpdateCampaign = async (id, updates) => {
+    setCampaigns((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, ...updates } : c))
+    );
+    const res = await crmUpdateCampaign(id, updates);
+    loadAllData();
+    return res.ok;
+  };
+
+  const handleDeleteCampaign = async (id) => {
+    setCampaigns((prev) => prev.filter((c) => c.id !== id));
+    await crmDeleteCampaign(id);
+    loadAllData();
+  };
+
+  // --------------------------------------------------------------------------
   // HANDLERS: CLIENTES ACTIVOS
   // --------------------------------------------------------------------------
   const handleCreateClient = async (clientData) => {
@@ -266,9 +316,11 @@ export default function CrmApp({ onNavigateLanding }) {
 
   return (
     <CrmDashboard
+      currentUser={currentUser}
       leads={leads}
       clients={clients}
       customerProfiles={customerProfiles}
+      campaigns={campaigns}
       expenses={expenses}
       onRefresh={loadAllData}
       refreshing={refreshing}
@@ -282,6 +334,9 @@ export default function CrmApp({ onNavigateLanding }) {
       onCreateCustomerProfile={handleCreateCustomerProfile}
       onDeleteCustomerProfile={handleDeleteCustomerProfile}
       onAddCustomerFollowup={handleAddCustomerFollowup}
+      onUpdateCampaign={handleUpdateCampaign}
+      onCreateCampaign={handleCreateCampaign}
+      onDeleteCampaign={handleDeleteCampaign}
       onCreateExpense={handleCreateExpense}
       onDeleteExpense={handleDeleteExpense}
       onConvertToClient={handleConvertToClient}

@@ -48,7 +48,21 @@ service cloud.firestore {
     }
 
     // ------------------------------------------------------------------------
-    // 5. BACKUPS & AUDITORÍA (Historial de copias de seguridad)
+    // 5. MARKETING & PUBLICIDAD (Campañas, pauta, plataformas y tareas)
+    // ------------------------------------------------------------------------
+    match /marketing_campaigns/{campaignId} {
+      allow read, write: if true;
+    }
+
+    // ------------------------------------------------------------------------
+    // 6. USUARIOS Y EQUIPO DEL CRM (Cuentas multi-rol)
+    // ------------------------------------------------------------------------
+    match /crm_users/{userId} {
+      allow read, write: if true;
+    }
+
+    // ------------------------------------------------------------------------
+    // 7. BACKUPS & AUDITORÍA (Historial de copias de seguridad)
     // ------------------------------------------------------------------------
     match /backups/{backupId} {
       allow read, write: if true;

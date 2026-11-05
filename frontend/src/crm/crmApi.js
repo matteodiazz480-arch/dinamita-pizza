@@ -13,15 +13,34 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 
-// Clave de acceso administrativa inmutable
-const CRM_PASS = "nexo2026admin";
+// Credenciales maestras por defecto para los tres roles iniciales
+const DEFAULT_SYSTEM_ACCOUNTS = {
+  admin: {
+    username: "admin",
+    name: "Administrador",
+    role: "admin",
+    password: "nexo2026admin",
+  },
+  atencion: {
+    username: "atencion",
+    name: "Atención al Cliente",
+    role: "atencion",
+    password: "atencion2026",
+  },
+  marketing: {
+    username: "marketing",
+    name: "Equipo de Marketing",
+    role: "marketing",
+    password: "marketing2026",
+  },
+};
 
 export async function crmLogin(usernameOrPassword, maybePassword) {
   let user = "admin";
   let pass = "";
 
   if (maybePassword !== undefined) {
-    user = (usernameOrPassword || "").trim();
+    user = (usernameOrPassword || "").trim().toLowerCase();
     pass = (maybePassword || "").trim();
   } else {
     pass = (usernameOrPassword || "").trim();
@@ -31,30 +50,77 @@ export async function crmLogin(usernameOrPassword, maybePassword) {
     return { ok: false, error: "Por favor ingresá tu contraseña de acceso." };
   }
 
-  if (pass === CRM_PASS) {
-    sessionStorage.setItem("nexo_crm_auth", "true");
-    sessionStorage.setItem("nexo_crm_user", user || "admin");
-    return {
-      ok: true,
-      user: {
-        role: "admin",
-        name: user ? user.charAt(0).toUpperCase() + user.slice(1) : "Administrador",
-      },
-    };
+  // 1. Verificación en base de datos Firestore (colección 'crm_users')
+  try {
+    const userDocRef = doc(db, "crm_users", user);
+    const snap = await getDoc(userDocRef);
+    if (snap.exists()) {
+      const data = snap.data();
+      if (data.status === "inactivo") {
+        return { ok: false, error: "Esta cuenta de usuario se encuentra desactivada." };
+      }
+      if (data.password === pass) {
+        const userObj = {
+          username: user,
+          name: data.name || user,
+          role: data.role || "atencion",
+        };
+        sessionStorage.setItem("nexo_crm_auth", "true");
+        sessionStorage.setItem("nexo_crm_user", userObj.name);
+        sessionStorage.setItem("nexo_crm_username", userObj.username);
+        sessionStorage.setItem("nexo_crm_role", userObj.role);
+        return { ok: true, user: userObj };
+      }
+    }
+  } catch (err) {
+    console.warn("Aviso en consulta de crm_users en Firestore:", err);
   }
-  return { ok: false, error: "Contraseña incorrecta. Verificá las credenciales de acceso." };
+
+  // 2. Verificación de cuentas maestras del sistema
+  const defaultAccount = DEFAULT_SYSTEM_ACCOUNTS[user];
+  if (defaultAccount && defaultAccount.password === pass) {
+    sessionStorage.setItem("nexo_crm_auth", "true");
+    sessionStorage.setItem("nexo_crm_user", defaultAccount.name);
+    sessionStorage.setItem("nexo_crm_username", defaultAccount.username);
+    sessionStorage.setItem("nexo_crm_role", defaultAccount.role);
+    return { ok: true, user: defaultAccount };
+  }
+
+  // 3. Compatibilidad con contraseña maestra general (admin)
+  if (pass === "nexo2026admin") {
+    const adminUser = {
+      username: user || "admin",
+      name: user ? user.charAt(0).toUpperCase() + user.slice(1) : "Administrador",
+      role: "admin",
+    };
+    sessionStorage.setItem("nexo_crm_auth", "true");
+    sessionStorage.setItem("nexo_crm_user", adminUser.name);
+    sessionStorage.setItem("nexo_crm_username", adminUser.username);
+    sessionStorage.setItem("nexo_crm_role", "admin");
+    return { ok: true, user: adminUser };
+  }
+
+  return { ok: false, error: "Usuario o contraseña incorrectos. Verificá tus credenciales." };
 }
 
 export async function crmLogout() {
   sessionStorage.removeItem("nexo_crm_auth");
   sessionStorage.removeItem("nexo_crm_user");
+  sessionStorage.removeItem("nexo_crm_username");
+  sessionStorage.removeItem("nexo_crm_role");
   return { ok: true };
 }
 
 export async function crmCheckAuth() {
   const isAuth = sessionStorage.getItem("nexo_crm_auth") === "true";
   const user = sessionStorage.getItem("nexo_crm_user") || "Administrador";
-  return { ok: true, authenticated: isAuth, user: { role: "admin", name: user } };
+  const username = sessionStorage.getItem("nexo_crm_username") || "admin";
+  const role = sessionStorage.getItem("nexo_crm_role") || "admin";
+  return {
+    ok: true,
+    authenticated: isAuth,
+    user: { role, name: user, username },
+  };
 }
 
 function parseLeadDoc(d) {
@@ -496,22 +562,24 @@ async function calculateJsonChecksum(obj) {
 
 export async function crmCreateBackup(type = "manual", author = "Administrador") {
   try {
-    const [leadsSnap, clientsSnap, customerSnap, expensesSnap] = await Promise.all([
+    const [leadsSnap, clientsSnap, customerSnap, expensesSnap, campaignsSnap] = await Promise.all([
       getDocs(collection(db, "leads")),
       getDocs(collection(db, "clients")),
       getDocs(collection(db, "customer_profiles")),
       getDocs(collection(db, "expenses")),
+      getDocs(collection(db, "marketing_campaigns")),
     ]);
 
     const leads = leadsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
     const clients = clientsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
     const customer_profiles = customerSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
     const expenses = expensesSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const marketing_campaigns = campaignsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
     const backupId = "bkp_" + Date.now().toString(36) + "_" + Math.random().toString(36).substring(2, 6);
     const createdAt = new Date().toISOString();
 
-    const dataPayload = { leads, clients, customer_profiles, expenses };
+    const dataPayload = { leads, clients, customer_profiles, expenses, marketing_campaigns };
     const checksum = await calculateJsonChecksum(dataPayload);
     const sizeBytes = new Blob([JSON.stringify(dataPayload)]).size;
 
@@ -528,7 +596,8 @@ export async function crmCreateBackup(type = "manual", author = "Administrador")
         clients: clients.length,
         customer_profiles: customer_profiles.length,
         expenses: expenses.length,
-        total: leads.length + clients.length + customer_profiles.length + expenses.length,
+        marketing_campaigns: marketing_campaigns.length,
+        total: leads.length + clients.length + customer_profiles.length + expenses.length + marketing_campaigns.length,
       },
       data: dataPayload,
     };
@@ -731,5 +800,218 @@ export async function crmCheckAndTriggerAutoBackup() {
     }
   } catch (err) {
     console.warn("Aviso en verificación de auto-backup:", err);
+  }
+}
+
+// ----------------------------------------------------------------------------
+// GESTIÓN DE USUARIOS Y ROLES (Exclusivo Administrador)
+// ----------------------------------------------------------------------------
+export async function crmGetUsers() {
+  try {
+    const snap = await getDocs(collection(db, "crm_users"));
+    let users = snap.docs.map((d) => ({
+      username: d.id,
+      ...d.data(),
+    }));
+
+    // Si la colección está vacía, inicializar con las cuentas de los tres roles
+    if (users.length === 0) {
+      const defaults = Object.values(DEFAULT_SYSTEM_ACCOUNTS);
+      for (const acc of defaults) {
+        await setDoc(doc(db, "crm_users", acc.username), {
+          username: acc.username,
+          name: acc.name,
+          role: acc.role,
+          password: acc.password,
+          status: "activo",
+          createdAt: serverTimestamp(),
+          createdAtIso: new Date().toISOString(),
+        });
+      }
+      users = defaults.map((d) => ({ ...d, status: "activo" }));
+    }
+
+    return { ok: true, users };
+  } catch (err) {
+    console.error("Error al obtener usuarios del CRM:", err);
+    // Devolver cuentas iniciales como fallback
+    return { ok: true, users: Object.values(DEFAULT_SYSTEM_ACCOUNTS).map((d) => ({ ...d, status: "activo" })) };
+  }
+}
+
+export async function crmCreateUser(userData) {
+  try {
+    const username = (userData.username || "").trim().toLowerCase();
+    if (!username) {
+      return { ok: false, error: "El nombre de usuario es obligatorio." };
+    }
+    if (!userData.password || userData.password.length < 4) {
+      return { ok: false, error: "La contraseña debe tener al menos 4 caracteres." };
+    }
+
+    const docRef = doc(db, "crm_users", username);
+    const existing = await getDoc(docRef);
+    if (existing.exists()) {
+      return { ok: false, error: "Ya existe un usuario con ese nombre de usuario." };
+    }
+
+    const payload = {
+      username,
+      name: userData.name || username,
+      role: userData.role || "atencion", // "admin" | "atencion" | "marketing"
+      password: userData.password,
+      status: userData.status || "activo",
+      createdAt: serverTimestamp(),
+      createdAtIso: new Date().toISOString(),
+    };
+
+    await setDoc(docRef, payload);
+    return { ok: true, user: payload };
+  } catch (err) {
+    console.error("Error al crear usuario en Firestore:", err);
+    return { ok: false, error: err.message };
+  }
+}
+
+export async function crmUpdateUser(username, updates) {
+  try {
+    const cleanUser = (username || "").trim().toLowerCase();
+    const docRef = doc(db, "crm_users", cleanUser);
+    const payload = { ...updates, updatedAt: serverTimestamp() };
+    await updateDoc(docRef, payload);
+    return { ok: true };
+  } catch (err) {
+    console.error("Error al actualizar usuario:", err);
+    return { ok: false, error: err.message };
+  }
+}
+
+export async function crmDeleteUser(username) {
+  try {
+    const cleanUser = (username || "").trim().toLowerCase();
+    const currentSessionUser = (sessionStorage.getItem("nexo_crm_username") || "").toLowerCase();
+    if (cleanUser === currentSessionUser) {
+      return { ok: false, error: "No podés eliminar tu propio usuario de la sesión actual." };
+    }
+    await deleteDoc(doc(db, "crm_users", cleanUser));
+    return { ok: true };
+  } catch (err) {
+    console.error("Error al eliminar usuario:", err);
+    return { ok: false, error: err.message };
+  }
+}
+
+// ----------------------------------------------------------------------------
+// MARKETING: CAMPAÑAS Y PUBLICIDAD DIGITAL (Firestore)
+// ----------------------------------------------------------------------------
+function parseCampaignDoc(d) {
+  const data = d.data() || {};
+  let createdStr = new Date().toISOString();
+  if (data.createdAt?.toDate && typeof data.createdAt.toDate === "function") {
+    try {
+      createdStr = data.createdAt.toDate().toISOString();
+    } catch {}
+  } else if (typeof data.createdAt === "string" && data.createdAt) {
+    createdStr = data.createdAt;
+  }
+
+  return {
+    id: d.id,
+    ...data,
+    createdAt: createdStr,
+    deliverables: Array.isArray(data.deliverables) ? data.deliverables : [],
+  };
+}
+
+export async function crmGetCampaigns() {
+  try {
+    const snap = await getDocs(collection(db, "marketing_campaigns"));
+    const campaigns = snap.docs.map(parseCampaignDoc);
+    campaigns.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    return { ok: true, campaigns };
+  } catch (err) {
+    console.error("Error al obtener campañas de marketing:", err);
+    return { ok: false, campaigns: [] };
+  }
+}
+
+export function crmSubscribeCampaigns(callback, onError) {
+  try {
+    return onSnapshot(
+      collection(db, "marketing_campaigns"),
+      (snap) => {
+        const campaigns = snap.docs.map(parseCampaignDoc);
+        campaigns.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+        callback(campaigns);
+      },
+      (err) => {
+        console.error("Error en listener de campañas:", err);
+        if (onError) onError(err);
+      }
+    );
+  } catch (err) {
+    console.error("Fallo al inicializar listener de campañas:", err);
+    if (onError) onError(err);
+    return () => {};
+  }
+}
+
+export async function crmCreateCampaign(campaignData) {
+  try {
+    const id = campaignData.id || "cmp_" + Date.now().toString(36) + "_" + Math.random().toString(36).substring(2, 6);
+    const refId = campaignData.refId || "CMP-" + Date.now().toString(36).toUpperCase().slice(-5);
+    const author = sessionStorage.getItem("nexo_crm_user") || "Equipo de Marketing";
+
+    const payload = {
+      ...campaignData,
+      id,
+      refId,
+      author,
+      status: campaignData.status || "activa", // "activa" | "optimizacion" | "pausada" | "finalizada"
+      createdAt: serverTimestamp(),
+      createdAtIso: new Date().toISOString(),
+      updatedAt: serverTimestamp(),
+    };
+
+    // Sanear campos undefined
+    Object.keys(payload).forEach((k) => {
+      if (payload[k] === undefined) payload[k] = "";
+    });
+
+    await setDoc(doc(db, "marketing_campaigns", id), payload);
+    return { ok: true, campaign: { ...payload, createdAt: new Date().toISOString() } };
+  } catch (err) {
+    console.error("Error al registrar campaña de marketing:", err);
+    return { ok: false, error: err.message };
+  }
+}
+
+export async function crmUpdateCampaign(id, updates) {
+  try {
+    const payload = {
+      ...updates,
+      updatedAt: serverTimestamp(),
+      updatedAtIso: new Date().toISOString(),
+    };
+
+    Object.keys(payload).forEach((k) => {
+      if (payload[k] === undefined) payload[k] = "";
+    });
+
+    await updateDoc(doc(db, "marketing_campaigns", id), payload);
+    return { ok: true };
+  } catch (err) {
+    console.error("Error al actualizar campaña:", err);
+    return { ok: false, error: err.message };
+  }
+}
+
+export async function crmDeleteCampaign(id) {
+  try {
+    await deleteDoc(doc(db, "marketing_campaigns", id));
+    return { ok: true };
+  } catch (err) {
+    console.error("Error al eliminar campaña:", err);
+    return { ok: false, error: err.message };
   }
 }

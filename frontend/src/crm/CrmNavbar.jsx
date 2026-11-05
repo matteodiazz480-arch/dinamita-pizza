@@ -18,20 +18,32 @@ import {
   Headset,
   Database,
   UserCheck,
+  Megaphone,
+  Shield,
 } from "lucide-react";
 import { BrandLogo } from "../components/Icons";
+
+const ROLE_LABELS = {
+  admin: { label: "Administrador", badge: "bg-red-500/15 text-red-300 border-red-500/30" },
+  atencion: { label: "Atención al Cliente", badge: "bg-blue-500/15 text-blue-300 border-blue-500/30" },
+  marketing: { label: "Marketing", badge: "bg-purple-500/15 text-purple-300 border-purple-500/30" },
+};
 
 export default function CrmNavbar({
   activeTab,
   onSelectTab,
+  currentUser,
   leadsCount = 0,
   clientsCount = 0,
   customerProfilesCount = 0,
+  campaignsCount = 0,
   meetingsCount = 0,
   onOpenNewLead,
   onOpenNewClient,
   onOpenNewCustomerProfile,
+  onOpenNewCampaign,
   onOpenNewExpense,
+  onOpenUsers,
   onOpenBackups,
   onExportCsv,
   onRefresh,
@@ -42,6 +54,9 @@ export default function CrmNavbar({
   const prefersReducedMotion = useReducedMotion();
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [isPlusMenuOpen, setIsPlusMenuOpen] = useState(false);
+
+  const role = currentUser?.role || "admin";
+  const roleConfig = ROLE_LABELS[role] || ROLE_LABELS.admin;
 
   const handleSelectTab = (tabId) => {
     onSelectTab(tabId);
@@ -55,14 +70,14 @@ export default function CrmNavbar({
       {/* 1. BARRA LATERAL IZQUIERDA PARA ESCRITORIO (Desktop Left Sidebar)  */}
       {/* ------------------------------------------------------------------ */}
       <aside className="hidden md:flex flex-col fixed inset-y-0 left-0 w-64 bg-[#141519] border-r border-white/10 z-30 select-none overflow-y-auto no-scrollbar">
-        {/* Cabecera Sidebar con Logo */}
+        {/* Cabecera Sidebar con Logo y Rol */}
         <div className="p-5 border-b border-white/10">
           <div className="flex items-center justify-between">
             <button
               type="button"
-              onClick={() => handleSelectTab("dashboard")}
+              onClick={() => handleSelectTab(role === "atencion" ? "customer_service" : role === "marketing" ? "marketing" : "dashboard")}
               className="transition-transform duration-200 hover:scale-102 cursor-pointer text-left"
-              aria-label="Ir al Dashboard"
+              aria-label="Ir al inicio del CRM"
             >
               <BrandLogo size="default" />
             </button>
@@ -77,14 +92,18 @@ export default function CrmNavbar({
               />
             </button>
           </div>
-          <div className="mt-3 flex items-center justify-between text-[11px] text-gray-400 bg-[#0d0f12] px-2.5 py-1.5 rounded-lg border border-white/5">
-            <span className="font-bold text-gray-300 uppercase tracking-wider text-[10px]">
-              CRM &amp; Finanzas
-            </span>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-[#16A34A]" />
-              <span className="text-[10px] text-white/80 font-medium">Activo</span>
+
+          {/* Identificación de Usuario y Rol */}
+          <div className="mt-3 flex items-center justify-between text-[11px] bg-[#0d0f12] px-2.5 py-1.5 rounded-lg border border-white/5">
+            <div className="flex items-center gap-1.5 truncate">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] flex-shrink-0" />
+              <span className="font-bold text-white truncate text-[11px]">
+                {currentUser?.name || currentUser?.username || "Usuario"}
+              </span>
             </div>
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase tracking-wider flex-shrink-0 ${roleConfig.badge}`}>
+              {roleConfig.label}
+            </span>
           </div>
         </div>
 
@@ -94,7 +113,7 @@ export default function CrmNavbar({
             <button
               type="button"
               onClick={() => setIsPlusMenuOpen(!isPlusMenuOpen)}
-                  className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white text-xs font-black transition-[background-color,transform] duration-150 active:scale-98 shadow-sm cursor-pointer"
+              className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white text-xs font-black transition-[background-color,transform] duration-150 active:scale-98 shadow-sm cursor-pointer"
             >
               <Plus className="w-4 h-4 stroke-[3]" />
               <span>Nuevo Registro</span>
@@ -102,242 +121,451 @@ export default function CrmNavbar({
 
             {isPlusMenuOpen && (
               <div className="absolute left-0 right-0 top-full mt-2 bg-[#181a20] border border-white/12 rounded-xl shadow-2xl p-1.5 z-50 text-xs">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsPlusMenuOpen(false);
-                    onOpenNewCustomerProfile?.();
-                  }}
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-gray-200 hover:text-white flex items-center gap-2 cursor-pointer font-semibold"
-                >
-                  <Headset className="w-4 h-4 text-[#22C55E]" />
-                  <span>Ficha de Atención</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsPlusMenuOpen(false);
-                    onOpenNewLead();
-                  }}
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-gray-200 hover:text-white flex items-center gap-2 cursor-pointer font-semibold"
-                >
-                  <Users className="w-4 h-4 text-[#22C55E]" />
-                  <span>Oportunidad / Lead</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsPlusMenuOpen(false);
-                    onOpenNewClient();
-                  }}
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-gray-200 hover:text-white flex items-center gap-2 cursor-pointer font-semibold"
-                >
-                  <Briefcase className="w-4 h-4 text-[#22C55E]" />
-                  <span>Cliente Activo</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsPlusMenuOpen(false);
-                    onOpenNewExpense();
-                  }}
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-gray-200 hover:text-white flex items-center gap-2 cursor-pointer font-semibold"
-                >
-                  <Receipt className="w-4 h-4 text-[#22C55E]" />
-                  <span>Gasto del Mes</span>
-                </button>
+                {(role === "admin" || role === "atencion") && onOpenNewCustomerProfile && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsPlusMenuOpen(false);
+                      onOpenNewCustomerProfile();
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-gray-200 hover:text-white flex items-center gap-2 cursor-pointer font-semibold"
+                  >
+                    <Headset className="w-4 h-4 text-[#22C55E]" />
+                    <span>Ficha de Atención</span>
+                  </button>
+                )}
+
+                {(role === "admin" || role === "marketing") && onOpenNewCampaign && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsPlusMenuOpen(false);
+                      onOpenNewCampaign();
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-gray-200 hover:text-white flex items-center gap-2 cursor-pointer font-semibold"
+                  >
+                    <Megaphone className="w-4 h-4 text-purple-400" />
+                    <span>Campaña Publicitaria</span>
+                  </button>
+                )}
+
+                {(role === "admin" || role === "atencion") && onOpenNewLead && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsPlusMenuOpen(false);
+                      onOpenNewLead();
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-gray-200 hover:text-white flex items-center gap-2 cursor-pointer font-semibold"
+                  >
+                    <Users className="w-4 h-4 text-[#22C55E]" />
+                    <span>Oportunidad / Lead</span>
+                  </button>
+                )}
+
+                {(role === "admin" || role === "atencion") && onOpenNewClient && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsPlusMenuOpen(false);
+                      onOpenNewClient();
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-gray-200 hover:text-white flex items-center gap-2 cursor-pointer font-semibold"
+                  >
+                    <Briefcase className="w-4 h-4 text-[#22C55E]" />
+                    <span>Cliente Activo</span>
+                  </button>
+                )}
+
+                {role === "admin" && onOpenNewExpense && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsPlusMenuOpen(false);
+                      onOpenNewExpense();
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-gray-200 hover:text-white flex items-center gap-2 cursor-pointer font-semibold"
+                  >
+                    <Receipt className="w-4 h-4 text-amber-400" />
+                    <span>Gasto del Mes</span>
+                  </button>
+                )}
               </div>
             )}
           </div>
         </div>
 
-        {/* Listado de Opciones de Navegación Vertical */}
+        {/* Listado de Opciones de Navegación Vertical Según Rol */}
         <div className="flex-1 py-3 px-3 space-y-6">
-          {/* GRUPO 1: VENTAS & OPERACIONES */}
-          <div>
-            <div className="px-3 pb-2 text-[10px] font-black uppercase tracking-wider text-gray-400">
-              Ventas &amp; Operaciones
-            </div>
-            <nav className="space-y-1">
-              <button
-                type="button"
-                onClick={() => handleSelectTab("dashboard")}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-[background-color,color,transform] duration-150 active:scale-98 cursor-pointer ${
-                  activeTab === "dashboard"
-                    ? "bg-[#16A34A] text-white shadow-sm"
-                    : "text-gray-300 hover:bg-white/5 hover:text-white"
-                }`}
-              >
-                <div className="flex items-center gap-2.5">
-                  <LayoutDashboard className="w-4 h-4" />
-                  <span>Dashboard &amp; Finanzas</span>
+          {/* ============================================================== */}
+          {/* MENU PARA ADMINISTRADOR                                        */}
+          {/* ============================================================== */}
+          {role === "admin" && (
+            <>
+              <div>
+                <div className="px-3 pb-2 text-[10px] font-black uppercase tracking-wider text-gray-400">
+                  Operaciones &amp; Equipos
                 </div>
-              </button>
+                <nav className="space-y-1">
+                  <button
+                    type="button"
+                    onClick={() => handleSelectTab("dashboard")}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-[background-color,color,transform] duration-150 active:scale-98 cursor-pointer ${
+                      activeTab === "dashboard"
+                        ? "bg-[#16A34A] text-white shadow-sm"
+                        : "text-gray-300 hover:bg-white/5 hover:text-white"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <LayoutDashboard className="w-4 h-4" />
+                      <span>Resumen Ejecutivo</span>
+                    </div>
+                  </button>
 
-              <button
-                type="button"
-                onClick={() => handleSelectTab("commercial")}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-[background-color,color,transform] duration-150 active:scale-98 cursor-pointer ${
-                  activeTab === "commercial"
-                    ? "bg-[#16A34A] text-white shadow-sm"
-                    : "text-gray-300 hover:bg-white/5 hover:text-white"
-                }`}
-              >
-                <div className="flex items-center gap-2.5">
-                  <Users className="w-4 h-4" />
-                  <span>CRM Comercial</span>
-                </div>
-                {leadsCount > 0 && (
-                  <span
-                    className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${
+                  <button
+                    type="button"
+                    onClick={() => handleSelectTab("commercial")}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-[background-color,color,transform] duration-150 active:scale-98 cursor-pointer ${
                       activeTab === "commercial"
-                        ? "bg-white/25 text-white"
-                        : "bg-[#16A34A]/20 text-[#22C55E]"
+                        ? "bg-[#16A34A] text-white shadow-sm"
+                        : "text-gray-300 hover:bg-white/5 hover:text-white"
                     }`}
                   >
-                    {leadsCount}
-                  </span>
-                )}
-              </button>
+                    <div className="flex items-center gap-2.5">
+                      <Users className="w-4 h-4" />
+                      <span>Pipeline Comercial</span>
+                    </div>
+                    {leadsCount > 0 && (
+                      <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${activeTab === "commercial" ? "bg-white/25 text-white" : "bg-[#16A34A]/20 text-[#22C55E]"}`}>
+                        {leadsCount}
+                      </span>
+                    )}
+                  </button>
 
-              <button
-                type="button"
-                onClick={() => handleSelectTab("customer_service")}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-[background-color,color,transform] duration-150 active:scale-98 cursor-pointer ${
-                  activeTab === "customer_service"
-                    ? "bg-[#16A34A] text-white shadow-sm"
-                    : "text-gray-300 hover:bg-white/5 hover:text-white"
-                }`}
-              >
-                <div className="flex items-center gap-2.5">
-                  <Headset className="w-4 h-4" />
-                  <span>Atención al Público</span>
-                </div>
-                {customerProfilesCount > 0 && (
-                  <span
-                    className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${
+                  <button
+                    type="button"
+                    onClick={() => handleSelectTab("customer_service")}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-[background-color,color,transform] duration-150 active:scale-98 cursor-pointer ${
                       activeTab === "customer_service"
-                        ? "bg-white/25 text-white"
-                        : "bg-[#16A34A]/20 text-[#22C55E]"
+                        ? "bg-[#16A34A] text-white shadow-sm"
+                        : "text-gray-300 hover:bg-white/5 hover:text-white"
                     }`}
                   >
-                    {customerProfilesCount}
-                  </span>
-                )}
-              </button>
+                    <div className="flex items-center gap-2.5">
+                      <Headset className="w-4 h-4" />
+                      <span>Atención al Público</span>
+                    </div>
+                    {customerProfilesCount > 0 && (
+                      <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${activeTab === "customer_service" ? "bg-white/25 text-white" : "bg-blue-500/20 text-blue-300"}`}>
+                        {customerProfilesCount}
+                      </span>
+                    )}
+                  </button>
 
-              <button
-                type="button"
-                onClick={() => handleSelectTab("clients")}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-[background-color,color,transform] duration-150 active:scale-98 cursor-pointer ${
-                  activeTab === "clients"
-                    ? "bg-[#16A34A] text-white shadow-sm"
-                    : "text-gray-300 hover:bg-white/5 hover:text-white"
-                }`}
-              >
-                <div className="flex items-center gap-2.5">
-                  <Briefcase className="w-4 h-4" />
-                  <span>Clientes Activos</span>
-                </div>
-                {clientsCount > 0 && (
-                  <span
-                    className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${
+                  <button
+                    type="button"
+                    onClick={() => handleSelectTab("marketing")}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-[background-color,color,transform] duration-150 active:scale-98 cursor-pointer ${
+                      activeTab === "marketing"
+                        ? "bg-[#16A34A] text-white shadow-sm"
+                        : "text-gray-300 hover:bg-white/5 hover:text-white"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Megaphone className="w-4 h-4" />
+                      <span>Marketing &amp; Pauta</span>
+                    </div>
+                    {campaignsCount > 0 && (
+                      <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${activeTab === "marketing" ? "bg-white/25 text-white" : "bg-purple-500/20 text-purple-300"}`}>
+                        {campaignsCount}
+                      </span>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleSelectTab("clients")}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-[background-color,color,transform] duration-150 active:scale-98 cursor-pointer ${
                       activeTab === "clients"
-                        ? "bg-white/25 text-white"
-                        : "bg-[#16A34A]/20 text-[#22C55E]"
+                        ? "bg-[#16A34A] text-white shadow-sm"
+                        : "text-gray-300 hover:bg-white/5 hover:text-white"
                     }`}
                   >
-                    {clientsCount}
-                  </span>
-                )}
-              </button>
+                    <div className="flex items-center gap-2.5">
+                      <Briefcase className="w-4 h-4" />
+                      <span>Clientes Activos</span>
+                    </div>
+                    {clientsCount > 0 && (
+                      <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${activeTab === "clients" ? "bg-white/25 text-white" : "bg-[#16A34A]/20 text-[#22C55E]"}`}>
+                        {clientsCount}
+                      </span>
+                    )}
+                  </button>
 
-              <button
-                type="button"
-                onClick={() => handleSelectTab("meetings")}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-[background-color,color,transform] duration-150 active:scale-98 cursor-pointer ${
-                  activeTab === "meetings"
-                    ? "bg-[#16A34A] text-white shadow-sm"
-                    : "text-gray-300 hover:bg-white/5 hover:text-white"
-                }`}
-              >
-                <div className="flex items-center gap-2.5">
-                  <Calendar className="w-4 h-4" />
-                  <span>Agenda Reuniones 20m</span>
-                </div>
-                {meetingsCount > 0 && (
-                  <span
-                    className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${
+                  <button
+                    type="button"
+                    onClick={() => handleSelectTab("meetings")}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-[background-color,color,transform] duration-150 active:scale-98 cursor-pointer ${
                       activeTab === "meetings"
-                        ? "bg-white/25 text-white"
-                        : "bg-[#16A34A]/20 text-[#22C55E]"
+                        ? "bg-[#16A34A] text-white shadow-sm"
+                        : "text-gray-300 hover:bg-white/5 hover:text-white"
                     }`}
                   >
-                    {meetingsCount}
-                  </span>
-                )}
-              </button>
-            </nav>
-          </div>
+                    <div className="flex items-center gap-2.5">
+                      <Calendar className="w-4 h-4" />
+                      <span>Agenda Reuniones 20m</span>
+                    </div>
+                    {meetingsCount > 0 && (
+                      <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${activeTab === "meetings" ? "bg-white/25 text-white" : "bg-[#16A34A]/20 text-[#22C55E]"}`}>
+                        {meetingsCount}
+                      </span>
+                    )}
+                  </button>
+                </nav>
+              </div>
 
-          {/* GRUPO 2: GESTIÓN & FINANZAS */}
-          <div>
-            <div className="px-3 pb-2 text-[10px] font-black uppercase tracking-wider text-gray-400">
-              Gestión &amp; Finanzas
+              <div>
+                <div className="px-3 pb-2 text-[10px] font-black uppercase tracking-wider text-gray-400">
+                  Gestión &amp; Finanzas
+                </div>
+                <nav className="space-y-1">
+                  <button
+                    type="button"
+                    onClick={() => handleSelectTab("responses")}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-[background-color,color,transform] duration-150 active:scale-98 cursor-pointer ${
+                      activeTab === "responses"
+                        ? "bg-[#16A34A] text-white shadow-sm"
+                        : "text-gray-300 hover:bg-white/5 hover:text-white"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <FileText className="w-4 h-4" />
+                      <span>Formularios Web</span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleSelectTab("expenses")}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-[background-color,color,transform] duration-150 active:scale-98 cursor-pointer ${
+                      activeTab === "expenses"
+                        ? "bg-[#16A34A] text-white shadow-sm"
+                        : "text-gray-300 hover:bg-white/5 hover:text-white"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Receipt className="w-4 h-4" />
+                      <span>Gastos del Mes</span>
+                    </div>
+                  </button>
+                </nav>
+              </div>
+            </>
+          )}
+
+          {/* ============================================================== */}
+          {/* MENU PARA ATENCIÓN AL CLIENTE                                 */}
+          {/* ============================================================== */}
+          {role === "atencion" && (
+            <div>
+              <div className="px-3 pb-2 text-[10px] font-black uppercase tracking-wider text-gray-400">
+                Atención al Cliente
+              </div>
+              <nav className="space-y-1">
+                <button
+                  type="button"
+                  onClick={() => handleSelectTab("customer_service")}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-[background-color,color,transform] duration-150 active:scale-98 cursor-pointer ${
+                    activeTab === "customer_service"
+                      ? "bg-[#16A34A] text-white shadow-sm"
+                      : "text-gray-300 hover:bg-white/5 hover:text-white"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Headset className="w-4 h-4" />
+                    <span>Fichas &amp; Diagnósticos</span>
+                  </div>
+                  {customerProfilesCount > 0 && (
+                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${activeTab === "customer_service" ? "bg-white/25 text-white" : "bg-[#16A34A]/20 text-[#22C55E]"}`}>
+                      {customerProfilesCount}
+                    </span>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleSelectTab("clients")}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-[background-color,color,transform] duration-150 active:scale-98 cursor-pointer ${
+                    activeTab === "clients"
+                      ? "bg-[#16A34A] text-white shadow-sm"
+                      : "text-gray-300 hover:bg-white/5 hover:text-white"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Briefcase className="w-4 h-4" />
+                    <span>Clientes Activos</span>
+                  </div>
+                  {clientsCount > 0 && (
+                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${activeTab === "clients" ? "bg-white/25 text-white" : "bg-[#16A34A]/20 text-[#22C55E]"}`}>
+                      {clientsCount}
+                    </span>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleSelectTab("meetings")}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-[background-color,color,transform] duration-150 active:scale-98 cursor-pointer ${
+                    activeTab === "meetings"
+                      ? "bg-[#16A34A] text-white shadow-sm"
+                      : "text-gray-300 hover:bg-white/5 hover:text-white"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Calendar className="w-4 h-4" />
+                    <span>Agenda de Reuniones</span>
+                  </div>
+                  {meetingsCount > 0 && (
+                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${activeTab === "meetings" ? "bg-white/25 text-white" : "bg-[#16A34A]/20 text-[#22C55E]"}`}>
+                      {meetingsCount}
+                    </span>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleSelectTab("responses")}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-[background-color,color,transform] duration-150 active:scale-98 cursor-pointer ${
+                    activeTab === "responses"
+                      ? "bg-[#16A34A] text-white shadow-sm"
+                      : "text-gray-300 hover:bg-white/5 hover:text-white"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <FileText className="w-4 h-4" />
+                    <span>Formularios Web</span>
+                  </div>
+                  {leadsCount > 0 && (
+                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${activeTab === "responses" ? "bg-white/25 text-white" : "bg-white/10 text-gray-300"}`}>
+                      {leadsCount}
+                    </span>
+                  )}
+                </button>
+              </nav>
             </div>
-            <nav className="space-y-1">
-              <button
-                type="button"
-                onClick={() => handleSelectTab("responses")}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-[background-color,color,transform] duration-150 active:scale-98 cursor-pointer ${
-                  activeTab === "responses"
-                    ? "bg-[#16A34A] text-white shadow-sm"
-                    : "text-gray-300 hover:bg-white/5 hover:text-white"
-                }`}
-              >
-                <div className="flex items-center gap-2.5">
-                  <FileText className="w-4 h-4" />
-                  <span>Formularios Web</span>
-                </div>
-              </button>
+          )}
 
-              <button
-                type="button"
-                onClick={() => handleSelectTab("expenses")}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-[background-color,color,transform] duration-150 active:scale-98 cursor-pointer ${
-                  activeTab === "expenses"
-                    ? "bg-[#16A34A] text-white shadow-sm"
-                    : "text-gray-300 hover:bg-white/5 hover:text-white"
-                }`}
-              >
-                <div className="flex items-center gap-2.5">
-                  <Receipt className="w-4 h-4" />
-                  <span>Gastos del Mes</span>
-                </div>
-              </button>
-            </nav>
-          </div>
+          {/* ============================================================== */}
+          {/* MENU PARA MARKETING                                            */}
+          {/* ============================================================== */}
+          {role === "marketing" && (
+            <div>
+              <div className="px-3 pb-2 text-[10px] font-black uppercase tracking-wider text-gray-400">
+                Marketing &amp; Publicidad
+              </div>
+              <nav className="space-y-1">
+                <button
+                  type="button"
+                  onClick={() => handleSelectTab("marketing")}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-[background-color,color,transform] duration-150 active:scale-98 cursor-pointer ${
+                    activeTab === "marketing"
+                      ? "bg-[#16A34A] text-white shadow-sm"
+                      : "text-gray-300 hover:bg-white/5 hover:text-white"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Megaphone className="w-4 h-4" />
+                    <span>Campañas &amp; Pauta</span>
+                  </div>
+                  {campaignsCount > 0 && (
+                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${activeTab === "marketing" ? "bg-white/25 text-white" : "bg-purple-500/20 text-purple-300"}`}>
+                      {campaignsCount}
+                    </span>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleSelectTab("clients")}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-[background-color,color,transform] duration-150 active:scale-98 cursor-pointer ${
+                    activeTab === "clients"
+                      ? "bg-[#16A34A] text-white shadow-sm"
+                      : "text-gray-300 hover:bg-white/5 hover:text-white"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Briefcase className="w-4 h-4" />
+                    <span>Clientes &amp; Servicios</span>
+                  </div>
+                  {clientsCount > 0 && (
+                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${activeTab === "clients" ? "bg-white/25 text-white" : "bg-[#16A34A]/20 text-[#22C55E]"}`}>
+                      {clientsCount}
+                    </span>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleSelectTab("customer_service")}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-[background-color,color,transform] duration-150 active:scale-98 cursor-pointer ${
+                    activeTab === "customer_service"
+                      ? "bg-[#16A34A] text-white shadow-sm"
+                      : "text-gray-300 hover:bg-white/5 hover:text-white"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Headset className="w-4 h-4" />
+                    <span>Contexto de Fichas</span>
+                  </div>
+                  {customerProfilesCount > 0 && (
+                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${activeTab === "customer_service" ? "bg-white/25 text-white" : "bg-blue-500/20 text-blue-300"}`}>
+                      {customerProfilesCount}
+                    </span>
+                  )}
+                </button>
+              </nav>
+            </div>
+          )}
         </div>
 
-        {/* Pie de la Barra Lateral con Exportación, Web y Cerrar Sesión */}
+        {/* Pie de la Barra Lateral */}
         <div className="p-3 border-t border-white/10 space-y-1 bg-[#101115]">
-          <button
-            type="button"
-            onClick={onOpenBackups}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-gray-300 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
-          >
-            <Database className="w-4 h-4 text-[#22C55E]" />
-            <span>Copias de Seguridad</span>
-          </button>
+          {role === "admin" && (
+            <>
+              {onOpenUsers && (
+                <button
+                  type="button"
+                  onClick={onOpenUsers}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-gray-300 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                >
+                  <UserCheck className="w-4 h-4 text-[#22C55E]" />
+                  <span>Equipo &amp; Accesos</span>
+                </button>
+              )}
 
-          <button
-            type="button"
-            onClick={onExportCsv}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-gray-300 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
-          >
-            <Download className="w-4 h-4 text-[#22C55E]" />
-            <span>Exportar Excel (CSV)</span>
-          </button>
+              {onOpenBackups && (
+                <button
+                  type="button"
+                  onClick={onOpenBackups}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-gray-300 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                >
+                  <Database className="w-4 h-4 text-[#22C55E]" />
+                  <span>Copias de Seguridad</span>
+                </button>
+              )}
+
+              {onExportCsv && (
+                <button
+                  type="button"
+                  onClick={onExportCsv}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-gray-300 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                >
+                  <Download className="w-4 h-4 text-[#22C55E]" />
+                  <span>Exportar Excel (CSV)</span>
+                </button>
+              )}
+            </>
+          )}
 
           <button
             type="button"
@@ -368,13 +596,17 @@ export default function CrmNavbar({
       <header className="md:hidden fixed top-0 left-0 right-0 z-30 bg-[#141519] border-b border-white/10 px-4 py-2.5 flex items-center justify-between">
         <button
           type="button"
-          onClick={() => handleSelectTab("dashboard")}
+          onClick={() => handleSelectTab(role === "atencion" ? "customer_service" : role === "marketing" ? "marketing" : "dashboard")}
           className="transition-transform duration-200 hover:scale-102 flex-shrink-0 cursor-pointer"
         >
           <BrandLogo size="default" />
         </button>
 
         <div className="flex items-center gap-2">
+          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-wider ${roleConfig.badge}`}>
+            {roleConfig.label}
+          </span>
+
           <button
             type="button"
             onClick={onRefresh}
@@ -399,39 +631,75 @@ export default function CrmNavbar({
 
             {isPlusMenuOpen && (
               <div className="absolute right-0 top-full mt-2 w-48 bg-[#181a20] border border-white/12 rounded-xl shadow-2xl p-1.5 z-50 text-xs">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsPlusMenuOpen(false);
-                    onOpenNewLead();
-                  }}
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-gray-200 flex items-center gap-2 cursor-pointer font-semibold"
-                >
-                  <Users className="w-3.5 h-3.5 text-[#22C55E]" />
-                  <span>Lead Comercial</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsPlusMenuOpen(false);
-                    onOpenNewClient();
-                  }}
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-gray-200 flex items-center gap-2 cursor-pointer font-semibold"
-                >
-                  <Briefcase className="w-3.5 h-3.5 text-[#22C55E]" />
-                  <span>Cliente Activo</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsPlusMenuOpen(false);
-                    onOpenNewExpense();
-                  }}
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-gray-200 flex items-center gap-2 cursor-pointer font-semibold"
-                >
-                  <Receipt className="w-3.5 h-3.5 text-[#22C55E]" />
-                  <span>Gasto del Mes</span>
-                </button>
+                {(role === "admin" || role === "atencion") && onOpenNewCustomerProfile && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsPlusMenuOpen(false);
+                      onOpenNewCustomerProfile();
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-gray-200 hover:text-white flex items-center gap-2 cursor-pointer font-semibold"
+                  >
+                    <Headset className="w-3.5 h-3.5 text-[#22C55E]" />
+                    <span>Ficha de Atención</span>
+                  </button>
+                )}
+
+                {(role === "admin" || role === "marketing") && onOpenNewCampaign && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsPlusMenuOpen(false);
+                      onOpenNewCampaign();
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-gray-200 hover:text-white flex items-center gap-2 cursor-pointer font-semibold"
+                  >
+                    <Megaphone className="w-3.5 h-3.5 text-purple-400" />
+                    <span>Campaña Publicitaria</span>
+                  </button>
+                )}
+
+                {(role === "admin" || role === "atencion") && onOpenNewLead && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsPlusMenuOpen(false);
+                      onOpenNewLead();
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-gray-200 hover:text-white flex items-center gap-2 cursor-pointer font-semibold"
+                  >
+                    <Users className="w-3.5 h-3.5 text-[#22C55E]" />
+                    <span>Lead / Oportunidad</span>
+                  </button>
+                )}
+
+                {(role === "admin" || role === "atencion") && onOpenNewClient && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsPlusMenuOpen(false);
+                      onOpenNewClient();
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-gray-200 hover:text-white flex items-center gap-2 cursor-pointer font-semibold"
+                  >
+                    <Briefcase className="w-3.5 h-3.5 text-[#22C55E]" />
+                    <span>Cliente Activo</span>
+                  </button>
+                )}
+
+                {role === "admin" && onOpenNewExpense && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsPlusMenuOpen(false);
+                      onOpenNewExpense();
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-gray-200 hover:text-white flex items-center gap-2 cursor-pointer font-semibold"
+                  >
+                    <Receipt className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Gasto del Mes</span>
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -439,372 +707,334 @@ export default function CrmNavbar({
       </header>
 
       {/* ------------------------------------------------------------------ */}
-      {/* 3. BARRA INFERIOR PARA CELULARES (Mobile Bottom Navigation Bar)    */}
+      {/* 3. BARRA INFERIOR DE ACCESO RÁPIDO PARA CELULARES (Mobile Bottom)  */}
       {/* ------------------------------------------------------------------ */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#141519]/96 backdrop-blur-xl border-t border-white/10 pb-[env(safe-area-inset-bottom,0px)] shadow-[0_-8px_24px_rgba(0,0,0,0.6)]">
-        <div className="grid grid-cols-5 h-15 items-center px-1">
-          {/* 1. Dashboard */}
-          <button
-            type="button"
-            onClick={() => handleSelectTab("dashboard")}
-            className={`flex flex-col items-center justify-center py-1 rounded-xl transition-[color,transform] duration-150 active:scale-95 cursor-pointer ${
-              activeTab === "dashboard"
-                ? "text-[#22C55E]"
-                : "text-gray-400 hover:text-white"
-            }`}
-          >
-            <div
-              className={`p-1 rounded-lg ${
-                activeTab === "dashboard" ? "bg-[#16A34A]/20" : ""
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-[#141519]/95 backdrop-blur-lg border-t border-white/10 px-2 py-2 flex items-center justify-around select-none">
+        {role === "admin" && (
+          <>
+            <button
+              type="button"
+              onClick={() => handleSelectTab("dashboard")}
+              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[10px] font-bold transition-colors cursor-pointer ${
+                activeTab === "dashboard" ? "text-[#22C55E]" : "text-gray-400 hover:text-white"
               }`}
             >
               <LayoutDashboard className="w-4 h-4" />
-            </div>
-            <span className="text-[10px] font-bold tracking-tight mt-0.5">
-              Inicio
-            </span>
-          </button>
+              <span>Resumen</span>
+            </button>
 
-          {/* 2. CRM Comercial */}
-          <button
-            type="button"
-            onClick={() => handleSelectTab("commercial")}
-            className={`flex flex-col items-center justify-center py-1 rounded-xl transition-[color,transform] duration-150 active:scale-95 cursor-pointer relative ${
-              activeTab === "commercial"
-                ? "text-[#22C55E]"
-                : "text-gray-400 hover:text-white"
-            }`}
-          >
-            <div
-              className={`p-1 rounded-lg ${
-                activeTab === "commercial" ? "bg-[#16A34A]/20" : ""
+            <button
+              type="button"
+              onClick={() => handleSelectTab("commercial")}
+              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[10px] font-bold transition-colors cursor-pointer relative ${
+                activeTab === "commercial" ? "text-[#22C55E]" : "text-gray-400 hover:text-white"
               }`}
             >
               <Users className="w-4 h-4" />
-            </div>
-            <span className="text-[10px] font-bold tracking-tight mt-0.5">
-              Ventas
-            </span>
-            {leadsCount > 0 && (
-              <span className="absolute top-1 right-3 w-4 h-4 rounded-full bg-[#16A34A] text-white text-[9px] font-black flex items-center justify-center">
-                {leadsCount > 9 ? "9+" : leadsCount}
-              </span>
-            )}
-          </button>
+              <span>Pipeline</span>
+              {leadsCount > 0 && (
+                <span className="absolute top-0 right-1 w-2 h-2 rounded-full bg-[#16A34A]" />
+              )}
+            </button>
 
-          {/* 3. Atención al Público */}
-          <button
-            type="button"
-            onClick={() => handleSelectTab("customer_service")}
-            className={`flex flex-col items-center justify-center py-1 rounded-xl transition-[color,transform] duration-150 active:scale-95 cursor-pointer relative ${
-              activeTab === "customer_service"
-                ? "text-[#22C55E]"
-                : "text-gray-400 hover:text-white"
-            }`}
-          >
-            <div
-              className={`p-1 rounded-lg ${
-                activeTab === "customer_service" ? "bg-[#16A34A]/20" : ""
+            <button
+              type="button"
+              onClick={() => handleSelectTab("customer_service")}
+              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[10px] font-bold transition-colors cursor-pointer relative ${
+                activeTab === "customer_service" ? "text-[#22C55E]" : "text-gray-400 hover:text-white"
               }`}
             >
               <Headset className="w-4 h-4" />
-            </div>
-            <span className="text-[10px] font-bold tracking-tight mt-0.5">
-              Atención
-            </span>
-            {customerProfilesCount > 0 && (
-              <span className="absolute top-1 right-3 w-4 h-4 rounded-full bg-[#16A34A] text-white text-[9px] font-black flex items-center justify-center">
-                {customerProfilesCount > 9 ? "9+" : customerProfilesCount}
-              </span>
-            )}
-          </button>
+              <span>Atención</span>
+              {customerProfilesCount > 0 && (
+                <span className="absolute top-0 right-1 w-2 h-2 rounded-full bg-blue-500" />
+              )}
+            </button>
 
-          {/* 4. Clientes Activos */}
-          <button
-            type="button"
-            onClick={() => handleSelectTab("clients")}
-            className={`flex flex-col items-center justify-center py-1 rounded-xl transition-[color,transform] duration-150 active:scale-95 cursor-pointer relative ${
-              activeTab === "clients"
-                ? "text-[#22C55E]"
-                : "text-gray-400 hover:text-white"
-            }`}
-          >
-            <div
-              className={`p-1 rounded-lg ${
-                activeTab === "clients" ? "bg-[#16A34A]/20" : ""
+            <button
+              type="button"
+              onClick={() => handleSelectTab("marketing")}
+              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[10px] font-bold transition-colors cursor-pointer relative ${
+                activeTab === "marketing" ? "text-[#22C55E]" : "text-gray-400 hover:text-white"
+              }`}
+            >
+              <Megaphone className="w-4 h-4" />
+              <span>Pauta</span>
+              {campaignsCount > 0 && (
+                <span className="absolute top-0 right-1 w-2 h-2 rounded-full bg-purple-500" />
+              )}
+            </button>
+          </>
+        )}
+
+        {role === "atencion" && (
+          <>
+            <button
+              type="button"
+              onClick={() => handleSelectTab("customer_service")}
+              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[10px] font-bold transition-colors cursor-pointer relative ${
+                activeTab === "customer_service" ? "text-[#22C55E]" : "text-gray-400 hover:text-white"
+              }`}
+            >
+              <Headset className="w-4 h-4" />
+              <span>Fichas</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleSelectTab("clients")}
+              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[10px] font-bold transition-colors cursor-pointer ${
+                activeTab === "clients" ? "text-[#22C55E]" : "text-gray-400 hover:text-white"
               }`}
             >
               <Briefcase className="w-4 h-4" />
-            </div>
-            <span className="text-[10px] font-bold tracking-tight mt-0.5">
-              Clientes
-            </span>
-            {clientsCount > 0 && (
-              <span className="absolute top-1 right-3 w-4 h-4 rounded-full bg-[#16A34A] text-white text-[9px] font-black flex items-center justify-center">
-                {clientsCount > 9 ? "9+" : clientsCount}
-              </span>
-            )}
-          </button>
+              <span>Clientes</span>
+            </button>
 
-          {/* 5. «Más» con menú desplegable */}
-          <button
-            type="button"
-            onClick={() => setIsMoreMenuOpen(true)}
-            className={`flex flex-col items-center justify-center py-1 rounded-xl transition-[color,transform] duration-150 active:scale-95 cursor-pointer ${
-              activeTab === "meetings" || activeTab === "responses" || activeTab === "expenses"
-                ? "text-[#22C55E]"
-                : "text-gray-400 hover:text-white"
-            }`}
-          >
-            <div
-              className={`p-1 rounded-lg ${
-                activeTab === "meetings" || activeTab === "responses" || activeTab === "expenses"
-                  ? "bg-[#16A34A]/20"
-                  : ""
+            <button
+              type="button"
+              onClick={() => handleSelectTab("meetings")}
+              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[10px] font-bold transition-colors cursor-pointer ${
+                activeTab === "meetings" ? "text-[#22C55E]" : "text-gray-400 hover:text-white"
               }`}
             >
-              <MoreHorizontal className="w-4 h-4" />
-            </div>
-            <span className="text-[10px] font-bold tracking-tight mt-0.5">
-              Más
-            </span>
-          </button>
-        </div>
-      </div>
+              <Calendar className="w-4 h-4" />
+              <span>Agenda</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleSelectTab("responses")}
+              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[10px] font-bold transition-colors cursor-pointer ${
+                activeTab === "responses" ? "text-[#22C55E]" : "text-gray-400 hover:text-white"
+              }`}
+            >
+              <FileText className="w-4 h-4" />
+              <span>Web</span>
+            </button>
+          </>
+        )}
+
+        {role === "marketing" && (
+          <>
+            <button
+              type="button"
+              onClick={() => handleSelectTab("marketing")}
+              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[10px] font-bold transition-colors cursor-pointer relative ${
+                activeTab === "marketing" ? "text-[#22C55E]" : "text-gray-400 hover:text-white"
+              }`}
+            >
+              <Megaphone className="w-4 h-4" />
+              <span>Campañas</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleSelectTab("clients")}
+              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[10px] font-bold transition-colors cursor-pointer ${
+                activeTab === "clients" ? "text-[#22C55E]" : "text-gray-400 hover:text-white"
+              }`}
+            >
+              <Briefcase className="w-4 h-4" />
+              <span>Clientes</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleSelectTab("customer_service")}
+              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[10px] font-bold transition-colors cursor-pointer ${
+                activeTab === "customer_service" ? "text-[#22C55E]" : "text-gray-400 hover:text-white"
+              }`}
+            >
+              <Headset className="w-4 h-4" />
+              <span>Contexto</span>
+            </button>
+          </>
+        )}
+
+        {/* Botón 'Más' móvil para opciones complementarias */}
+        <button
+          type="button"
+          onClick={() => setIsMoreMenuOpen(true)}
+          className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[10px] font-bold text-gray-400 hover:text-white transition-colors cursor-pointer"
+        >
+          <MoreHorizontal className="w-4 h-4" />
+          <span>Más</span>
+        </button>
+      </nav>
 
       {/* ------------------------------------------------------------------ */}
-      {/* 4. BOTTOM SHEET «MÁS» PARA CELULARES                               */}
+      {/* 4. MODAL / BOTTOM SHEET "MÁS OPCIONES" PARA MÓVIL                  */}
       {/* ------------------------------------------------------------------ */}
       <AnimatePresence>
         {isMoreMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
-            className="md:hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex flex-col justify-end"
-            onClick={() => setIsMoreMenuOpen(false)}
-          >
+          <div className="fixed inset-0 z-50 flex items-end justify-center md:hidden">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+              onClick={() => setIsMoreMenuOpen(false)}
+            />
+
             <motion.div
               initial={prefersReducedMotion ? false : { y: "100%" }}
               animate={{ y: 0 }}
-              exit={prefersReducedMotion ? false : { y: "100%" }}
-              transition={{ duration: 0.28, ease: [0.32, 0.72, 0, 1] }}
-              className="bg-[#141519] border-t border-white/12 rounded-t-3xl p-5 pb-[calc(2rem+env(safe-area-inset-bottom,0px))] space-y-4 shadow-2xl max-h-[82vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
+              exit={{ y: "100%" }}
+              transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
+              className="relative w-full bg-[#181a20] border-t border-white/10 rounded-t-3xl p-5 pb-8 max-h-[85vh] overflow-y-auto z-10"
             >
-              {/* Drag indicator handle */}
-              <div className="w-10 h-1 rounded-full bg-white/20 mx-auto -mt-1.5 mb-1" />
+              <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-4" />
 
-              {/* Cabecera del Bottom Sheet */}
-              <div className="flex items-center justify-between pb-3 border-b border-white/10">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-[#16A34A]" />
-                  <h3 className="text-sm font-black text-white">
-                    Gestión &amp; Administración
-                  </h3>
+              <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10">
+                <div>
+                  <h3 className="text-sm font-black text-white">Menú de Navegación</h3>
+                  <p className="text-[11px] text-gray-400">Sesión iniciada como {currentUser?.name || currentUser?.username}</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsMoreMenuOpen(false)}
-                  className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors cursor-pointer"
+                  className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-white/5"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* Apartados Secundarios */}
               <div className="space-y-1">
-                <button
-                  type="button"
-                  onClick={() => handleSelectTab("meetings")}
-                  className={`w-full flex items-center justify-between p-3 rounded-xl text-left transition-colors cursor-pointer ${
-                    activeTab === "meetings"
-                      ? "bg-[#16A34A] text-white"
-                      : "bg-white/5 text-gray-200 hover:bg-white/10"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Calendar className="w-4 h-4 text-[#22C55E]" />
-                    <span className="text-xs font-bold block">
-                      Agenda de Reuniones
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {meetingsCount > 0 && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#16A34A]/25 text-[#22C55E]">
-                        {meetingsCount}
-                      </span>
+                {role === "admin" && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectTab("clients")}
+                      className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/5 text-gray-200 text-xs font-bold"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Briefcase className="w-4 h-4 text-[#22C55E]" />
+                        <span>Clientes Activos</span>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-gray-500" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSelectTab("meetings")}
+                      className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/5 text-gray-200 text-xs font-bold"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Calendar className="w-4 h-4 text-[#22C55E]" />
+                        <span>Agenda Reuniones 20m</span>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-gray-500" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSelectTab("responses")}
+                      className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/5 text-gray-200 text-xs font-bold"
+                    >
+                      <div className="flex items-center gap-3">
+                        <FileText className="w-4 h-4 text-[#22C55E]" />
+                        <span>Formularios Web</span>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-gray-500" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSelectTab("expenses")}
+                      className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/5 text-gray-200 text-xs font-bold"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Receipt className="w-4 h-4 text-amber-400" />
+                        <span>Gastos del Mes</span>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-gray-500" />
+                    </button>
+
+                    {onOpenUsers && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsMoreMenuOpen(false);
+                          onOpenUsers();
+                        }}
+                        className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/5 text-gray-200 text-xs font-bold"
+                      >
+                        <div className="flex items-center gap-3">
+                          <UserCheck className="w-4 h-4 text-[#22C55E]" />
+                          <span>Equipo &amp; Accesos</span>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-gray-500" />
+                      </button>
                     )}
-                    <ChevronRight className="w-4 h-4 opacity-50" />
-                  </div>
-                </button>
 
-                <button
-                  type="button"
-                  onClick={() => handleSelectTab("responses")}
-                  className={`w-full flex items-center justify-between p-3 rounded-xl text-left transition-colors cursor-pointer ${
-                    activeTab === "responses"
-                      ? "bg-[#16A34A] text-white"
-                      : "bg-white/5 text-gray-200 hover:bg-white/10"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <FileText className="w-4 h-4 text-[#22C55E]" />
-                    <span className="text-xs font-bold block">
-                      Formularios Web
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {leadsCount > 0 && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#16A34A]/25 text-[#22C55E]">
-                        {leadsCount}
-                      </span>
+                    {onOpenBackups && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsMoreMenuOpen(false);
+                          onOpenBackups();
+                        }}
+                        className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/5 text-gray-200 text-xs font-bold"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Database className="w-4 h-4 text-[#22C55E]" />
+                          <span>Copias de Seguridad</span>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-gray-500" />
+                      </button>
                     )}
-                    <ChevronRight className="w-4 h-4 opacity-50" />
-                  </div>
-                </button>
 
-                <button
-                  type="button"
-                  onClick={() => handleSelectTab("expenses")}
-                  className={`w-full flex items-center justify-between p-3 rounded-xl text-left transition-colors cursor-pointer ${
-                    activeTab === "expenses"
-                      ? "bg-[#16A34A] text-white"
-                      : "bg-white/5 text-gray-200 hover:bg-white/10"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Receipt className="w-4 h-4 text-[#22C55E]" />
-                    <span className="text-xs font-bold block">
-                      Gastos del Mes
-                    </span>
-                  </div>
-                  <ChevronRight className="w-4 h-4 opacity-50" />
-                </button>
+                    {onExportCsv && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsMoreMenuOpen(false);
+                          onExportCsv();
+                        }}
+                        className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/5 text-gray-200 text-xs font-bold"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Download className="w-4 h-4 text-[#22C55E]" />
+                          <span>Exportar Excel (CSV)</span>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-gray-500" />
+                      </button>
+                    )}
+                  </>
+                )}
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMoreMenuOpen(false);
-                    onOpenBackups?.();
-                  }}
-                  className="w-full flex items-center justify-between p-3 rounded-xl text-left bg-white/5 text-gray-200 hover:bg-white/10 transition-colors cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    <Database className="w-4 h-4 text-[#22C55E]" />
-                    <span className="text-xs font-bold block">
-                      Copias de Seguridad (Backups)
-                    </span>
-                  </div>
-                  <ChevronRight className="w-4 h-4 opacity-50" />
-                </button>
-              </div>
-
-              {/* Accesos de Creación Rápida */}
-              <div className="pt-2 border-t border-white/5">
-                <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider block mb-2">
-                  Acciones Rápidas
-                </span>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div className="pt-2 mt-2 border-t border-white/10 space-y-1">
                   <button
                     type="button"
                     onClick={() => {
                       setIsMoreMenuOpen(false);
-                      onOpenNewCustomerProfile?.();
+                      onNavigateLanding();
                     }}
-                    className="p-2.5 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 flex flex-col items-center justify-center text-center gap-1 cursor-pointer active:scale-96 transition-transform"
+                    className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/5 text-gray-200 text-xs font-bold"
                   >
-                    <Headset className="w-4 h-4 text-[#22C55E]" />
-                    <span className="text-[10px] font-bold text-white leading-tight">
-                      Nueva Ficha
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <ExternalLink className="w-4 h-4 text-gray-400" />
+                      <span>Ver Sitio Web</span>
+                    </div>
+                    <ChevronRight className="w-3.5 h-3.5 text-gray-500" />
                   </button>
 
                   <button
                     type="button"
                     onClick={() => {
                       setIsMoreMenuOpen(false);
-                      onOpenNewLead();
+                      onLogout();
                     }}
-                    className="p-2.5 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 flex flex-col items-center justify-center text-center gap-1 cursor-pointer active:scale-96 transition-transform"
+                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-red-500/10 text-red-400 text-xs font-bold"
                   >
-                    <Users className="w-4 h-4 text-[#22C55E]" />
-                    <span className="text-[10px] font-bold text-white leading-tight">
-                      Nuevo Lead
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsMoreMenuOpen(false);
-                      onOpenNewClient();
-                    }}
-                    className="p-2.5 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 flex flex-col items-center justify-center text-center gap-1 cursor-pointer active:scale-96 transition-transform"
-                  >
-                    <Briefcase className="w-4 h-4 text-[#22C55E]" />
-                    <span className="text-[10px] font-bold text-white leading-tight">
-                      Nuevo Cliente
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsMoreMenuOpen(false);
-                      onOpenNewExpense();
-                    }}
-                    className="p-2.5 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 flex flex-col items-center justify-center text-center gap-1 cursor-pointer active:scale-96 transition-transform"
-                  >
-                    <Receipt className="w-4 h-4 text-[#22C55E]" />
-                    <span className="text-[10px] font-bold text-white leading-tight">
-                      Nuevo Gasto
-                    </span>
+                    <LogOut className="w-4 h-4" />
+                    <span>Cerrar Sesión</span>
                   </button>
                 </div>
               </div>
-
-              {/* Acciones del Sistema */}
-              <div className="pt-2 border-t border-white/5 space-y-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMoreMenuOpen(false);
-                    onExportCsv();
-                  }}
-                  className="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-gray-200 cursor-pointer"
-                >
-                  <Download className="w-4 h-4 text-[#22C55E]" />
-                  <span>Exportar Excel (CSV)</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMoreMenuOpen(false);
-                    onNavigateLanding();
-                  }}
-                  className="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-gray-200 cursor-pointer"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  <span>Ver Sitio Web</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMoreMenuOpen(false);
-                    onLogout();
-                  }}
-                  className="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl bg-red-500/10 text-red-400 text-xs font-bold cursor-pointer"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span>Cerrar Sesión</span>
-                </button>
-              </div>
             </motion.div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </>
