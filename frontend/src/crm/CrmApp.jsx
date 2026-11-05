@@ -23,6 +23,11 @@ import {
   crmCreateCampaign,
   crmUpdateCampaign,
   crmDeleteCampaign,
+  crmGetCompanyCampaigns,
+  crmSubscribeCompanyCampaigns,
+  crmCreateCompanyCampaign,
+  crmUpdateCompanyCampaign,
+  crmDeleteCompanyCampaign,
   crmCheckAndTriggerAutoBackup,
   crmGetExpenses,
   crmCreateExpense,
@@ -37,20 +42,32 @@ export default function CrmApp({ onNavigateLanding }) {
   const [leads, setLeads] = useState([]);
   const [clients, setClients] = useState([]);
   const [customerProfiles, setCustomerProfiles] = useState([]);
-  const [campaigns, setCampaigns] = useState([]);
+  const [clientCampaigns, setClientCampaigns] = useState([]);
+  const [companyCampaigns, setCompanyCampaigns] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
 
-  const loadAllData = useCallback(async () => {
+  const loadAllData = useCallback(async (userRole = currentUser?.role) => {
     try {
       setRefreshing(true);
-      const [leadsRes, clientsRes, customerRes, campaignsRes, expensesRes] = await Promise.all([
+      const isMarketing = userRole === "marketing";
+
+      // Peticiones concurrentes
+      const promises = [
         crmGetLeads(),
         crmGetClients(),
         crmGetCustomerProfiles(),
         crmGetCampaigns(),
-        crmGetExpenses(),
-      ]);
+        crmGetCompanyCampaigns(),
+      ];
+
+      // Exclusivo para Marketing: los gastos y balances financieros solo se solicitan si es rol marketing
+      if (isMarketing) {
+        promises.push(crmGetExpenses());
+      }
+
+      const results = await Promise.all(promises);
+      const [leadsRes, clientsRes, customerRes, clientCampRes, companyCampRes, expensesRes] = results;
 
       if (leadsRes.ok && Array.isArray(leadsRes.leads)) {
         setLeads(leadsRes.leads);
@@ -61,27 +78,32 @@ export default function CrmApp({ onNavigateLanding }) {
       if (customerRes.ok && Array.isArray(customerRes.profiles)) {
         setCustomerProfiles(customerRes.profiles);
       }
-      if (campaignsRes.ok && Array.isArray(campaignsRes.campaigns)) {
-        setCampaigns(campaignsRes.campaigns);
+      if (clientCampRes.ok && Array.isArray(clientCampRes.campaigns)) {
+        setClientCampaigns(clientCampRes.campaigns);
       }
-      if (expensesRes.ok && Array.isArray(expensesRes.expenses)) {
+      if (companyCampRes.ok && Array.isArray(companyCampRes.campaigns)) {
+        setCompanyCampaigns(companyCampRes.campaigns);
+      }
+      if (isMarketing && expensesRes?.ok && Array.isArray(expensesRes.expenses)) {
         setExpenses(expensesRes.expenses);
+      } else {
+        setExpenses([]);
       }
     } catch {
       // ignore
     } finally {
       setTimeout(() => setRefreshing(false), 300);
     }
-  }, []);
+  }, [currentUser?.role]);
 
   useEffect(() => {
     crmCheckAuth()
       .then((res) => {
         if (res.ok && res.authenticated) {
+          const user = res.user || { username: "admin", role: "admin", name: "Administrador" };
           setIsAuthenticated(true);
-          setCurrentUser(res.user || { username: "admin", role: "admin", name: "Administrador" });
-          loadAllData();
-          // Comprobar y disparar copia de seguridad automática si pasaron 24h
+          setCurrentUser(user);
+          loadAllData(user.role);
           crmCheckAndTriggerAutoBackup();
         } else {
           setIsAuthenticated(false);
@@ -93,7 +115,7 @@ export default function CrmApp({ onNavigateLanding }) {
       });
   }, [loadAllData]);
 
-  // Suscripción en tiempo real a leads, fichas y campañas de Firestore
+  // Suscripciones en tiempo real de Firestore
   useEffect(() => {
     if (!isAuthenticated) return;
 
@@ -109,23 +131,31 @@ export default function CrmApp({ onNavigateLanding }) {
       }
     });
 
-    const unsubCampaigns = crmSubscribeCampaigns((realtimeCampaigns) => {
-      if (Array.isArray(realtimeCampaigns)) {
-        setCampaigns(realtimeCampaigns);
+    const unsubClientCamps = crmSubscribeCampaigns((realtimeClientCamps) => {
+      if (Array.isArray(realtimeClientCamps)) {
+        setClientCampaigns(realtimeClientCamps);
+      }
+    });
+
+    const unsubCompanyCamps = crmSubscribeCompanyCampaigns((realtimeCompanyCamps) => {
+      if (Array.isArray(realtimeCompanyCamps)) {
+        setCompanyCampaigns(realtimeCompanyCamps);
       }
     });
 
     return () => {
       if (typeof unsubLeads === "function") unsubLeads();
       if (typeof unsubProfiles === "function") unsubProfiles();
-      if (typeof unsubCampaigns === "function") unsubCampaigns();
+      if (typeof unsubClientCamps === "function") unsubClientCamps();
+      if (typeof unsubCompanyCamps === "function") unsubCompanyCamps();
     };
   }, [isAuthenticated]);
 
   const handleLoginSuccess = async (user) => {
     setIsAuthenticated(true);
-    setCurrentUser(user || { username: "admin", role: "admin", name: "Administrador" });
-    await loadAllData();
+    const activeUser = user || { username: "admin", role: "admin", name: "Administrador" };
+    setCurrentUser(activeUser);
+    await loadAllData(activeUser.role);
     crmCheckAndTriggerAutoBackup();
   };
 
@@ -147,7 +177,6 @@ export default function CrmApp({ onNavigateLanding }) {
       if (maybeNotes !== undefined) updates.notes = maybeNotes;
     }
 
-    // Optimistic update
     setLeads((prev) =>
       prev.map((l) => (l.id === id || l.refId === id ? { ...l, ...updates } : l))
     );
@@ -170,7 +199,6 @@ export default function CrmApp({ onNavigateLanding }) {
     loadAllData();
   };
 
-  // Convertir oportunidad ganada a Cliente Activo
   const handleConvertToClient = async (lead) => {
     const clientData = {
       clientName: lead.businessName || lead.fullName,
@@ -194,7 +222,7 @@ export default function CrmApp({ onNavigateLanding }) {
   };
 
   // --------------------------------------------------------------------------
-  // HANDLERS: ATENCIÓN AL PÚBLICO (FICHAS COMPLETAS DE CLIENTES)
+  // HANDLERS: ATENCIÓN AL PÚBLICO (FICHAS)
   // --------------------------------------------------------------------------
   const handleCreateCustomerProfile = async (profileData) => {
     const res = await crmCreateCustomerProfile(profileData);
@@ -226,19 +254,19 @@ export default function CrmApp({ onNavigateLanding }) {
   };
 
   // --------------------------------------------------------------------------
-  // HANDLERS: MARKETING & PUBLICIDAD
+  // HANDLERS: PUBLICIDAD DE CLIENTES
   // --------------------------------------------------------------------------
-  const handleCreateCampaign = async (campaignData) => {
+  const handleCreateClientCampaign = async (campaignData) => {
     const res = await crmCreateCampaign(campaignData);
     if (res.ok && res.campaign) {
-      setCampaigns((prev) => [res.campaign, ...prev]);
+      setClientCampaigns((prev) => [res.campaign, ...prev]);
     }
     loadAllData();
     return res.ok;
   };
 
-  const handleUpdateCampaign = async (id, updates) => {
-    setCampaigns((prev) =>
+  const handleUpdateClientCampaign = async (id, updates) => {
+    setClientCampaigns((prev) =>
       prev.map((c) => (c.id === id ? { ...c, ...updates } : c))
     );
     const res = await crmUpdateCampaign(id, updates);
@@ -246,9 +274,36 @@ export default function CrmApp({ onNavigateLanding }) {
     return res.ok;
   };
 
-  const handleDeleteCampaign = async (id) => {
-    setCampaigns((prev) => prev.filter((c) => c.id !== id));
+  const handleDeleteClientCampaign = async (id) => {
+    setClientCampaigns((prev) => prev.filter((c) => c.id !== id));
     await crmDeleteCampaign(id);
+    loadAllData();
+  };
+
+  // --------------------------------------------------------------------------
+  // HANDLERS: PUBLICIDAD PROPIA DE LA EMPRESA
+  // --------------------------------------------------------------------------
+  const handleCreateCompanyCampaign = async (campaignData) => {
+    const res = await crmCreateCompanyCampaign(campaignData);
+    if (res.ok && res.campaign) {
+      setCompanyCampaigns((prev) => [res.campaign, ...prev]);
+    }
+    loadAllData();
+    return res.ok;
+  };
+
+  const handleUpdateCompanyCampaign = async (id, updates) => {
+    setCompanyCampaigns((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, ...updates } : c))
+    );
+    const res = await crmUpdateCompanyCampaign(id, updates);
+    loadAllData();
+    return res.ok;
+  };
+
+  const handleDeleteCompanyCampaign = async (id) => {
+    setCompanyCampaigns((prev) => prev.filter((c) => c.id !== id));
+    await crmDeleteCompanyCampaign(id);
     loadAllData();
   };
 
@@ -278,9 +333,10 @@ export default function CrmApp({ onNavigateLanding }) {
   };
 
   // --------------------------------------------------------------------------
-  // HANDLERS: GASTOS DEL MES
+  // HANDLERS: GASTOS (Exclusivo Marketing)
   // --------------------------------------------------------------------------
   const handleCreateExpense = async (expenseData) => {
+    if (currentUser?.role !== "marketing") return;
     const res = await crmCreateExpense(expenseData);
     if (res.ok && res.expense) {
       setExpenses((prev) => [res.expense, ...prev]);
@@ -289,6 +345,7 @@ export default function CrmApp({ onNavigateLanding }) {
   };
 
   const handleDeleteExpense = async (id) => {
+    if (currentUser?.role !== "marketing") return;
     setExpenses((prev) => prev.filter((e) => e.id !== id));
     await crmDeleteExpense(id);
     loadAllData();
@@ -320,7 +377,8 @@ export default function CrmApp({ onNavigateLanding }) {
       leads={leads}
       clients={clients}
       customerProfiles={customerProfiles}
-      campaigns={campaigns}
+      clientCampaigns={clientCampaigns}
+      companyCampaigns={companyCampaigns}
       expenses={expenses}
       onRefresh={loadAllData}
       refreshing={refreshing}
@@ -334,9 +392,12 @@ export default function CrmApp({ onNavigateLanding }) {
       onCreateCustomerProfile={handleCreateCustomerProfile}
       onDeleteCustomerProfile={handleDeleteCustomerProfile}
       onAddCustomerFollowup={handleAddCustomerFollowup}
-      onUpdateCampaign={handleUpdateCampaign}
-      onCreateCampaign={handleCreateCampaign}
-      onDeleteCampaign={handleDeleteCampaign}
+      onUpdateClientCampaign={handleUpdateClientCampaign}
+      onCreateClientCampaign={handleCreateClientCampaign}
+      onDeleteClientCampaign={handleDeleteClientCampaign}
+      onUpdateCompanyCampaign={handleUpdateCompanyCampaign}
+      onCreateCompanyCampaign={handleCreateCompanyCampaign}
+      onDeleteCompanyCampaign={handleDeleteCompanyCampaign}
       onCreateExpense={handleCreateExpense}
       onDeleteExpense={handleDeleteExpense}
       onConvertToClient={handleConvertToClient}

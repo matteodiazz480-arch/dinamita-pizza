@@ -48,8 +48,16 @@ service cloud.firestore {
     }
 
     // ------------------------------------------------------------------------
-    // 5. MARKETING & PUBLICIDAD (Campañas, pauta, plataformas y tareas)
+    // 5. MARKETING & PUBLICIDAD (Campañas de clientes y publicidad propia)
     // ------------------------------------------------------------------------
+    match /client_campaigns/{campaignId} {
+      allow read, write: if true;
+    }
+
+    match /company_campaigns/{campaignId} {
+      allow read, write: if true;
+    }
+
     match /marketing_campaigns/{campaignId} {
       allow read, write: if true;
     }

@@ -1,9 +1,5 @@
 import React from "react";
 import {
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  Wallet,
   Users,
   Briefcase,
   Calendar,
@@ -12,12 +8,10 @@ import {
   Megaphone,
   Plus,
   Headset,
+  CheckCircle2,
+  Activity,
 } from "lucide-react";
 import { WhatsAppIcon } from "../components/Icons";
-
-function getCurrentYearMonth() {
-  return new Date().toISOString().slice(0, 7);
-}
 
 function getFormattedMonth() {
   return new Date().toLocaleDateString("es-AR", { month: "long", year: "numeric" });
@@ -27,55 +21,35 @@ export default function CrmDashboardView({
   leads = [],
   clients = [],
   customerProfiles = [],
-  campaigns = [],
-  expenses = [],
+  clientCampaigns = [],
+  companyCampaigns = [],
   onNavigateTab,
   onOpenNewLead,
   onOpenNewCustomer,
-  onOpenNewCampaign,
+  onOpenNewClientCampaign,
 }) {
-  // Clientes activos y honorarios mensuales (Ganancias del mes)
+  // Clientes activos en cartera
   const activeClients = clients.filter(
     (c) => c.status === "activo" || c.status === "por_renovar"
   );
-  const monthlyRevenue = activeClients.reduce(
-    (acc, c) => acc + (Number(c.feeARS) || 0),
-    0
-  );
 
-  // Total de gastos del mes actual
-  const currentYearMonth = getCurrentYearMonth();
-  const monthlyExpenses = expenses
-    .filter((e) => !e.date || (e.date || "").startsWith(currentYearMonth))
-    .reduce((acc, e) => acc + (Number(e.amount) || 0), 0);
-
-  // Balance mensual = Ganancias - Gastos
-  const monthlyBalance = monthlyRevenue - monthlyExpenses;
-  const isSuperavit = monthlyBalance >= 0;
-
-  // Pipeline Comercial
+  // Leads comerciales activos
   const activeLeads = leads.filter(
     (l) => l.status !== "ganado" && l.status !== "perdido" && l.status !== "archivado"
   );
-  const pipelineValue = leads.reduce((acc, l) => {
-    if (l.status === "ganado" || l.status === "perdido" || l.status === "archivado") {
-      return acc;
-    }
-    const fee = Number(l.feeARS) || 0;
-    const prob = Number(l.probability) || 50;
-    return acc + Math.round(fee * (prob / 100));
-  }, 0);
 
-  // Campañas de Marketing
-  const activeCampaigns = campaigns.filter(
+  // Fichas de atención activas
+  const activeProfiles = customerProfiles.filter((p) => p.status === "activo");
+
+  // Campañas activas totales (clientes + empresa)
+  const activeClientCamps = clientCampaigns.filter(
     (c) => c.status === "activa" || c.status === "optimizacion"
   );
-  const totalMarketingBudget = campaigns.reduce(
-    (acc, c) => acc + (Number(c.budgetARS) || 0),
-    0
+  const activeCompanyCamps = companyCampaigns.filter(
+    (c) => c.status === "activa" || c.status === "optimizacion"
   );
 
-  // Próximas renovaciones de clientes
+  // Próximas renovaciones operativas de clientes
   const renewingClients = activeClients.slice(0, 5);
 
   // Próximas reuniones de 20 min
@@ -90,17 +64,17 @@ export default function CrmDashboardView({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 select-none">
       {/* ------------------------------------------------------------------ */}
-      {/* 1. CABECERA EJECUTIVA SIMPLIFICADA                                 */}
+      {/* 1. CABECERA OPERATIVA DE SUPERVISIÓN                              */}
       {/* ------------------------------------------------------------------ */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-white/8">
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-            Resumen General
+            Panel Operativo de Administración
           </h1>
           <p className="text-xs text-gray-400 capitalize mt-0.5">
-            Período de {getFormattedMonth()}
+            Supervisión de equipos y actividades · {getFormattedMonth()}
           </p>
         </div>
 
@@ -113,17 +87,6 @@ export default function CrmDashboardView({
             >
               <Headset className="w-3.5 h-3.5 text-[#22C55E]" />
               <span>Nueva Ficha</span>
-            </button>
-          )}
-
-          {onOpenNewCampaign && (
-            <button
-              type="button"
-              onClick={onOpenNewCampaign}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-semibold border border-white/10 transition-colors cursor-pointer"
-            >
-              <Megaphone className="w-3.5 h-3.5 text-[#22C55E]" />
-              <span>Nueva Campaña</span>
             </button>
           )}
 
@@ -141,68 +104,86 @@ export default function CrmDashboardView({
       </div>
 
       {/* ------------------------------------------------------------------ */}
-      {/* 2. SALUD FINANCIERA: 3 TARJETAS CLAVE                              */}
+      {/* 2. PULSO OPERATIVO (4 INDICADORES DE GESTIÓN SIN TOTALES DE PLATA)  */}
       {/* ------------------------------------------------------------------ */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4">
-        {/* Balance Neto */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+        {/* Pipeline Activo */}
         <div className="bg-[#141519] border border-white/10 rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-lg">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
-              Balance Neto
-            </span>
-            <div className={`p-2 rounded-xl ${isSuperavit ? "bg-[#16A34A]/15 text-[#22C55E]" : "bg-red-500/15 text-red-400"}`}>
-              {isSuperavit ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-            </div>
-          </div>
-          <div className="mt-3">
-            <div className="text-2xl sm:text-3xl font-black text-white font-mono tracking-tight">
-              ${monthlyBalance.toLocaleString("es-AR")}
-            </div>
-            <div className="text-xs mt-1">
-              <span className={`font-semibold ${isSuperavit ? "text-[#22C55E]" : "text-red-400"}`}>
-                {isSuperavit ? "Superávit operativo" : "Déficit mensual"}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Ingresos del Mes */}
-        <div className="bg-[#141519] border border-white/10 rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-lg">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
-              Ingresos Facturados
+            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+              Pipeline Activo
             </span>
             <div className="p-2 rounded-xl bg-[#16A34A]/15 text-[#22C55E]">
-              <DollarSign className="w-4 h-4" />
+              <Users className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3">
-            <div className="text-2xl sm:text-3xl font-black text-[#22C55E] font-mono tracking-tight">
-              ${monthlyRevenue.toLocaleString("es-AR")}
+          <div className="mt-2">
+            <div className="text-2xl sm:text-3xl font-black text-white font-mono tracking-tight">
+              {activeLeads.length}
             </div>
-            <div className="text-xs text-gray-400 mt-1">
-              {activeClients.length} clientes activos
-            </div>
+            <span className="text-xs text-gray-400 mt-0.5 block">
+              Oportunidades en curso
+            </span>
           </div>
         </div>
 
-        {/* Gastos del Mes */}
+        {/* Clientes en Atención */}
         <div className="bg-[#141519] border border-white/10 rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-lg">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
-              Gastos Operativos
+            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+              Atención al Cliente
             </span>
-            <div className="p-2 rounded-xl bg-amber-500/15 text-amber-400">
-              <Wallet className="w-4 h-4" />
+            <div className="p-2 rounded-xl bg-blue-500/15 text-blue-400">
+              <Headset className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3">
+          <div className="mt-2">
             <div className="text-2xl sm:text-3xl font-black text-white font-mono tracking-tight">
-              ${monthlyExpenses.toLocaleString("es-AR")}
+              {activeProfiles.length}
             </div>
-            <div className="text-xs text-gray-400 mt-1">
-              {expenses.length} egresos registrados
+            <span className="text-xs text-gray-400 mt-0.5 block">
+              Fichas activas en servicio
+            </span>
+          </div>
+        </div>
+
+        {/* Campañas en Curso */}
+        <div className="bg-[#141519] border border-white/10 rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-lg">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+              Campañas en Curso
+            </span>
+            <div className="p-2 rounded-xl bg-purple-500/15 text-purple-400">
+              <Megaphone className="w-4 h-4" />
             </div>
+          </div>
+          <div className="mt-2">
+            <div className="text-2xl sm:text-3xl font-black text-white font-mono tracking-tight">
+              {activeClientCamps.length + activeCompanyCamps.length}
+            </div>
+            <span className="text-xs text-gray-400 mt-0.5 block">
+              {activeClientCamps.length} clientes · {activeCompanyCamps.length} propias
+            </span>
+          </div>
+        </div>
+
+        {/* Cartera Activa */}
+        <div className="bg-[#141519] border border-white/10 rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-lg">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+              Clientes Activos
+            </span>
+            <div className="p-2 rounded-xl bg-emerald-500/15 text-emerald-400">
+              <Briefcase className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-2">
+            <div className="text-2xl sm:text-3xl font-black text-[#22C55E] font-mono tracking-tight">
+              {activeClients.length}
+            </div>
+            <span className="text-xs text-gray-400 mt-0.5 block">
+              Contratos en ejecución
+            </span>
           </div>
         </div>
       </div>
@@ -212,7 +193,7 @@ export default function CrmDashboardView({
       {/* ------------------------------------------------------------------ */}
       <div>
         <h2 className="text-xs font-black uppercase tracking-wider text-gray-400 mb-3">
-          Áreas de Trabajo
+          Supervisión por Departamento
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4">
@@ -236,11 +217,9 @@ export default function CrmDashboardView({
               </p>
             </div>
 
-            <div className="pt-3 mt-4 border-t border-white/5 flex items-baseline justify-between">
-              <span className="text-[11px] text-gray-400">Valor estimado:</span>
-              <span className="text-xs font-mono font-bold text-white">
-                ${pipelineValue.toLocaleString("es-AR")}
-              </span>
+            <div className="pt-3 mt-4 border-t border-white/5 flex items-center justify-between text-xs text-gray-400">
+              <span>Contactados y reuniones</span>
+              <span className="font-bold text-[#22C55E]">Ver Pipeline &rarr;</span>
             </div>
           </div>
 
@@ -260,15 +239,13 @@ export default function CrmDashboardView({
                 Atención al Cliente
               </h3>
               <p className="text-xs text-gray-400 mt-1">
-                {customerProfiles.length} fichas individuales
+                {customerProfiles.length} fichas y diagnósticos
               </p>
             </div>
 
-            <div className="pt-3 mt-4 border-t border-white/5 flex items-baseline justify-between">
-              <span className="text-[11px] text-gray-400">Clientes activos:</span>
-              <span className="text-xs font-bold text-emerald-400">
-                {customerProfiles.filter((p) => p.status === "activo").length} en servicio
-              </span>
+            <div className="pt-3 mt-4 border-t border-white/5 flex items-center justify-between text-xs text-gray-400">
+              <span>{activeProfiles.length} en servicio</span>
+              <span className="font-bold text-blue-400">Abrir Módulo &rarr;</span>
             </div>
           </div>
 
@@ -285,18 +262,16 @@ export default function CrmDashboardView({
                 <ArrowRight className="w-4 h-4 text-gray-500 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
               </div>
               <h3 className="text-sm font-black text-white mt-3">
-                Marketing &amp; Pauta
+                Marketing &amp; Publicidad
               </h3>
               <p className="text-xs text-gray-400 mt-1">
-                {activeCampaigns.length} campañas activas
+                {clientCampaigns.length} campañas de clientes · {companyCampaigns.length} propias
               </p>
             </div>
 
-            <div className="pt-3 mt-4 border-t border-white/5 flex items-baseline justify-between">
-              <span className="text-[11px] text-gray-400">Pauta administrada:</span>
-              <span className="text-xs font-mono font-bold text-white">
-                ${totalMarketingBudget.toLocaleString("es-AR")}
-              </span>
+            <div className="pt-3 mt-4 border-t border-white/5 flex items-center justify-between text-xs text-gray-400">
+              <span>Gestión publicitaria</span>
+              <span className="font-bold text-purple-300">Supervisar &rarr;</span>
             </div>
           </div>
         </div>
@@ -380,14 +355,14 @@ export default function CrmDashboardView({
           </div>
         </div>
 
-        {/* Próximas Renovaciones / Cobros */}
+        {/* Próximas Renovaciones / Vencimientos operativos */}
         <div className="bg-[#141519] border border-white/10 rounded-2xl p-4 sm:p-5 shadow-lg flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/8">
               <div className="flex items-center gap-2">
                 <Briefcase className="w-4 h-4 text-[#22C55E]" />
                 <h4 className="text-xs font-black uppercase tracking-wider text-white">
-                  Próximas Renovaciones
+                  Próximas Renovaciones Operativas
                 </h4>
               </div>
               <button
@@ -415,11 +390,11 @@ export default function CrmDashboardView({
                       <div className="text-[11px] text-gray-400">{c.service}</div>
                     </div>
                     <div className="text-right">
-                      <div className="font-mono font-bold text-[#22C55E]">
-                        ${(Number(c.feeARS) || 0).toLocaleString("es-AR")}
+                      <div className="font-bold text-white">
+                        {c.renewalDate || "A confirmar"}
                       </div>
                       <div className="text-[10px] text-gray-400">
-                        {c.renewalDate || "Fecha a confirmar"}
+                        Responsable: {c.responsible || "Equipo"}
                       </div>
                     </div>
                   </div>

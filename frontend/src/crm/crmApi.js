@@ -300,9 +300,15 @@ export async function crmDeleteClient(id) {
 }
 
 // ----------------------------------------------------------------------------
-// GASTOS DEL MES (Firestore)
+// GASTOS DEL MES (Firestore) - Protegido: Exclusivo para Marketing / Finanzas
 // ----------------------------------------------------------------------------
 export async function crmGetExpenses() {
+  const currentRole = sessionStorage.getItem("nexo_crm_role") || "";
+  // Privacidad estricta: Únicamente el rol de marketing puede consultar los totales y registros financieros
+  if (currentRole !== "marketing") {
+    return { ok: false, expenses: [], error: "No autorizado para consultar registros financieros." };
+  }
+
   try {
     const snap = await getDocs(collection(db, "expenses"));
     const expenses = snap.docs.map((d) => ({
@@ -316,28 +322,40 @@ export async function crmGetExpenses() {
 }
 
 export async function crmCreateExpense(expenseData) {
+  const currentRole = sessionStorage.getItem("nexo_crm_role") || "";
+  if (currentRole !== "marketing") {
+    return { ok: false, error: "No autorizado para registrar gastos financieros." };
+  }
+
   try {
     const id = expenseData.id || "exp_" + Date.now().toString(36);
     const payload = {
       ...expenseData,
       id,
+      amount: Number(expenseData.amount) || 0,
       createdAt: serverTimestamp(),
+      createdAtIso: new Date().toISOString(),
     };
     await setDoc(doc(db, "expenses", id), payload);
     return { ok: true, expense: payload };
   } catch (err) {
     console.error("Error creating expense in Firestore:", err);
-    return { ok: false };
+    return { ok: false, error: err.message };
   }
 }
 
 export async function crmDeleteExpense(id) {
+  const currentRole = sessionStorage.getItem("nexo_crm_role") || "";
+  if (currentRole !== "marketing") {
+    return { ok: false, error: "No autorizado para eliminar registros de gastos." };
+  }
+
   try {
     await deleteDoc(doc(db, "expenses", id));
     return { ok: true };
   } catch (err) {
     console.error("Error deleting expense in Firestore:", err);
-    return { ok: false };
+    return { ok: false, error: err.message };
   }
 }
 
@@ -562,12 +580,13 @@ async function calculateJsonChecksum(obj) {
 
 export async function crmCreateBackup(type = "manual", author = "Administrador") {
   try {
-    const [leadsSnap, clientsSnap, customerSnap, expensesSnap, campaignsSnap] = await Promise.all([
+    const [leadsSnap, clientsSnap, customerSnap, expensesSnap, campaignsSnap, companyCampSnap] = await Promise.all([
       getDocs(collection(db, "leads")),
       getDocs(collection(db, "clients")),
       getDocs(collection(db, "customer_profiles")),
       getDocs(collection(db, "expenses")),
       getDocs(collection(db, "marketing_campaigns")),
+      getDocs(collection(db, "company_campaigns")),
     ]);
 
     const leads = leadsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -575,11 +594,12 @@ export async function crmCreateBackup(type = "manual", author = "Administrador")
     const customer_profiles = customerSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
     const expenses = expensesSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
     const marketing_campaigns = campaignsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const company_campaigns = companyCampSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
     const backupId = "bkp_" + Date.now().toString(36) + "_" + Math.random().toString(36).substring(2, 6);
     const createdAt = new Date().toISOString();
 
-    const dataPayload = { leads, clients, customer_profiles, expenses, marketing_campaigns };
+    const dataPayload = { leads, clients, customer_profiles, expenses, marketing_campaigns, company_campaigns };
     const checksum = await calculateJsonChecksum(dataPayload);
     const sizeBytes = new Blob([JSON.stringify(dataPayload)]).size;
 
@@ -597,7 +617,8 @@ export async function crmCreateBackup(type = "manual", author = "Administrador")
         customer_profiles: customer_profiles.length,
         expenses: expenses.length,
         marketing_campaigns: marketing_campaigns.length,
-        total: leads.length + clients.length + customer_profiles.length + expenses.length + marketing_campaigns.length,
+        company_campaigns: company_campaigns.length,
+        total: leads.length + clients.length + customer_profiles.length + expenses.length + marketing_campaigns.length + company_campaigns.length,
       },
       data: dataPayload,
     };
@@ -735,7 +756,7 @@ export async function crmRestoreBackup(backupJson, selectedCollections = null) {
       parsed = JSON.parse(backupJson);
     }
     const data = parsed.data || parsed;
-    const collectionsToProcess = selectedCollections || ["leads", "clients", "customer_profiles", "expenses"];
+    const collectionsToProcess = selectedCollections || ["leads", "clients", "customer_profiles", "expenses", "marketing_campaigns", "company_campaigns"];
     const results = { restored: 0, errors: [] };
 
     for (const col of collectionsToProcess) {
@@ -902,7 +923,7 @@ export async function crmDeleteUser(username) {
 }
 
 // ----------------------------------------------------------------------------
-// MARKETING: CAMPAÑAS Y PUBLICIDAD DIGITAL (Firestore)
+// MARKETING: PUBLICIDAD DE CLIENTES (Firestore: 'marketing_campaigns')
 // ----------------------------------------------------------------------------
 function parseCampaignDoc(d) {
   const data = d.data() || {};
@@ -915,9 +936,23 @@ function parseCampaignDoc(d) {
     createdStr = data.createdAt;
   }
 
+  // Cálculos financieros garantizados por registro
+  const adSpend = Number(data.adSpend) || Number(data.budgetARS) || 0;
+  const agencyFee = Number(data.agencyFee) || 0;
+  const extraExpenses = Number(data.extraExpenses) || 0;
+  const clientPaysAdDirect = data.clientPaysAdDirect !== false;
+  const totalBilled = Number(data.totalBilled) || (agencyFee + (clientPaysAdDirect ? 0 : adSpend) + extraExpenses);
+  const netProfit = Number(data.netProfit) || Math.max(0, agencyFee - extraExpenses);
+
   return {
     id: d.id,
     ...data,
+    adSpend,
+    agencyFee,
+    extraExpenses,
+    clientPaysAdDirect,
+    totalBilled,
+    netProfit,
     createdAt: createdStr,
     deliverables: Array.isArray(data.deliverables) ? data.deliverables : [],
   };
@@ -930,7 +965,7 @@ export async function crmGetCampaigns() {
     campaigns.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
     return { ok: true, campaigns };
   } catch (err) {
-    console.error("Error al obtener campañas de marketing:", err);
+    console.error("Error al obtener campañas de clientes:", err);
     return { ok: false, campaigns: [] };
   }
 }
@@ -945,7 +980,7 @@ export function crmSubscribeCampaigns(callback, onError) {
         callback(campaigns);
       },
       (err) => {
-        console.error("Error en listener de campañas:", err);
+        console.error("Error en listener de campañas de clientes:", err);
         if (onError) onError(err);
       }
     );
@@ -962,18 +997,32 @@ export async function crmCreateCampaign(campaignData) {
     const refId = campaignData.refId || "CMP-" + Date.now().toString(36).toUpperCase().slice(-5);
     const author = sessionStorage.getItem("nexo_crm_user") || "Equipo de Marketing";
 
+    // Cálculo estricto de montos financieros
+    const adSpend = Number(campaignData.adSpend) || Number(campaignData.budgetARS) || 0;
+    const agencyFee = Number(campaignData.agencyFee) || 0;
+    const extraExpenses = Number(campaignData.extraExpenses) || 0;
+    const clientPaysAdDirect = campaignData.clientPaysAdDirect !== false;
+    const totalBilled = Number(campaignData.totalBilled) || (agencyFee + (clientPaysAdDirect ? 0 : adSpend) + extraExpenses);
+    const netProfit = Math.max(0, agencyFee - extraExpenses);
+
     const payload = {
       ...campaignData,
       id,
       refId,
       author,
+      adSpend,
+      agencyFee,
+      extraExpenses,
+      clientPaysAdDirect,
+      totalBilled,
+      netProfit,
+      budgetARS: adSpend, // compatibilidad hacia atrás
       status: campaignData.status || "activa", // "activa" | "optimizacion" | "pausada" | "finalizada"
       createdAt: serverTimestamp(),
       createdAtIso: new Date().toISOString(),
       updatedAt: serverTimestamp(),
     };
 
-    // Sanear campos undefined
     Object.keys(payload).forEach((k) => {
       if (payload[k] === undefined) payload[k] = "";
     });
@@ -981,18 +1030,25 @@ export async function crmCreateCampaign(campaignData) {
     await setDoc(doc(db, "marketing_campaigns", id), payload);
     return { ok: true, campaign: { ...payload, createdAt: new Date().toISOString() } };
   } catch (err) {
-    console.error("Error al registrar campaña de marketing:", err);
+    console.error("Error al registrar campaña de cliente:", err);
     return { ok: false, error: err.message };
   }
 }
 
 export async function crmUpdateCampaign(id, updates) {
   try {
+    // Si se modifican honorarios o gastos extras, recalcular ganancia neta
     const payload = {
       ...updates,
       updatedAt: serverTimestamp(),
       updatedAtIso: new Date().toISOString(),
     };
+
+    if (updates.agencyFee !== undefined || updates.extraExpenses !== undefined) {
+      const fee = Number(updates.agencyFee) || 0;
+      const extra = Number(updates.extraExpenses) || 0;
+      payload.netProfit = Math.max(0, fee - extra);
+    }
 
     Object.keys(payload).forEach((k) => {
       if (payload[k] === undefined) payload[k] = "";
@@ -1012,6 +1068,209 @@ export async function crmDeleteCampaign(id) {
     return { ok: true };
   } catch (err) {
     console.error("Error al eliminar campaña:", err);
+    return { ok: false, error: err.message };
+  }
+}
+
+// ----------------------------------------------------------------------------
+// MARKETING: PUBLICIDAD PROPIA DE LA EMPRESA (Firestore: 'company_campaigns')
+// ----------------------------------------------------------------------------
+function parseCompanyCampaignDoc(d) {
+  const data = d.data() || {};
+  let createdStr = new Date().toISOString();
+  if (data.createdAt?.toDate && typeof data.createdAt.toDate === "function") {
+    try {
+      createdStr = data.createdAt.toDate().toISOString();
+    } catch {}
+  } else if (typeof data.createdAt === "string" && data.createdAt) {
+    createdStr = data.createdAt;
+  }
+
+  const spentAmount = Number(data.spentAmount) || 0;
+  const leadsAcquired = Number(data.leadsAcquired) || 0;
+  const cpl = leadsAcquired > 0 ? Math.round(spentAmount / leadsAcquired) : 0;
+
+  return {
+    id: d.id,
+    ...data,
+    spentAmount,
+    leadsAcquired,
+    cpl,
+    createdAt: createdStr,
+  };
+}
+
+export async function crmGetCompanyCampaigns() {
+  try {
+    const snap = await getDocs(collection(db, "company_campaigns"));
+    const campaigns = snap.docs.map(parseCompanyCampaignDoc);
+    campaigns.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    return { ok: true, campaigns };
+  } catch (err) {
+    console.error("Error al obtener campañas propias:", err);
+    return { ok: false, campaigns: [] };
+  }
+}
+
+export function crmSubscribeCompanyCampaigns(callback, onError) {
+  try {
+    return onSnapshot(
+      collection(db, "company_campaigns"),
+      (snap) => {
+        const campaigns = snap.docs.map(parseCompanyCampaignDoc);
+        campaigns.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+        callback(campaigns);
+      },
+      (err) => {
+        console.error("Error en listener de campañas propias:", err);
+        if (onError) onError(err);
+      }
+    );
+  } catch (err) {
+    console.error("Fallo al inicializar listener de campañas propias:", err);
+    if (onError) onError(err);
+    return () => {};
+  }
+}
+
+export async function crmCreateCompanyCampaign(campaignData) {
+  try {
+    const id = campaignData.id || "own_" + Date.now().toString(36) + "_" + Math.random().toString(36).substring(2, 6);
+    const refId = campaignData.refId || "OWN-" + Date.now().toString(36).toUpperCase().slice(-5);
+    const author = sessionStorage.getItem("nexo_crm_user") || "Equipo de Marketing";
+
+    const spentAmount = Number(campaignData.spentAmount) || 0;
+    const leadsAcquired = Number(campaignData.leadsAcquired) || 0;
+    const cpl = leadsAcquired > 0 ? Math.round(spentAmount / leadsAcquired) : 0;
+
+    const payload = {
+      ...campaignData,
+      id,
+      refId,
+      author,
+      spentAmount,
+      leadsAcquired,
+      cpl,
+      allocatedBudget: Number(campaignData.allocatedBudget) || 0,
+      status: campaignData.status || "activa",
+      createdAt: serverTimestamp(),
+      createdAtIso: new Date().toISOString(),
+      updatedAt: serverTimestamp(),
+    };
+
+    Object.keys(payload).forEach((k) => {
+      if (payload[k] === undefined) payload[k] = "";
+    });
+
+    await setDoc(doc(db, "company_campaigns", id), payload);
+    return { ok: true, campaign: { ...payload, createdAt: new Date().toISOString() } };
+  } catch (err) {
+    console.error("Error al registrar campaña propia:", err);
+    return { ok: false, error: err.message };
+  }
+}
+
+export async function crmUpdateCompanyCampaign(id, updates) {
+  try {
+    const payload = {
+      ...updates,
+      updatedAt: serverTimestamp(),
+      updatedAtIso: new Date().toISOString(),
+    };
+
+    if (updates.spentAmount !== undefined || updates.leadsAcquired !== undefined) {
+      const spent = Number(updates.spentAmount) || 0;
+      const leads = Number(updates.leadsAcquired) || 0;
+      payload.cpl = leads > 0 ? Math.round(spent / leads) : 0;
+    }
+
+    Object.keys(payload).forEach((k) => {
+      if (payload[k] === undefined) payload[k] = "";
+    });
+
+    await updateDoc(doc(db, "company_campaigns", id), payload);
+    return { ok: true };
+  } catch (err) {
+    console.error("Error al actualizar campaña propia:", err);
+    return { ok: false, error: err.message };
+  }
+}
+
+export async function crmDeleteCompanyCampaign(id) {
+  try {
+    await deleteDoc(doc(db, "company_campaigns", id));
+    return { ok: true };
+  } catch (err) {
+    console.error("Error al eliminar campaña propia:", err);
+    return { ok: false, error: err.message };
+  }
+}
+
+// ----------------------------------------------------------------------------
+// CONTROL FINANCIERO Y BALANCES GLOBALES (Exclusivo Rol Marketing)
+// ----------------------------------------------------------------------------
+export async function crmGetMarketingFinancialSummary() {
+  const currentRole = sessionStorage.getItem("nexo_crm_role") || "";
+  // Privacidad estricta: Denegar acceso a Admin o Atención al Cliente
+  if (currentRole !== "marketing") {
+    return {
+      ok: false,
+      error: "Acceso no autorizado: Solo el rol de Marketing tiene permisos para consultar los totales financieros y reportes económicos del negocio.",
+    };
+  }
+
+  try {
+    const [clientCampRes, ownCampRes, expensesRes] = await Promise.all([
+      crmGetCampaigns(),
+      crmGetCompanyCampaigns(),
+      crmGetExpenses(),
+    ]);
+
+    const clientCampaigns = clientCampRes.ok ? clientCampRes.campaigns : [];
+    const ownCampaigns = ownCampRes.ok ? ownCampRes.campaigns : [];
+    const expensesList = expensesRes.ok ? expensesRes.expenses : [];
+
+    // 1. Total invertido en publicidad propia
+    const totalOwnSpent = ownCampaigns.reduce((acc, c) => acc + (Number(c.spentAmount) || 0), 0);
+
+    // 2. Total invertido en campañas de clientes (pauta que va a plataformas)
+    const totalClientAdSpend = clientCampaigns.reduce((acc, c) => acc + (Number(c.adSpend) || 0), 0);
+
+    // 3. Total cobrado por servicios de marketing (honorarios de la agencia)
+    const totalAgencyFees = clientCampaigns.reduce((acc, c) => acc + (Number(c.agencyFee) || 0), 0);
+
+    // 4. Gastos adicionales en campañas de clientes
+    const totalClientExtraExpenses = clientCampaigns.reduce((acc, c) => acc + (Number(c.extraExpenses) || 0), 0);
+
+    // 5. Total facturado cobrado al cliente
+    const totalClientBilled = clientCampaigns.reduce((acc, c) => acc + (Number(c.totalBilled) || 0), 0);
+
+    // 6. Gastos operativos generales
+    const totalOperatingExpenses = expensesList.reduce((acc, e) => acc + (Number(e.amount) || 0), 0);
+
+    // 7. Ganancia neta real de la empresa = Honorarios cobrados - Gastos extras de campañas - Publicidad propia invertida
+    const netMarketingProfit = totalAgencyFees - totalClientExtraExpenses - totalOwnSpent;
+
+    // 8. Rentabilidad sobre inversión propia (ROI)
+    const roi = totalOwnSpent > 0 ? Math.round((netMarketingProfit / totalOwnSpent) * 100) : 100;
+
+    return {
+      ok: true,
+      summary: {
+        totalOwnSpent,
+        totalClientAdSpend,
+        totalAgencyFees,
+        totalClientExtraExpenses,
+        totalClientBilled,
+        totalOperatingExpenses,
+        netMarketingProfit,
+        roi,
+        ownCampaignsCount: ownCampaigns.length,
+        clientCampaignsCount: clientCampaigns.length,
+      },
+    };
+  } catch (err) {
+    console.error("Error al calcular resumen financiero de marketing:", err);
     return { ok: false, error: err.message };
   }
 }
