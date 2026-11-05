@@ -5,6 +5,7 @@ import CrmCommercialView from "./CrmCommercialView";
 import CrmCustomerServiceView from "./CrmCustomerServiceView";
 import CrmMarketingView from "./CrmMarketingView";
 import CrmClientsView from "./CrmClientsView";
+import CrmExpensesView from "./CrmExpensesView";
 import CrmResponsesView from "./CrmResponsesView";
 import CrmMeetingsView from "./CrmMeetingsView";
 import CrmNewLeadModal from "./CrmNewLeadModal";
@@ -18,9 +19,9 @@ import CrmUsersModal from "./CrmUsersModal";
 import CrmToast from "./CrmToast";
 
 const ROLE_ALLOWED_TABS = {
-  admin: ["dashboard", "commercial", "customer_service", "marketing", "clients", "meetings", "responses"],
+  admin: ["dashboard", "commercial", "customer_service", "marketing", "clients", "meetings", "responses", "expenses"],
   atencion: ["customer_service", "clients", "meetings", "responses"],
-  marketing: ["marketing", "clients", "customer_service"],
+  marketing: ["marketing", "clients", "customer_service", "expenses"],
 };
 
 export default function CrmDashboard({
@@ -190,7 +191,7 @@ export default function CrmDashboard({
 
       <div className="md:pl-64 flex flex-col flex-1 min-h-screen pt-14 md:pt-0">
         <main className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-5 sm:py-8 flex-1 w-full pb-28 md:pb-12">
-          {/* PESTAÑA: PANEL OPERATIVO (Solo Admin - Sin números financieros de ganancias/balances) */}
+          {/* PESTAÑA: RESUMEN GENERAL (Admin) */}
           {activeTab === "dashboard" && role === "admin" && (
             <CrmDashboardView
               leads={leads}
@@ -198,6 +199,7 @@ export default function CrmDashboard({
               customerProfiles={customerProfiles}
               clientCampaigns={clientCampaigns}
               companyCampaigns={companyCampaigns}
+              expenses={expenses}
               onNavigateTab={setActiveTab}
               onOpenNewLead={() => setIsNewLeadOpen(true)}
               onOpenNewCustomer={() => {
@@ -205,6 +207,7 @@ export default function CrmDashboard({
                 setIsNewCustomerOpen(true);
               }}
               onOpenNewClientCampaign={() => setIsNewClientCampaignOpen(true)}
+              onOpenNewExpense={() => setIsNewExpenseOpen(true)}
             />
           )}
 
@@ -339,6 +342,18 @@ export default function CrmDashboard({
               }}
             />
           )}
+
+          {/* PESTAÑA: GASTOS DEL MES (Admin y Marketing) */}
+          {activeTab === "expenses" && (role === "admin" || role === "marketing") && (
+            <CrmExpensesView
+              expenses={expenses}
+              onDeleteExpense={async (id) => {
+                await onDeleteExpense(id);
+                showToast("Gasto eliminado", "Se eliminó el egreso contable.");
+              }}
+              onOpenNewExpense={() => setIsNewExpenseOpen(true)}
+            />
+          )}
         </main>
       </div>
 
@@ -398,8 +413,8 @@ export default function CrmDashboard({
         }}
       />
 
-      {/* Modal Gastos Operativos (Solo para Marketing) */}
-      {role === "marketing" && (
+      {/* Modal Gastos Operativos (Admin y Marketing) */}
+      {(role === "admin" || role === "marketing") && (
         <CrmNewExpenseModal
           isOpen={isNewExpenseOpen}
           onClose={() => setIsNewExpenseOpen(false)}

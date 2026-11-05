@@ -300,12 +300,11 @@ export async function crmDeleteClient(id) {
 }
 
 // ----------------------------------------------------------------------------
-// GASTOS DEL MES (Firestore) - Protegido: Exclusivo para Marketing / Finanzas
+// GASTOS DEL MES (Firestore) - Protegido: Administrador y Marketing
 // ----------------------------------------------------------------------------
 export async function crmGetExpenses() {
-  const currentRole = sessionStorage.getItem("nexo_crm_role") || "";
-  // Privacidad estricta: Únicamente el rol de marketing puede consultar los totales y registros financieros
-  if (currentRole !== "marketing") {
+  const currentRole = sessionStorage.getItem("nexo_crm_role") || "admin";
+  if (currentRole === "atencion") {
     return { ok: false, expenses: [], error: "No autorizado para consultar registros financieros." };
   }
 
@@ -322,8 +321,8 @@ export async function crmGetExpenses() {
 }
 
 export async function crmCreateExpense(expenseData) {
-  const currentRole = sessionStorage.getItem("nexo_crm_role") || "";
-  if (currentRole !== "marketing") {
+  const currentRole = sessionStorage.getItem("nexo_crm_role") || "admin";
+  if (currentRole === "atencion") {
     return { ok: false, error: "No autorizado para registrar gastos financieros." };
   }
 
@@ -345,8 +344,8 @@ export async function crmCreateExpense(expenseData) {
 }
 
 export async function crmDeleteExpense(id) {
-  const currentRole = sessionStorage.getItem("nexo_crm_role") || "";
-  if (currentRole !== "marketing") {
+  const currentRole = sessionStorage.getItem("nexo_crm_role") || "admin";
+  if (currentRole === "atencion") {
     return { ok: false, error: "No autorizado para eliminar registros de gastos." };
   }
 
@@ -1207,15 +1206,14 @@ export async function crmDeleteCompanyCampaign(id) {
 }
 
 // ----------------------------------------------------------------------------
-// CONTROL FINANCIERO Y BALANCES GLOBALES (Exclusivo Rol Marketing)
+// CONTROL FINANCIERO Y BALANCES GLOBALES (Administrador y Marketing)
 // ----------------------------------------------------------------------------
 export async function crmGetMarketingFinancialSummary() {
-  const currentRole = sessionStorage.getItem("nexo_crm_role") || "";
-  // Privacidad estricta: Denegar acceso a Admin o Atención al Cliente
-  if (currentRole !== "marketing") {
+  const currentRole = sessionStorage.getItem("nexo_crm_role") || "admin";
+  if (currentRole === "atencion") {
     return {
       ok: false,
-      error: "Acceso no autorizado: Solo el rol de Marketing tiene permisos para consultar los totales financieros y reportes económicos del negocio.",
+      error: "Acceso no autorizado: Atención al Cliente no tiene permisos para consultar reportes económicos.",
     };
   }
 

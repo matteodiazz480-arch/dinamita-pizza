@@ -123,47 +123,6 @@ export default function CrmNavbar({
 
             {isPlusMenuOpen && (
               <div className="absolute left-0 right-0 top-full mt-2 bg-[#181a20] border border-white/12 rounded-xl shadow-2xl p-1.5 z-50 text-xs">
-                {/* Opciones para Marketing */}
-                {role === "marketing" && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsPlusMenuOpen(false);
-                        onOpenNewClientCampaign?.();
-                      }}
-                      className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-gray-200 hover:text-white flex items-center gap-2 cursor-pointer font-semibold"
-                    >
-                      <Megaphone className="w-4 h-4 text-purple-400" />
-                      <span>Campaña de Cliente</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsPlusMenuOpen(false);
-                        onOpenNewCompanyCampaign?.();
-                      }}
-                      className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-gray-200 hover:text-white flex items-center gap-2 cursor-pointer font-semibold"
-                    >
-                      <Target className="w-4 h-4 text-blue-400" />
-                      <span>Campaña Propia (NEXO)</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsPlusMenuOpen(false);
-                        onOpenNewExpense?.();
-                      }}
-                      className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-gray-200 hover:text-white flex items-center gap-2 cursor-pointer font-semibold"
-                    >
-                      <Receipt className="w-4 h-4 text-amber-400" />
-                      <span>Gasto Operativo</span>
-                    </button>
-                  </>
-                )}
-
                 {/* Opciones para Admin y Atención */}
                 {(role === "admin" || role === "atencion") && onOpenNewCustomerProfile && (
                   <button
@@ -205,6 +164,47 @@ export default function CrmNavbar({
                     <Briefcase className="w-4 h-4 text-[#22C55E]" />
                     <span>Cliente Activo</span>
                   </button>
+                )}
+
+                {/* Opciones para Admin y Marketing */}
+                {(role === "admin" || role === "marketing") && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsPlusMenuOpen(false);
+                        onOpenNewClientCampaign?.();
+                      }}
+                      className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-gray-200 hover:text-white flex items-center gap-2 cursor-pointer font-semibold"
+                    >
+                      <Megaphone className="w-4 h-4 text-purple-400" />
+                      <span>Campaña de Cliente</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsPlusMenuOpen(false);
+                        onOpenNewCompanyCampaign?.();
+                      }}
+                      className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-gray-200 hover:text-white flex items-center gap-2 cursor-pointer font-semibold"
+                    >
+                      <Target className="w-4 h-4 text-blue-400" />
+                      <span>Campaña Propia (NEXO)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsPlusMenuOpen(false);
+                        onOpenNewExpense?.();
+                      }}
+                      className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-gray-200 hover:text-white flex items-center gap-2 cursor-pointer font-semibold"
+                    >
+                      <Receipt className="w-4 h-4 text-amber-400" />
+                      <span>Registrar Gasto</span>
+                    </button>
+                  </>
                 )}
               </div>
             )}
@@ -342,7 +342,7 @@ export default function CrmNavbar({
 
               <div>
                 <div className="px-3 pb-2 text-[10px] font-black uppercase tracking-wider text-gray-400">
-                  Consultas &amp; Web
+                  Finanzas &amp; Consultas Web
                 </div>
                 <nav className="space-y-1">
                   <button
@@ -357,6 +357,21 @@ export default function CrmNavbar({
                     <div className="flex items-center gap-2.5">
                       <FileText className="w-4 h-4" />
                       <span>Formularios Web</span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleSelectTab("expenses")}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-[background-color,color,transform] duration-150 active:scale-98 cursor-pointer ${
+                      activeTab === "expenses"
+                        ? "bg-[#16A34A] text-white shadow-sm"
+                        : "text-gray-300 hover:bg-white/5 hover:text-white"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Receipt className="w-4 h-4 text-amber-400" />
+                      <span>Gastos del Mes</span>
                     </div>
                   </button>
                 </nav>
@@ -523,6 +538,20 @@ export default function CrmNavbar({
                       {customerProfilesCount}
                     </span>
                   )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSelectTab("expenses")}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-[background-color,color,transform] duration-150 active:scale-98 cursor-pointer ${
+                    activeTab === "expenses"
+                      ? "bg-[#16A34A] text-white shadow-sm"
+                      : "text-gray-300 hover:bg-white/5 hover:text-white"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Receipt className="w-4 h-4 text-amber-400" />
+                    <span>Gastos del Mes</span>
+                  </div>
                 </button>
               </nav>
             </div>
@@ -918,6 +947,18 @@ export default function CrmNavbar({
                       <div className="flex items-center gap-3">
                         <FileText className="w-4 h-4 text-[#22C55E]" />
                         <span>Formularios Web</span>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-gray-500" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSelectTab("expenses")}
+                      className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/5 text-gray-200 text-xs font-bold"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Receipt className="w-4 h-4 text-amber-400" />
+                        <span>Gastos del Mes</span>
                       </div>
                       <ChevronRight className="w-4 h-4 text-gray-500" />
                     </button>

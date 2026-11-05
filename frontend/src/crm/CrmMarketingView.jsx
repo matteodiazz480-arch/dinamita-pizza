@@ -52,7 +52,7 @@ export default function CrmMarketingView({
   onDeleteExpense,
   onViewCustomerDetail,
 }) {
-  const isMarketingRole = currentUser?.role === "marketing";
+  const isMarketingRole = !currentUser?.role || currentUser?.role === "admin" || currentUser?.role === "marketing";
 
   // Sub-pestañas: "client_ads" | "own_ads" | "financial_control"
   const [activeSection, setActiveSection] = useState("client_ads");
@@ -929,54 +929,60 @@ export default function CrmMarketingView({
         </div>
       )}
 
-      {/* Modal / Drawer de contexto de cliente */}
+      {/* Panel lateral de contexto de cliente */}
       {selectedProfileDetail && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm select-none">
-          <div className="bg-[#141519] border border-white/10 rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-3.5 text-xs">
-            <div className="flex items-center justify-between pb-2 border-b border-white/10">
-              <div>
-                <h3 className="text-sm font-black text-white">{selectedProfileDetail.fullName}</h3>
-                <span className="text-[11px] text-gray-400">{selectedProfileDetail.businessName}</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelectedProfileDetail(null)}
-                className="p-1 text-gray-400 hover:text-white"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-400">Teléfono:</span>
-                <span className="text-white font-mono">{selectedProfileDetail.phone || "No registrado"}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Plan contratado:</span>
-                <span className="text-white font-bold">{selectedProfileDetail.planName || "A medida"}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Pauta acordada:</span>
-                <span className="text-[#22C55E] font-mono font-bold">
-                  ${(Number(selectedProfileDetail.adBudget) || 0).toLocaleString("es-AR")}
-                </span>
-              </div>
-              {selectedProfileDetail.notes && (
-                <div className="pt-2 border-t border-white/6 text-gray-300">
-                  <span className="block text-gray-500 text-[10px] uppercase font-bold">Notas:</span>
-                  <p className="mt-0.5">{selectedProfileDetail.notes}</p>
+        <div className="fixed inset-0 z-50 flex justify-end select-none">
+          <div
+            onClick={() => setSelectedProfileDetail(null)}
+            className="fixed inset-0 bg-black/75 backdrop-blur-sm"
+          />
+          <div className="relative z-10 bg-[#141519] border-l border-white/12 max-w-md w-full h-dvh p-6 shadow-2xl flex flex-col justify-between text-xs">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                <div>
+                  <h3 className="text-sm font-black text-white">{selectedProfileDetail.fullName}</h3>
+                  <span className="text-[11px] text-gray-400">{selectedProfileDetail.businessName}</span>
                 </div>
-              )}
+                <button
+                  type="button"
+                  onClick={() => setSelectedProfileDetail(null)}
+                  className="p-1.5 rounded-xl bg-white/5 text-gray-400 hover:text-white cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex justify-between p-3 rounded-xl bg-[#0d0f12] border border-white/6">
+                  <span className="text-gray-400">Teléfono:</span>
+                  <span className="text-white font-mono">{selectedProfileDetail.phone || "No registrado"}</span>
+                </div>
+                <div className="flex justify-between p-3 rounded-xl bg-[#0d0f12] border border-white/6">
+                  <span className="text-gray-400">Plan contratado:</span>
+                  <span className="text-white font-bold">{selectedProfileDetail.planName || "A medida"}</span>
+                </div>
+                <div className="flex justify-between p-3 rounded-xl bg-[#0d0f12] border border-white/6">
+                  <span className="text-gray-400">Pauta acordada:</span>
+                  <span className="text-[#22C55E] font-mono font-bold">
+                    ${(Number(selectedProfileDetail.adBudget) || 0).toLocaleString("es-AR")}
+                  </span>
+                </div>
+                {selectedProfileDetail.observations && (
+                  <div className="p-3 rounded-xl bg-[#0d0f12] border border-white/6 text-gray-300">
+                    <span className="block text-gray-500 text-[10px] uppercase font-bold mb-1">Observaciones:</span>
+                    <p>{selectedProfileDetail.observations}</p>
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="pt-3 border-t border-white/10 text-right">
+            <div className="pt-4 border-t border-white/10 text-right">
               <button
                 type="button"
                 onClick={() => setSelectedProfileDetail(null)}
-                className="px-4 py-2 rounded-xl bg-white/10 text-white font-bold"
+                className="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold cursor-pointer"
               >
-                Cerrar
+                Cerrar Panel
               </button>
             </div>
           </div>

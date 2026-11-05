@@ -370,11 +370,15 @@ export default function CrmCustomerServiceView({
       )}
 
       {/* ============================================================== */}
-      {/* MODAL DETALLE / EDICIÓN: FICHA COMPLETA DE CLIENTE            */}
+      {/* PANEL LATERAL: FICHA COMPLETA DE CLIENTE                       */}
       {/* ============================================================== */}
       {selectedProfile && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-[#141519] border border-white/15 rounded-3xl max-w-3xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden my-auto">
+        <div className="fixed inset-0 z-50 flex justify-end">
+          <div
+            onClick={handleCloseDetail}
+            className="fixed inset-0 bg-black/75 backdrop-blur-sm"
+          />
+          <div className="relative z-10 bg-[#141519] border-l border-white/15 max-w-2xl w-full h-dvh flex flex-col shadow-2xl overflow-hidden">
             {/* Header Modal */}
             <div className="p-4 sm:p-6 border-b border-white/10 flex items-start justify-between gap-4">
               <div>

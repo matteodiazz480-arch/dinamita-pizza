@@ -50,7 +50,7 @@ export default function CrmApp({ onNavigateLanding }) {
   const loadAllData = useCallback(async (userRole = currentUser?.role) => {
     try {
       setRefreshing(true);
-      const isMarketing = userRole === "marketing";
+      const canAccessFinances = !userRole || userRole === "admin" || userRole === "marketing";
 
       // Peticiones concurrentes
       const promises = [
@@ -61,8 +61,7 @@ export default function CrmApp({ onNavigateLanding }) {
         crmGetCompanyCampaigns(),
       ];
 
-      // Exclusivo para Marketing: los gastos y balances financieros solo se solicitan si es rol marketing
-      if (isMarketing) {
+      if (canAccessFinances) {
         promises.push(crmGetExpenses());
       }
 
@@ -84,7 +83,7 @@ export default function CrmApp({ onNavigateLanding }) {
       if (companyCampRes.ok && Array.isArray(companyCampRes.campaigns)) {
         setCompanyCampaigns(companyCampRes.campaigns);
       }
-      if (isMarketing && expensesRes?.ok && Array.isArray(expensesRes.expenses)) {
+      if (canAccessFinances && expensesRes?.ok && Array.isArray(expensesRes.expenses)) {
         setExpenses(expensesRes.expenses);
       } else {
         setExpenses([]);
@@ -333,10 +332,10 @@ export default function CrmApp({ onNavigateLanding }) {
   };
 
   // --------------------------------------------------------------------------
-  // HANDLERS: GASTOS (Exclusivo Marketing)
+  // HANDLERS: GASTOS (Administrador y Marketing)
   // --------------------------------------------------------------------------
   const handleCreateExpense = async (expenseData) => {
-    if (currentUser?.role !== "marketing") return;
+    if (currentUser?.role === "atencion") return;
     const res = await crmCreateExpense(expenseData);
     if (res.ok && res.expense) {
       setExpenses((prev) => [res.expense, ...prev]);
@@ -345,7 +344,7 @@ export default function CrmApp({ onNavigateLanding }) {
   };
 
   const handleDeleteExpense = async (id) => {
-    if (currentUser?.role !== "marketing") return;
+    if (currentUser?.role === "atencion") return;
     setExpenses((prev) => prev.filter((e) => e.id !== id));
     await crmDeleteExpense(id);
     loadAllData();
