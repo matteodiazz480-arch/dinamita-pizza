@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { NEXO_CONFIG } from "../data/nexoData";
-import { ArrowRight, Check, Compass, Globe, Layout, Zap, Smartphone, Layers } from "lucide-react";
+import { ArrowRight, Check, Compass } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 
 function PlanCard({ plan, onOpenConsultationModal, prefersReducedMotion }) {
@@ -227,124 +227,28 @@ export default function PlansSection({ onOpenConsultationModal, onOpenPlanFinder
         </div>
 
         {/* ============================================================== */}
-        {/* BLOQUE DESTACADO: PÁGINAS WEB TOTALMENTE PERSONALIZABLES      */}
+        {/* BLOQUE EDITORIAL: PÁGINAS WEB TOTALMENTE PERSONALIZABLES      */}
         {/* ============================================================== */}
         <motion.div
-          initial={prefersReducedMotion ? false : { opacity: 0, y: 18 }}
+          initial={prefersReducedMotion ? false : { opacity: 0, y: 14 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-40px" }}
-          transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="mt-8 sm:mt-12 rounded-3xl bg-[#111111] text-white p-6 sm:p-8 lg:p-10 border border-white/12 shadow-2xl relative overflow-hidden group"
+          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+          className="mt-8 sm:mt-10 rounded-2xl bg-[#111111] text-white p-6 sm:p-8 lg:p-9 border border-white/10 shadow-sm"
         >
-          {/* Halo estructural sutil en verde sólido de la marca */}
-          <div className="absolute -right-24 -top-24 w-80 h-80 bg-[#16A34A]/[0.07] rounded-full blur-3xl pointer-events-none" />
-
-          <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 lg:gap-10 border-b border-white/10 pb-6 sm:pb-8">
-            <div className="space-y-3 max-w-2xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#16A34A]/15 border border-[#16A34A]/30 text-[#22C55E] text-[10px] sm:text-[11px] font-black uppercase tracking-wider">
-                <Globe className="w-3.5 h-3.5" />
-                <span>Desarrollo Web &amp; Landing Pages</span>
-              </div>
-
-              <h3 className="text-xl sm:text-3xl lg:text-[2.2rem] font-black tracking-tight text-white leading-tight">
-                Páginas Web{" "}
-                <span className="text-[#22C55E] underline decoration-[#16A34A]/40 underline-offset-4">
-                  Totalmente Personalizables
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-8 items-center">
+            <div className="lg:col-span-5">
+              <h3 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-white leading-tight">
+                Páginas web{" "}
+                <span className="font-editorial-serif italic font-normal text-white/90 block sm:inline">
+                  totalmente personalizables.
                 </span>
               </h3>
-
-              <p className="text-xs sm:text-sm lg:text-base text-gray-300 leading-relaxed font-medium">
-                Diseñamos y programamos sitios web y landing pages exclusivas para tu negocio. Cero plantillas genéricas: cada detalle está pensado desde el código para cargar en menos de 1 segundo y convertir visitantes en clientes reales.
+            </div>
+            <div className="lg:col-span-7 lg:border-l lg:border-white/10 lg:pl-8">
+              <p className="text-xs sm:text-sm lg:text-base text-gray-300 leading-relaxed font-normal">
+                Diseñamos y programamos sitios institucionales y landing pages a medida para tu negocio. Cero plantillas genéricas: cada proyecto se construye desde el código para reflejar la identidad de tu marca y convertir visitas en clientes reales.
               </p>
-            </div>
-
-            <div className="flex-shrink-0 w-full sm:w-auto">
-              <motion.button
-                whileHover={prefersReducedMotion ? {} : { scale: 1.02 }}
-                whileTap={prefersReducedMotion ? {} : { scale: 0.98 }}
-                onClick={() =>
-                  onOpenConsultationModal?.("Páginas Web Totalmente Personalizables & Landing Pages")
-                }
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 bg-[#16A34A] hover:bg-[#15803D] text-white font-black text-xs sm:text-sm px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl shadow-sm transition-[background-color,transform] duration-150 cursor-pointer group/btn"
-              >
-                <span>Solicitar presupuesto web</span>
-                <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
-              </motion.button>
-            </div>
-          </div>
-
-          {/* Cuadrícula de 4 Pilares de Calidad */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 pt-6 sm:pt-8">
-            <div className="bg-[#17181d] border border-white/8 rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
-              <div>
-                <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-[#22C55E] mb-3">
-                  <Layout className="w-4 h-4" />
-                </div>
-                <h4 className="text-sm font-extrabold text-white mb-1">
-                  100% a Medida de tu Marca
-                </h4>
-                <p className="text-xs text-gray-400 leading-relaxed">
-                  Sin limitaciones de WordPress ni plantillas repetidas. La estética responde exactamente a la identidad de tu negocio.
-                </p>
-              </div>
-              <div className="mt-3 pt-3 border-t border-white/5 text-[11px] font-bold text-[#22C55E] flex items-center gap-1.5">
-                <Check className="w-3.5 h-3.5 stroke-[3]" />
-                <span>Identidad visual exclusiva</span>
-              </div>
-            </div>
-
-            <div className="bg-[#17181d] border border-white/8 rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
-              <div>
-                <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-[#22C55E] mb-3">
-                  <Zap className="w-4 h-4" />
-                </div>
-                <h4 className="text-sm font-extrabold text-white mb-1">
-                  Enfocadas en Ventas (CRO)
-                </h4>
-                <p className="text-xs text-gray-400 leading-relaxed">
-                  Estructuradas para guiar al visitante hacia la acción: botones directos a WhatsApp, llamadas en un clic y formularios claros.
-                </p>
-              </div>
-              <div className="mt-3 pt-3 border-t border-white/5 text-[11px] font-bold text-[#22C55E] flex items-center gap-1.5">
-                <Check className="w-3.5 h-3.5 stroke-[3]" />
-                <span>Más consultas por visita</span>
-              </div>
-            </div>
-
-            <div className="bg-[#17181d] border border-white/8 rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
-              <div>
-                <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-[#22C55E] mb-3">
-                  <Smartphone className="w-4 h-4" />
-                </div>
-                <h4 className="text-sm font-extrabold text-white mb-1">
-                  Carga en &lt; 1s en Celulares
-                </h4>
-                <p className="text-xs text-gray-400 leading-relaxed">
-                  Desarrolladas con tecnología moderna que vuela en cualquier dispositivo móvil, reduciendo rebotes y mejorando SEO.
-                </p>
-              </div>
-              <div className="mt-3 pt-3 border-t border-white/5 text-[11px] font-bold text-[#22C55E] flex items-center gap-1.5">
-                <Check className="w-3.5 h-3.5 stroke-[3]" />
-                <span>Velocidad comprobada</span>
-              </div>
-            </div>
-
-            <div className="bg-[#17181d] border border-white/8 rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
-              <div>
-                <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-[#22C55E] mb-3">
-                  <Layers className="w-4 h-4" />
-                </div>
-                <h4 className="text-sm font-extrabold text-white mb-1">
-                  Integración con CRM &amp; Métricas
-                </h4>
-                <p className="text-xs text-gray-400 leading-relaxed">
-                  Formularios conectados en tiempo real a tu base de datos y WhatsApp, listos para campañas de Meta Ads y Google.
-                </p>
-              </div>
-              <div className="mt-3 pt-3 border-t border-white/5 text-[11px] font-bold text-[#22C55E] flex items-center gap-1.5">
-                <Check className="w-3.5 h-3.5 stroke-[3]" />
-                <span>Gestión centralizada</span>
-              </div>
             </div>
           </div>
         </motion.div>
