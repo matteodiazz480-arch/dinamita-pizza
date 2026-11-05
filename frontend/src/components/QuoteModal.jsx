@@ -7,6 +7,7 @@ import { submitLeadRecord, sanitizeClientText } from "../utils/securityClient";
 import FormSuccessCountdown from "./FormSuccessCountdown";
 
 const SERVICE_OPTIONS = [
+  "Páginas Web Totalmente Personalizables & Landing Pages",
   "Plan Lanzamiento (Desde $190.000 ARS/mes)",
   "Plan Crecimiento Integral (Desde $290.000 ARS/mes)",
   "Plan Escala & Expansión (Desde $480.000 ARS/mes)",

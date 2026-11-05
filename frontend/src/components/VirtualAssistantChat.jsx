@@ -127,6 +127,24 @@ function getLocalAssistantReply(rawQuery) {
   }
 
   if (
+    q.includes("web") ||
+    q.includes("pagina") ||
+    q.includes("página") ||
+    q.includes("landing") ||
+    q.includes("sitio")
+  ) {
+    return {
+      reply:
+        "Desarrollamos páginas web y landing pages 100% personalizables para tu negocio: sin plantillas genéricas, con carga ultra rápida (<1s en celular), botones directos a WhatsApp y conexión automática a tu CRM. ¿Te gustaría solicitar una cotización a medida?",
+      action: {
+        label: "Solicitar presupuesto web",
+        type: "quote",
+        service: "Páginas Web Totalmente Personalizables & Landing Pages",
+      },
+    };
+  }
+
+  if (
     q.includes("servicio") ||
     q.includes("hacen") ||
     q.includes("ofrecen") ||
@@ -138,7 +156,7 @@ function getLocalAssistantReply(rawQuery) {
   ) {
     return {
       reply:
-        "Trabajamos en 4 áreas principales:\n1. Publicidad Digital (Meta Ads en Facebook e Instagram).\n2. Gestión de Redes Sociales.\n3. Diseño de Contenido.\n4. Estrategia Digital y Soluciones por Rubro.",
+        "Trabajamos en 5 áreas principales:\n1. Páginas Web Totalmente Personalizables & Landing Pages.\n2. Publicidad Digital (Meta Ads en Facebook e Instagram).\n3. Gestión de Redes Sociales.\n4. Diseño de Contenido.\n5. Estrategia Digital y Soluciones por Rubro.",
     };
   }
 

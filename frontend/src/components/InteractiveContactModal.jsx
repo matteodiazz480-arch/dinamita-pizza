@@ -10,6 +10,7 @@ const RUBRO_OPTIONS = [
   "Comercios y Locales",
   "Oficios y Servicios Técnicos",
   "Profesionales y Consultorios",
+  "Desarrollo Web & Landing Pages",
   "Gastronomía y Eventos",
   "Empresas y Corporativo",
   "Otro Rubro",

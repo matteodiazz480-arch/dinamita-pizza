@@ -28,15 +28,17 @@ export const NEXO_CONFIG = {
       "Estrategia.",
       "Creatividad.",
       "Marketing.",
+      "Páginas Web.",
       "Identidad.",
       "Resultados.",
     ],
     description:
-      "Estrategias digitales, creatividad y resultados reales para potenciar tu marca.",
+      "Estrategias digitales, publicidad en Meta Ads y páginas web totalmente personalizables para potenciar tu marca.",
     ctaText: "SOLICITAR ASESORAMIENTO",
     pills: [
       { icon: "Zap", text: "Más visibilidad" },
       { icon: "Users", text: "Más clientes" },
+      { icon: "Globe", text: "Webs a medida" },
       { icon: "BarChart3", text: "Más ventas" },
       { icon: "Star", text: "Marca más fuerte" },
     ],
@@ -78,7 +80,7 @@ export const NEXO_CONFIG = {
     ],
   },
 
-  services: {
+    services: {
     title: "Soluciones para tu negocio",
     subtitle:
       "Resolvemos los principales obstáculos de comunicación y ventas de tu marca con acciones concretas.",
@@ -126,6 +128,17 @@ export const NEXO_CONFIG = {
         icon: "BarChart3",
         theme: "light",
         badgeTheme: "purple",
+      },
+      {
+        id: "web",
+        number: "05",
+        title: "Páginas Web Personalizables",
+        problemSolved: "¿Tu negocio no tiene página web o tu sitio actual no transmite confianza ni convierte?",
+        description:
+          "Diseño y desarrollo web 100% a medida, ultra rápido y enfocado en convertir visitantes en clientes reales.",
+        icon: "Globe",
+        theme: "dark",
+        badgeTheme: "green",
       },
     ],
   },
@@ -188,6 +201,37 @@ export const NEXO_CONFIG = {
       },
     ],
   },
+  webDevelopment: {
+    badge: "100% A MEDIDA",
+    title: "Páginas Web Totalmente Personalizables",
+    subtitle:
+      "Desarrollamos sitios web y landing pages exclusivas para tu negocio. Cero plantillas genéricas, máxima velocidad de carga y pensadas desde la primera línea para convertir visitas en consultas de WhatsApp y ventas.",
+    features: [
+      {
+        title: "Diseño 100% a Medida",
+        desc: "Cada sección, tipografía y detalle visual se diseña exclusivamente para tu marca. Sin plantillas genéricas ni limitaciones.",
+        icon: "Layout",
+      },
+      {
+        title: "Enfoque Directo en Ventas (CRO)",
+        desc: "Arquitectura pensada para guiar al usuario: llamadas a la acción claras, formularios inteligentes y botones directos a WhatsApp.",
+        icon: "Zap",
+      },
+      {
+        title: "Velocidad Ultra Rápida en Celulares",
+        desc: "Carga en menos de 1 segundo con código limpio y moderno. Máximo rendimiento que mejora tu posicionamiento en Google.",
+        icon: "Smartphone",
+      },
+      {
+        title: "Conexión en Vivo con CRM y WhatsApp",
+        desc: "Todas las consultas de tu web se guardan automáticamente en tu panel de control centralizado y te llegan en tiempo real.",
+        icon: "Layers",
+      },
+    ],
+    ctaText: "Solicitar presupuesto web",
+    serviceName: "Páginas Web Totalmente Personalizables & Landing Pages",
+  },
+
 
   planFinder: {
     buttonLabel: "Encontrá tu plan ideal",
@@ -380,6 +424,13 @@ export const NEXO_CONFIG = {
     title: "Resolvemos tus dudas antes de empezar",
     items: [
       {
+        id: 5,
+        question: "¿Hacen páginas web personalizadas para cualquier negocio?",
+        answer:
+          "Sí, desarrollamos sitios web y landing pages 100% personalizables desde cero. No usamos plantillas prediseñadas: adaptamos la estética, la estructura y los formularios a las necesidades comerciales exactas de tu negocio, con integración directa a WhatsApp y CRM.",
+      },
+
+      {
         id: 1,
         question: "¿Cuánto tiempo tardan en verse resultados?",
         answer:
@@ -426,7 +477,7 @@ export const NEXO_CONFIG = {
   },
 
   footer: {
-    servicesList: "Publicidad Digital · Redes Sociales · Diseño · Estrategia",
+    servicesList: "Publicidad Digital · Redes Sociales · Páginas Web Personalizadas · Diseño · Estrategia",
     copyright: "© 2026 NEXO Creative. Todos los derechos reservados.",
   },
 };
